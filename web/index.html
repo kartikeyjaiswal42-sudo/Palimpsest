@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palimpsest — where, and why</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <h1>Palimpsest</h1>
+    <p class="tagline">An AI-text detector for admissions essays that shows its working.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="panel" id="input-panel">
+    <label class="label" for="essay">Paste an essay</label>
+    <textarea id="essay" rows="12" spellcheck="false"
+      placeholder="Paste the essay here. Around 500-700 words works best — that is what the detector was measured on."></textarea>
+    <div class="controls">
+      <button id="analyse" class="primary">Analyse</button>
+      <button id="load-sample" class="ghost" type="button">Example it catches</button>
+      <button id="load-missed" class="ghost" type="button">Example it misses</button>
+      <span id="status" class="status" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="verdict-panel">
+    <div class="verdict-grid">
+      <div class="metric">
+        <div class="metric-label">How much reads as machine-written</div>
+        <div class="metric-value" id="share">—</div>
+        <div class="metric-sub" id="share-interval"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Confidence any of it is machine-written</div>
+        <div class="metric-value" id="anyp">—</div>
+        <div class="metric-sub" id="doc-sub"></div>
+      </div>
+    </div>
+    <p class="two-numbers">
+      These are two different questions, kept apart on purpose. An essay with one polished
+      paragraph has a <em>low share</em> and a <em>high confidence</em>. A single percentage
+      would hide exactly that.
+    </p>
+  </section>
+
+  <section class="panel hidden" id="text-panel">
+    <div class="panel-head">
+      <h2>The essay, sentence by sentence</h2>
+      <div class="legend">
+        <span class="swatch s0"></span> unremarkable
+        <span class="swatch s2"></span> some signal
+        <span class="swatch s4"></span> flagged
+      </div>
+    </div>
+    <p class="hint">Click any sentence to see the evidence behind its score.</p>
+    <div id="rendered" class="rendered"></div>
+  </section>
+
+  <section class="panel hidden" id="evidence-panel">
+    <div class="panel-head">
+      <h2>Why this sentence scored what it did</h2>
+      <span id="evidence-score" class="pill"></span>
+    </div>
+    <blockquote id="evidence-text"></blockquote>
+    <p class="hint" id="evidence-math"></p>
+    <div id="evidence-bars"></div>
+    <details class="tokens">
+      <summary>Word-by-word view from the observer model</summary>
+      <p class="hint">
+        How predictable each word was, given everything before it. Green means the observer's
+        top guess; grey means it was genuinely surprised. Human writing produces more grey.
+      </p>
+      <div id="token-strip" class="token-strip"></div>
+    </details>
+  </section>
+
+  <section class="panel hidden" id="limits-panel">
+    <h2>What this tool gets wrong</h2>
+    <ul id="limitations"></ul>
+    <p class="hint">
+      Measured on held-out data and reported here because a detector that hides its error
+      rates is not an instrument. Full numbers in <code>docs/03-evaluation.md</code>.
+    </p>
+  </section>
+
+</main>
+
+<footer class="wrap footnote">
+  <p>
+    The language model is read for token probabilities only — it is never asked for a verdict.
+    Nothing you paste leaves this machine.
+  </p>
+</footer>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>

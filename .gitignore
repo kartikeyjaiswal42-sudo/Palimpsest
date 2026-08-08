@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+# The human essay corpus is other people's writing under licences that do not
+# permit redistribution. Rebuild it with scripts/fetch_corpus.py; provenance and
+# per-document SHA-256 hashes live in data/manifest/ and
+# src/palimpsest/data/sources.py so a rebuild can be proved identical.
+# ---------------------------------------------------------------------------
+data/raw/
+data/features/
+
+# Derived corpora that EMBED that human text are equally not ours to redistribute.
+# Both are reproducible: build_real_hybrids.py needs data/raw/, and the hand-written
+# hybrids are spliced onto Liang essays.
+data/generated/real_hybrid_essays.jsonl
+data/generated/hybrid_essays.jsonl
+
+# data/generated/machine_essays.jsonl IS committed -- we wrote those essays, so they
+# are ours to publish, and they are the adversarial set the evaluation reports on.
+
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.DS_Store

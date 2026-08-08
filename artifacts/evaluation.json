@@ -1,0 +1,138 @@
+{
+  "flagThreshold": 0.6149,
+  "sets": {
+    "unseen_prompting": {
+      "nSentences": 356,
+      "nDocuments": 31,
+      "sentenceRecall": 0.1124,
+      "documentRecall": 0.0968,
+      "medianShare": 0.0406
+    },
+    "adversarial": {
+      "nSentences": 780,
+      "nDocuments": 21,
+      "sentenceRecall": 0.0218,
+      "documentRecall": 0.0,
+      "medianShare": 0.0,
+      "byStyle": {
+        "evasive": {
+          "n": 180,
+          "flagRate": 0.0222,
+          "medianP": 0.0063
+        },
+        "persona": {
+          "n": 127,
+          "flagRate": 0.0079,
+          "medianP": 0.007
+        },
+        "plain": {
+          "n": 158,
+          "flagRate": 0.038,
+          "medianP": 0.0244
+        },
+        "polish": {
+          "n": 40,
+          "flagRate": 0.0,
+          "medianP": 0.0094
+        }
+      }
+    },
+    "domain_shift": {
+      "nSentences": 1011,
+      "nDocuments": 44,
+      "sentenceFPR": 0.0811,
+      "documentFPR": 0.0
+    },
+    "esl": {
+      "nSentences": 6694,
+      "nDocuments": 395,
+      "sentenceFPR": 0.1138,
+      "documentFPR": 0.0684,
+      "breakdown": {
+        "ellipse": {
+          "nSentences": 2965,
+          "sentenceFPR": 0.0688,
+          "documentFPR": 0.0229
+        },
+        "liang_toefl": {
+          "nSentences": 277,
+          "sentenceFPR": 0.2491,
+          "documentFPR": 0.2222
+        },
+        "persuade": {
+          "nSentences": 3452,
+          "sentenceFPR": 0.1417,
+          "documentFPR": 0.0743
+        },
+        "persuade_ELL": {
+          "nSentences": 282,
+          "sentenceFPR": 0.1099,
+          "documentFPR": 0.0
+        },
+        "persuade_non-ELL": {
+          "nSentences": 3170,
+          "sentenceFPR": 0.1445,
+          "documentFPR": 0.0828
+        },
+        "ellipse_prof_2.0": {
+          "nSentences": 181,
+          "sentenceFPR": 0.0497
+        },
+        "ellipse_prof_2.5": {
+          "nSentences": 443,
+          "sentenceFPR": 0.0316
+        },
+        "ellipse_prof_3.0": {
+          "nSentences": 1050,
+          "sentenceFPR": 0.0552
+        },
+        "ellipse_prof_3.5": {
+          "nSentences": 819,
+          "sentenceFPR": 0.0867
+        },
+        "ellipse_prof_4.0": {
+          "nSentences": 292,
+          "sentenceFPR": 0.0514
+        },
+        "ellipse_prof_4.5": {
+          "nSentences": 120,
+          "sentenceFPR": 0.3
+        },
+        "ellipse_prof_5.0": {
+          "nSentences": 52,
+          "sentenceFPR": 0.0192
+        }
+      }
+    },
+    "localisation": {
+      "nSentences": 847,
+      "sentenceAuroc": 0.8784,
+      "precision": 0.7874,
+      "recall": 0.566,
+      "seam": {
+        "documentsWithSeamFound": 58,
+        "totalDocuments": 70,
+        "medianOffsetSentences": 1,
+        "withinTwoSentences": 0.6552
+      },
+      "hewlett": {
+        "auroc": 0.9108,
+        "recall": 0.6349
+      },
+      "toefl": {
+        "auroc": 0.8328,
+        "recall": 0.4343
+      }
+    },
+    "ablation": {
+      "TOEFL essays, GPT-4 'polished'": {
+        "originalFlagged": 0.1868,
+        "rewrittenFlagged": 0.2527
+      },
+      "ASAP essays, GPT-simplified": {
+        "originalFlagged": 0.0,
+        "rewrittenFlagged": 0.6591
+      }
+    }
+  }
+}
