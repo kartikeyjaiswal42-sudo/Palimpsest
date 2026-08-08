@@ -91,6 +91,16 @@ class SentenceReport:
                 }
                 for c in self.prediction.top(top_k)
             ],
+            # The displayed bars are the k largest terms, which is NOT the whole logit. The
+            # 37 smaller terms outweigh the six shown on 30.9% of training sentences, and
+            # the intercept (-2.26, the prior that most sentences are human) is larger than
+            # either. Publishing both lets the interface print a sum that actually closes,
+            # so a reader can check the explanation against the verdict instead of taking
+            # "the rest come from the remaining features" on trust.
+            "intercept": round(self.prediction.intercept, 4),
+            "evidenceRemainder": round(self.prediction.remainder(top_k), 4),
+            "nFeaturesShown": min(top_k, len(self.prediction.contributions)),
+            "nFeaturesTotal": len(self.prediction.contributions),
         }
 
 

@@ -16,10 +16,23 @@ function check(name, ok, detail = '') {
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  — ${detail}` : ''}`);
 }
 
+// Prefer Playwright's own chromium; fall back to an installed Google Chrome. Without the
+// fallback this script dies on any machine where `npx playwright install` has not been run,
+// or where the npm package has been updated past the downloaded browser build -- which is a
+// confusing failure for someone who just cloned the repo to look at the interface.
+async function launch() {
+  try {
+    return await chromium.launch();
+  } catch (err) {
+    console.log('  (bundled chromium unavailable, trying system Chrome)');
+    return await chromium.launch({ channel: 'chrome' });
+  }
+}
+
 (async () => {
   const fs = require('fs');
   fs.mkdirSync(OUT, { recursive: true });
-  const browser = await chromium.launch();
+  const browser = await launch();
   const page = await browser.newPage({ viewport: { width: 1180, height: 1000 } });
 
   const errors = [];
@@ -67,6 +80,19 @@ function check(name, ok, detail = '') {
   check('evidence panel prints the arithmetic', /log-odds/.test(mathText),
     mathText.slice(0, 70) + '…');
 
+  // Read the four numbers off the screen and check they add up. This is the claim the whole
+  // interface rests on -- that the explanation IS the computation -- so it is verified
+  // against the rendered text, not against the API payload that produced it.
+  const nums = mathText.replace(/−/g, '-').match(/[-+]?\d+\.\d+/g).map(Number);
+  const [baseline, shownSum, otherSum, logit] = nums;
+  const closes = Math.abs(baseline + shownSum + otherSum - logit) < 0.02;
+  check('the displayed evidence adds up to the displayed verdict', closes,
+    `${baseline} ${shownSum >= 0 ? '+' : ''}${shownSum} ${otherSum >= 0 ? '+' : ''}${otherSum} = ${logit}`);
+
+  const remainderRow = await page.locator('.bar-row.remainder').count();
+  check('the features not shown individually are still accounted for', remainderRow === 1,
+    `${remainderRow} remainder row`);
+
   const firstBar = (await page.textContent('.bar-row .bar-name')).trim();
   check('features named in plain language', firstBar.length > 3, firstBar.replace(/\s+/g, ' '));
 
@@ -98,6 +124,20 @@ function check(name, ok, detail = '') {
   const share2 = (await page.textContent('#share')).trim();
   check('the documented failure case is reported honestly as low',
     parseInt(share2, 10) < 30, `share ${share2}`);
+
+  // The interesting half of this example: the SENTENCE layer gets it right even though the
+  // DOCUMENT verdict declines to flag. If the highlighting ever stops landing on the
+  // rewritten paragraph, the demo's explanation becomes false and should fail here.
+  const highlighted = await page.locator('.sentence.s3, .sentence.s4').allTextContents();
+  const polished = highlighted.filter((t) =>
+    /Throughout this experience|important to note|remarkable patience|profound learning/.test(t));
+  check('the rewritten paragraph is still located correctly',
+    highlighted.length > 0 && polished.length >= Math.ceil(highlighted.length / 2),
+    `${polished.length} of ${highlighted.length} highlighted sentences are in the rewritten paragraph`);
+
+  const anyp2 = parseInt((await page.textContent('#anyp')).trim(), 10);
+  check('and the document verdict still declines to flag it', anyp2 < 97,
+    `confidence ${anyp2}% is below the shipped document threshold`);
   await page.screenshot({ path: `${OUT}/missed.png`, fullPage: true });
 
   // ---- responsive

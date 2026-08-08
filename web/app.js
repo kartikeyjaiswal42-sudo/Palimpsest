@@ -45,10 +45,15 @@ Since then, I've made an effort to be more intentional about expressing gratitud
 
 In terms of how this experience has affected my motivation, it has helped me to refocus on what really matters in life. Instead of getting caught up in my own problems and stresses, I try to take a step back and appreciate the people and experiences that bring joy and meaning to my life. Ultimately, I hope to carry this gratitude and compassion forward as I continue to grow and pursue my goals in college and beyond.`;
 
-// MISSED: an essay written by hand, with its middle paragraph rewritten by hand in a
-// polished register. The detector scores it near zero. This is a documented failure --
-// docs/04-failures.md explains why composed machine-style prose does not carry the
-// statistical signature of sampled machine prose.
+// LETS THROUGH: an essay written by hand whose middle paragraph was rewritten by hand in a
+// polished register. This is the more interesting kind of failure, and it is not the one we
+// first described. The sentence layer gets it RIGHT -- the highlighting lands on the
+// rewritten paragraph and almost nothing else. What fails is the document verdict: about
+// 74% confidence against a shipped threshold of 97.4%, so the essay is not flagged.
+//
+// That is the operating point doing exactly what docs/03-evaluation.md says it does. We
+// calibrated it so the tool almost never accuses a real student, and this is what that
+// costs, on screen, in the demo. Left in deliberately.
 const SAMPLE_MISSED = `I burned the rice. Again. My grandmother watched from the doorway of our kitchen in Lucknow and said nothing, which was worse than if she had said something. She had been making biryani for forty-one years. I had been making it for three weekends. The difference, she told me later, was not the recipe. It was that I kept checking. Lifting the lid, stirring, worrying. Steam escapes, she said. You have to trust the pot.
 
 Throughout this experience, I came to realize that patience is a virtue that extends far beyond the culinary realm. It is important to note that the kitchen has always been more than just a room; it has been a place of profound learning, growth, and self-discovery. My grandmother, a woman of remarkable patience and unwavering dedication, taught me invaluable lessons that continue to shape who I am today.
@@ -124,11 +129,21 @@ function renderEvidence(sentence) {
   els.evidenceText.textContent = sentence.text;
   els.evidenceScore.textContent = `${(sentence.probability * 100).toFixed(1)}% machine-like`;
 
-  const total = sentence.evidence.reduce((a, c) => a + c.contribution, 0);
+  // Print a sum that closes. Showing the biggest six bars and waving at "the rest" is not
+  // an explanation you can check: the omitted terms outweigh every bar displayed on 30.9%
+  // of sentences, and the baseline term is bigger than both. intercept + shown + remainder
+  // is exactly the logit, so a reader can verify the explanation produces the verdict
+  // rather than trusting that it does.
+  const shownTotal = sentence.evidence.reduce((a, c) => a + c.contribution, 0);
+  const sign = (v) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(2)}`;
   els.evidenceMath.textContent =
-    `The bars below are the terms the classifier added together. The six shown sum to ` +
-    `${total >= 0 ? "+" : ""}${total.toFixed(2)} of a total log-odds of ` +
-    `${sentence.logit.toFixed(2)}; the rest come from the remaining features.`;
+    `Every bar is a term the classifier added up, and these add up to the verdict: ` +
+    `baseline ${sign(sentence.intercept)} ` +
+    `${sign(shownTotal)} from the ${sentence.nFeaturesShown} features shown ` +
+    `${sign(sentence.evidenceRemainder)} from the other ` +
+    `${sentence.nFeaturesTotal - sentence.nFeaturesShown} ` +
+    `= ${sentence.logit.toFixed(2)} log-odds, which is ` +
+    `${(sentence.probability * 100).toFixed(1)}% after calibration.`;
 
   const widest = Math.max(...sentence.evidence.map((c) => Math.abs(c.contribution)), 0.01);
   const frag = document.createDocumentFragment();
@@ -164,6 +179,42 @@ function renderEvidence(sentence) {
       : `${c.description} This sentence was too short to measure it, so it contributed nothing.`;
     frag.appendChild(desc);
   });
+
+  // The omitted features as one row, on the same scale as the rest. Without it the panel
+  // silently drops most of the model, and a reader comparing the bars to the verdict would
+  // find they disagree.
+  const others = sentence.nFeaturesTotal - sentence.nFeaturesShown;
+  if (others > 0) {
+    const row = document.createElement("div");
+    row.className = "bar-row remainder";
+
+    const name = document.createElement("div");
+    name.className = "bar-name";
+    name.innerHTML = `${others} smaller terms<span class="grp">everything else</span>`;
+
+    const track = document.createElement("div");
+    track.className = "bar-track";
+    const fill = document.createElement("div");
+    fill.className = `bar-fill ${sentence.evidenceRemainder >= 0 ? "machine" : "human"}`;
+    fill.style.width = `${Math.min(Math.abs(sentence.evidenceRemainder) / widest, 1) * 48}%`;
+    track.appendChild(fill);
+
+    const val = document.createElement("div");
+    val.className = "bar-val";
+    val.textContent = `${sentence.evidenceRemainder >= 0 ? "+" : ""}` +
+      `${sentence.evidenceRemainder.toFixed(2)}`;
+
+    row.append(name, track, val);
+    frag.appendChild(row);
+
+    const desc = document.createElement("div");
+    desc.className = "evidence-desc";
+    desc.textContent =
+      `The rest of the ${sentence.nFeaturesTotal} features, summed. Each is individually ` +
+      `smaller than the bars above, but there are many of them, so together they can ` +
+      `outweigh everything shown. Shown so the arithmetic above adds up.`;
+    frag.appendChild(desc);
+  }
 
   els.bars.replaceChildren(frag);
   renderTokens(sentence);
@@ -247,7 +298,8 @@ els.sample.addEventListener("click", () => {
 els.sampleMissed.addEventListener("click", () => {
   els.essay.value = SAMPLE_MISSED;
   els.status.textContent =
-    "Loaded a case we get WRONG: the middle paragraph was rewritten, and the detector misses it.";
+    "Loaded a case we let through. The highlighting finds the rewritten paragraph — " +
+    "but the document confidence lands under our threshold, so we do not flag it.";
 });
 els.essay.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") analyse();

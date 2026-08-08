@@ -69,7 +69,7 @@ sentence is
 
 > "Therefore, I prefer computer science."
 
-flagged on **stock vocabulary +3.92**. Five words, of which the content is a discourse marker
+flagged on **stock vocabulary +4.12**. Five words, of which the content is a discourse marker
 and a restatement.
 
 ESL writing instruction teaches an explicit connective inventory and an explicit essay
@@ -95,8 +95,11 @@ also with being a diligent native student, which is why failure #1 in
 
 ## What we changed because of this
 
-1. **Removed the document-length feature.** It gave short documents a machine-ward push and
-   TOEFL essays are short; it alone was worth 41% → 19.8% document FPR on that set.
+1. **Removed the document-length feature.** It gave short documents a machine-ward push —
+   the fit's largest document-level weight, −3.09 — and TOEFL essays are short. Honest
+   caveat: re-measured on the current build, this helps TOEFL by 33.3% → 24.4%, which a
+   paired test says is **within noise** (p = 0.29), and it slightly *raises* aggregate ESL
+   false positives. We removed it on principle, not on the numbers.
    ([04-failures.md](04-failures.md#6))
 2. **Calibrated the operating point on the at-risk population, not the convenient one.** The
    document threshold is chosen so the false-positive rate on ESL and out-of-domain human

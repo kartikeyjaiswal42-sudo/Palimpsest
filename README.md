@@ -52,8 +52,14 @@ uvicorn palimpsest.api.app:app --port 8123     # first run downloads GPT-2 (~500
 open http://127.0.0.1:8123
 ```
 
-Paste an essay, or press **Example it catches** / **Example it misses** — the demo deliberately ships a case we get wrong as well as one we get right. Click any sentence to see the evidence behind
-its score. Analysis takes about 2 seconds for a 650-word essay on a laptop CPU.
+Paste an essay, or press **Example it catches** / **Example it lets through** — the demo
+deliberately ships a failure alongside the success. The second one is the more instructive:
+the highlighting lands on the rewritten paragraph exactly, and the tool *still declines to
+flag the essay*, because 74% document confidence is under the 97.4% threshold we ship. That
+is the operating point costing us a catch, visible on screen rather than buried in a table.
+
+Click any sentence to see the evidence behind its score. Analysis takes about 2 seconds for a
+650-word essay on a laptop CPU.
 
 To rebuild everything from scratch:
 
@@ -64,8 +70,9 @@ python scripts/build_features.py --sets all
 python scripts/train.py               # fit + report cross-validated performance
 python scripts/evaluate.py            # every held-out set
 python scripts/find_failures.py       # the essays it gets confidently wrong
-pytest                                # 103 tests, no network, no model download
-node scripts/verify_ui.cjs            # 19 end-to-end browser checks (needs the server up)
+python scripts/ablate_length.py       # re-run the document-length ablation
+pytest                                # 118 tests, no network, no model download
+node scripts/verify_ui.cjs            # 23 end-to-end browser checks (needs the server up)
 ```
 
 ## What it does, honestly
@@ -128,10 +135,15 @@ The interesting work was mostly in catching our own mistakes. Full write-ups in
    **0%**). We normalise typography at ingest now. The score barely moved, which is itself
    the evidence that the rest of the signal is real.
 
-3. **A length artifact that landed on exactly the people it should not.** The document model
-   learned "fewer sentences ⇒ machine", because the machine essays in the corpus happened to
-   be shorter. That single feature was producing a **41%** false-positive rate on short
-   TOEFL essays by non-native speakers. Removing it halved the harm.
+3. **A length artifact that landed on exactly the people it should not — and a claim about
+   it that went stale.** The document model gave "fewer sentences ⇒ machine" its largest
+   weight (−3.09), learned from the fact that the machine essays in the corpus happened to
+   be shorter. We removed it, measured a large improvement on short TOEFL essays, and wrote
+   that down. Later pipeline changes invalidated the measurement and the write-up kept
+   asserting it. Re-running the ablation as a script showed the improvement is **within
+   noise** (p = 0.29) and that removal *costs* in-domain AUROC. We still removed it, on the
+   principle that a corpus artifact should not be the model's strongest input — but the
+   [docs now say the numbers disagree with us](docs/04-failures.md).
 
 ## Why non-native writers get flagged, with a theory
 
@@ -168,7 +180,8 @@ src/palimpsest/
 web/                     the interface (no build step)
 scripts/                 fetch → fit → features → train → evaluate → failures
 docs/                    approach, dataset, evaluation, failures, ESL, decisions, AI use
-tests/                   40 tests
+tests/                   118 tests: no model is ever asked for a verdict, and
+                         the documented numbers must match the artifacts
 ```
 
 ## Documentation

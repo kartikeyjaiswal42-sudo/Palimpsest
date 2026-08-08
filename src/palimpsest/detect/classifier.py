@@ -69,10 +69,25 @@ class Prediction:
     probability: float
     logit: float
     contributions: list[Contribution]
+    #: The model's bias term. Carried so a reader can reconstruct the logit exactly:
+    #: ``logit == intercept + sum(c.contribution for c in contributions)``.
+    intercept: float = 0.0
 
     def top(self, k: int = 6) -> list[Contribution]:
         """The k features that moved this verdict most, either direction."""
         return sorted(self.contributions, key=lambda c: -abs(c.contribution))[:k]
+
+    def remainder(self, k: int = 6) -> float:
+        """Everything ``top(k)`` leaves out, as a single number.
+
+        Showing six bars out of forty-three and calling it an explanation is a half-truth:
+        the omitted terms are individually small but there are thirty-seven of them, and
+        measured across the training corpus they outweigh the six shown on 30.9% of
+        sentences. Reporting their sum keeps the displayed arithmetic honest --
+        intercept + shown + remainder is exactly the logit.
+        """
+        shown = {id(c) for c in self.top(k)}
+        return float(sum(c.contribution for c in self.contributions if id(c) not in shown))
 
 
 @dataclass
@@ -207,7 +222,9 @@ class SentenceDetector:
                     measured=bool(np.isfinite(value)),
                 )
             )
-        return Prediction(self._calibrate(_sigmoid(logit)), logit, contributions)
+        return Prediction(
+            self._calibrate(_sigmoid(logit)), logit, contributions, float(self.intercept)
+        )
 
     def predict_many(self, features: list[dict[str, float]]) -> np.ndarray:
         """Calibrated probabilities for many sentences. Used by the evaluation harness."""

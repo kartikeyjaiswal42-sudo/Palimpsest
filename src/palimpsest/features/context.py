@@ -24,6 +24,8 @@ removes the norm from the comparison. It does not eliminate the bias, and
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 
 __all__ = ["extract_context_features", "CONTEXT_FEATURE_NAMES", "MIN_SENTENCES"]
@@ -83,7 +85,13 @@ def extract_context_features(
     out: list[dict[str, float]] = []
     for i in range(n_sentences):
         others = np.delete(scaled, i, axis=0)
-        centre = np.nanmedian(others, axis=0)
+        # A column can be entirely NaN -- a style statistic that no other sentence in this
+        # essay was long enough to measure. numpy warns and returns NaN, which is exactly
+        # the answer we want ("no baseline to compare against"), so the warning is noise.
+        # It is silenced here rather than globally so a genuine all-NaN elsewhere still warns.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            centre = np.nanmedian(others, axis=0)
         here = scaled[i]
 
         gap_terms = np.abs(here - centre)

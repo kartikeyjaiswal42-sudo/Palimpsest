@@ -5,12 +5,12 @@
       "set": "esl",
       "source": "persuade",
       "label": 0,
-      "docP": 0.9985145554280864,
+      "docP": 0.998084135700463,
       "share": 0.9492957746478873,
       "nSentences": 25,
       "topSentences": [
         {
-          "p": 0.8515,
+          "p": 0.854,
           "text": "Distance learning is a way of going to school without actually going there physically, by taking your courses ",
           "start": 112,
           "end": 253,
@@ -18,28 +18,28 @@
           "evidence": [
             {
               "label": "Smoother than the author's baseline",
-              "contribution": 4.448,
+              "contribution": 4.709,
               "value": -3.758
             },
             {
               "label": "Curvature vs the author's baseline",
-              "contribution": 1.436,
+              "contribution": 1.554,
               "value": -2.11
             },
             {
               "label": "Probability curvature",
-              "contribution": -1.33,
+              "contribution": -1.386,
               "value": -0.078
             },
             {
               "label": "Local rhythm",
-              "contribution": 1.325,
+              "contribution": 1.333,
               "value": 0.066
             }
           ]
         },
         {
-          "p": 0.8465,
+          "p": 0.8487,
           "text": ".\n\nClearly, distance learning is a beneficial option for many students because it can help them get more sleep",
           "start": 3023,
           "end": 3202,
@@ -47,22 +47,22 @@
           "evidence": [
             {
               "label": "Average predictability",
-              "contribution": 1.592,
+              "contribution": 1.643,
               "value": -2.39
             },
             {
               "label": "Sentence length",
-              "contribution": -1.432,
+              "contribution": -1.429,
               "value": 30.0
             },
             {
               "label": "Local rhythm",
-              "contribution": 1.373,
+              "contribution": 1.381,
               "value": 0.053
             },
             {
               "label": "Vocabulary richness",
-              "contribution": 1.231,
+              "contribution": 1.212,
               "value": 4.747
             }
           ]
@@ -74,12 +74,12 @@
       "set": "esl",
       "source": "persuade",
       "label": 0,
-      "docP": 0.9983157583981753,
+      "docP": 0.9979010860832551,
       "share": 0.8846153846153846,
       "nSentences": 16,
       "topSentences": [
         {
-          "p": 0.8565,
+          "p": 0.858,
           "text": "r. That is why I think all students must participate in one or more extracurricular activiti",
           "start": 1202,
           "end": 1294,
@@ -87,28 +87,28 @@
           "evidence": [
             {
               "label": "Average predictability",
-              "contribution": 3.702,
+              "contribution": 3.819,
               "value": -1.166
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -2.39,
+              "contribution": -2.508,
               "value": 1.884
             },
             {
               "label": "Observer uncertainty",
-              "contribution": 1.585,
+              "contribution": 1.567,
               "value": 1.565
             },
             {
               "label": "Average log rank",
-              "contribution": 1.517,
+              "contribution": 1.536,
               "value": 0.465
             }
           ]
         },
         {
-          "p": 0.856,
+          "p": 0.8575,
           "text": "l. Students would have more friends because they would need to cooperate with each oth",
           "start": 1115,
           "end": 1201,
@@ -116,22 +116,22 @@
           "evidence": [
             {
               "label": "Average predictability",
-              "contribution": 3.068,
+              "contribution": 3.166,
               "value": -1.533
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -1.575,
+              "contribution": -1.648,
               "value": 1.212
             },
             {
               "label": "Average log rank",
-              "contribution": 1.389,
+              "contribution": 1.406,
               "value": 0.575
             },
             {
               "label": "Local rhythm",
-              "contribution": 1.227,
+              "contribution": 1.235,
               "value": 0.092
             }
           ]
@@ -143,12 +143,12 @@
       "set": "esl",
       "source": "liang_toefl",
       "label": 0,
-      "docP": 0.9981384525892507,
+      "docP": 0.9976773598182495,
       "share": 0.8656716417910447,
       "nSentences": 7,
       "topSentences": [
         {
-          "p": 0.8567,
+          "p": 0.8582,
           "text": "Therefore, I prefer computer science.",
           "start": 752,
           "end": 789,
@@ -156,28 +156,28 @@
           "evidence": [
             {
               "label": "Stock vocabulary",
-              "contribution": 3.924,
+              "contribution": 4.12,
               "value": 20.0
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -3.619,
+              "contribution": -3.806,
               "value": 2.899
             },
             {
               "label": "Average predictability",
-              "contribution": 2.839,
+              "contribution": 2.93,
               "value": -1.666
             },
             {
               "label": "Doesn't sound like the rest",
-              "contribution": 2.28,
+              "contribution": 2.29,
               "value": 3.104
             }
           ]
         },
         {
-          "p": 0.8518,
+          "p": 0.8546,
           "text": "I addition, I prefer computer science because computer science classes can teach me how to solve problems.",
           "start": 440,
           "end": 546,
@@ -185,92 +185,23 @@
           "evidence": [
             {
               "label": "Curvature vs the author's baseline",
-              "contribution": 2.684,
+              "contribution": 2.906,
               "value": -3.897
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": 1.473,
+              "contribution": 1.569,
               "value": -1.303
             },
             {
               "label": "Doesn't sound like the rest",
-              "contribution": 1.102,
+              "contribution": 1.107,
               "value": 1.928
             },
             {
               "label": "Average predictability",
-              "contribution": 0.604,
+              "contribution": 0.624,
               "value": -2.964
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "doc_id": "liang_toefl:0051",
-      "set": "esl",
-      "source": "liang_toefl",
-      "label": 0,
-      "docP": 0.997367296988801,
-      "share": 0.8372093023255814,
-      "nSentences": 5,
-      "topSentences": [
-        {
-          "p": 0.8485,
-          "text": "Every time he walks in the working group, he should bring a strong feeling of authority, and makes his student",
-          "start": 157,
-          "end": 300,
-          "label": 0,
-          "evidence": [
-            {
-              "label": "Curvature vs the author's baseline",
-              "contribution": 3.811,
-              "value": -5.512
-            },
-            {
-              "label": "Smoother than the author's baseline",
-              "contribution": 1.343,
-              "value": -1.196
-            },
-            {
-              "label": "Doesn't sound like the rest",
-              "contribution": 0.962,
-              "value": 1.789
-            },
-            {
-              "label": "Length vs the author's baseline",
-              "contribution": 0.958,
-              "value": 4.384
-            }
-          ]
-        },
-        {
-          "p": 0.8357,
-          "text": "If a leader is too strict, his fellow members would be afraid to ask questions, and that will decrease the eff",
-          "start": 354,
-          "end": 486,
-          "label": 0,
-          "evidence": [
-            {
-              "label": "Smoother than the author's baseline",
-              "contribution": -1.889,
-              "value": 1.471
-            },
-            {
-              "label": "Probability curvature",
-              "contribution": 1.866,
-              "value": 0.391
-            },
-            {
-              "label": "Average predictability",
-              "contribution": 1.566,
-              "value": -2.405
-            },
-            {
-              "label": "Vocabulary richness",
-              "contribution": 1.431,
-              "value": 4.899
             }
           ]
         }
@@ -281,12 +212,12 @@
       "set": "esl",
       "source": "liang_toefl",
       "label": 0,
-      "docP": 0.9971720439779918,
-      "share": 0.824,
+      "docP": 0.9975868130349228,
+      "share": 0.952,
       "nSentences": 7,
       "topSentences": [
         {
-          "p": 0.8468,
+          "p": 0.8496,
           "text": "For example, this month I stopped watching the nightly news and suddenly it became a lot easier to get all of ",
           "start": 527,
           "end": 666,
@@ -294,28 +225,28 @@
           "evidence": [
             {
               "label": "Vocabulary richness",
-              "contribution": 1.563,
+              "contribution": 1.539,
               "value": 5.0
             },
             {
               "label": "Position in essay",
-              "contribution": 1.003,
+              "contribution": 1.046,
               "value": 1.0
             },
             {
               "label": "Average predictability",
-              "contribution": 0.886,
+              "contribution": 0.914,
               "value": -2.8
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": 0.826,
+              "contribution": 0.886,
               "value": -0.769
             }
           ]
         },
         {
-          "p": 0.8359,
+          "p": 0.8356,
           "text": "Secondly, I think watching the news every day can be a waste of time.",
           "start": 339,
           "end": 408,
@@ -323,23 +254,92 @@
           "evidence": [
             {
               "label": "Probability curvature",
-              "contribution": 2.815,
+              "contribution": 2.934,
               "value": 0.531
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -2.76,
+              "contribution": -2.899,
               "value": 2.19
             },
             {
               "label": "Average predictability",
-              "contribution": 2.697,
+              "contribution": 2.783,
               "value": -1.749
             },
             {
               "label": "Curvature vs the author's baseline",
-              "contribution": -2.281,
+              "contribution": -2.473,
               "value": 3.214
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "liang_toefl:0051",
+      "set": "esl",
+      "source": "liang_toefl",
+      "label": 0,
+      "docP": 0.996719081160974,
+      "share": 0.8372093023255814,
+      "nSentences": 5,
+      "topSentences": [
+        {
+          "p": 0.8526,
+          "text": "Every time he walks in the working group, he should bring a strong feeling of authority, and makes his student",
+          "start": 157,
+          "end": 300,
+          "label": 0,
+          "evidence": [
+            {
+              "label": "Curvature vs the author's baseline",
+              "contribution": 4.128,
+              "value": -5.512
+            },
+            {
+              "label": "Smoother than the author's baseline",
+              "contribution": 1.432,
+              "value": -1.196
+            },
+            {
+              "label": "Length vs the author's baseline",
+              "contribution": 1.009,
+              "value": 4.384
+            },
+            {
+              "label": "Doesn't sound like the rest",
+              "contribution": 0.966,
+              "value": 1.789
+            }
+          ]
+        },
+        {
+          "p": 0.8385,
+          "text": "If a leader is too strict, his fellow members would be afraid to ask questions, and that will decrease the eff",
+          "start": 354,
+          "end": 486,
+          "label": 0,
+          "evidence": [
+            {
+              "label": "Smoother than the author's baseline",
+              "contribution": -1.979,
+              "value": 1.471
+            },
+            {
+              "label": "Probability curvature",
+              "contribution": 1.945,
+              "value": 0.391
+            },
+            {
+              "label": "Average predictability",
+              "contribution": 1.616,
+              "value": -2.405
+            },
+            {
+              "label": "Vocabulary richness",
+              "contribution": 1.409,
+              "value": 4.899
             }
           ]
         }
@@ -352,12 +352,12 @@
       "set": "adversarial",
       "source": "hybrid_claude",
       "label": 1,
-      "docP": 0.03048337552225505,
+      "docP": 0.031057953748444632,
       "share": 0.011940298507462687,
       "nSentences": 22,
       "topSentences": [
         {
-          "p": 0.7598,
+          "p": 0.7862,
           "text": "Good mortaring requires technical precision, speed and strength.",
           "start": 2690,
           "end": 2754,
@@ -365,28 +365,28 @@
           "evidence": [
             {
               "label": "Smoother than the author's baseline",
-              "contribution": 5.647,
+              "contribution": 5.975,
               "value": -4.747
             },
             {
               "label": "Probability curvature",
-              "contribution": -4.226,
+              "contribution": -4.404,
               "value": -0.504
             },
             {
               "label": "Curvature vs the author's baseline",
-              "contribution": 3.463,
+              "contribution": 3.75,
               "value": -5.013
             },
             {
               "label": "Average predictability",
-              "contribution": -3.224,
+              "contribution": -3.327,
               "value": -5.186
             }
           ]
         },
         {
-          "p": 0.0151,
+          "p": 0.0156,
           "text": "Eventing requires a similar mastery of multiple skills in order to succeed in the three distinct phases of com",
           "start": 2938,
           "end": 3057,
@@ -394,22 +394,22 @@
           "evidence": [
             {
               "label": "Smoother than the author's baseline",
-              "contribution": 2.264,
+              "contribution": 2.404,
               "value": -1.955
             },
             {
               "label": "Average predictability",
-              "contribution": -1.656,
+              "contribution": -1.709,
               "value": -4.276
             },
             {
               "label": "Fluent but atypical",
-              "contribution": -1.049,
+              "contribution": -1.051,
               "value": 1.656
             },
             {
               "label": "Average log rank",
-              "contribution": -0.879,
+              "contribution": -0.89,
               "value": 2.521
             }
           ]
@@ -421,12 +421,12 @@
       "set": "adversarial",
       "source": "hybrid_claude",
       "label": 1,
-      "docP": 0.0337229663103825,
+      "docP": 0.03598362185796599,
       "share": 0.010802469135802469,
       "nSentences": 47,
       "topSentences": [
         {
-          "p": 0.7829,
+          "p": 0.7774,
           "text": "Dream of being an amazing computer scientist.",
           "start": 1256,
           "end": 1301,
@@ -434,28 +434,28 @@
           "evidence": [
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -2.798,
+              "contribution": -2.938,
               "value": 2.221
             },
             {
               "label": "Probability curvature",
-              "contribution": 2.601,
+              "contribution": 2.71,
               "value": 0.499
             },
             {
               "label": "Average predictability",
-              "contribution": 2.46,
+              "contribution": 2.538,
               "value": -1.886
             },
             {
               "label": "Fluent but atypical",
-              "contribution": 1.782,
+              "contribution": 1.786,
               "value": 6.448
             }
           ]
         },
         {
-          "p": 0.5094,
+          "p": 0.4881,
           "text": "Dream of being an incredible dancer.",
           "start": 1181,
           "end": 1217,
@@ -463,23 +463,23 @@
           "evidence": [
             {
               "label": "Probability curvature",
-              "contribution": 3.872,
+              "contribution": 4.035,
               "value": 0.686
             },
             {
               "label": "Curvature vs the author's baseline",
-              "contribution": -2.226,
+              "contribution": -2.414,
               "value": 3.135
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -2.08,
+              "contribution": -2.181,
               "value": 1.629
             },
             {
-              "label": "Vocabulary richness",
-              "contribution": -1.78,
-              "value": 2.449
+              "label": "Average predictability",
+              "contribution": 1.761,
+              "value": -2.324
             }
           ]
         }
@@ -490,12 +490,12 @@
       "set": "adversarial",
       "source": "machine_claude",
       "label": 1,
-      "docP": 0.036963230281587114,
+      "docP": 0.039784523474272436,
       "share": 0.009771986970684038,
       "nSentences": 40,
       "topSentences": [
         {
-          "p": 0.6421,
+          "p": 0.63,
           "text": "week. Two hundred and forty people ans",
           "start": 1722,
           "end": 1760,
@@ -503,28 +503,28 @@
           "evidence": [
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -2.562,
+              "contribution": -2.69,
               "value": 2.026
             },
             {
               "label": "Vocabulary richness",
-              "contribution": -1.78,
+              "contribution": -1.753,
               "value": 2.449
             },
             {
               "label": "Probability curvature",
-              "contribution": 1.521,
+              "contribution": 1.585,
               "value": 0.341
             },
             {
               "label": "Sentence length",
-              "contribution": 1.519,
+              "contribution": 1.516,
               "value": 6.0
             }
           ]
         },
         {
-          "p": 0.0388,
+          "p": 0.0366,
           "text": "n cable. All of the visible parts of a functioning radio station were",
           "start": 2923,
           "end": 2992,
@@ -532,92 +532,23 @@
           "evidence": [
             {
               "label": "Probability curvature",
-              "contribution": 1.395,
+              "contribution": 1.454,
               "value": 0.322
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -1.292,
+              "contribution": -1.349,
               "value": 0.978
             },
             {
               "label": "Vocabulary richness",
-              "contribution": -0.828,
+              "contribution": -0.816,
               "value": 3.175
             },
             {
               "label": "Sentence length",
-              "contribution": 0.781,
+              "contribution": 0.779,
               "value": 12.0
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "doc_id": "hybrid_claude:007",
-      "set": "adversarial",
-      "source": "hybrid_claude",
-      "label": 1,
-      "docP": 0.04313229387228094,
-      "share": 0.0,
-      "nSentences": 26,
-      "topSentences": [
-        {
-          "p": 0.5722,
-          "text": "Soon, however, I became more confident and adventurous with my designs.",
-          "start": 3026,
-          "end": 3097,
-          "label": 0,
-          "evidence": [
-            {
-              "label": "Smoother than the author's baseline",
-              "contribution": -2.398,
-              "value": 1.891
-            },
-            {
-              "label": "Average predictability",
-              "contribution": 1.345,
-              "value": -2.534
-            },
-            {
-              "label": "Probability curvature",
-              "contribution": 1.211,
-              "value": 0.295
-            },
-            {
-              "label": "Curvature vs the author's baseline",
-              "contribution": -1.079,
-              "value": 1.491
-            }
-          ]
-        },
-        {
-          "p": 0.0341,
-          "text": "Legos hold a special place in my mind and my heart due to the effect they have had on my curiosity, creativity",
-          "start": 3410,
-          "end": 3542,
-          "label": 0,
-          "evidence": [
-            {
-              "label": "Smoother than the author's baseline",
-              "contribution": -2.048,
-              "value": 1.603
-            },
-            {
-              "label": "Average predictability",
-              "contribution": 1.094,
-              "value": -2.68
-            },
-            {
-              "label": "Local rhythm",
-              "contribution": 0.957,
-              "value": 0.162
-            },
-            {
-              "label": "Position in essay",
-              "contribution": 0.842,
-              "value": 0.92
             }
           ]
         }
@@ -628,12 +559,12 @@
       "set": "adversarial",
       "source": "machine_claude",
       "label": 1,
-      "docP": 0.045386426795977285,
+      "docP": 0.04686575529545236,
       "share": 0.007564296520423601,
       "nSentences": 41,
       "topSentences": [
         {
-          "p": 0.7633,
+          "p": 0.76,
           "text": "ic. A wobble means something speci",
           "start": 1283,
           "end": 1317,
@@ -641,28 +572,28 @@
           "evidence": [
             {
               "label": "Probability curvature",
-              "contribution": 4.025,
+              "contribution": 4.194,
               "value": 0.709
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -3.505,
+              "contribution": -3.685,
               "value": 2.805
             },
             {
               "label": "Average predictability",
-              "contribution": 2.928,
+              "contribution": 3.021,
               "value": -1.615
             },
             {
               "label": "Vocabulary richness",
-              "contribution": -2.06,
+              "contribution": -2.028,
               "value": 2.236
             }
           ]
         },
         {
-          "p": 0.1921,
+          "p": 0.1862,
           "text": "bolt. A different one means I have chosen the wrong",
           "start": 2206,
           "end": 2257,
@@ -670,23 +601,92 @@
           "evidence": [
             {
               "label": "Probability curvature",
-              "contribution": 2.442,
+              "contribution": 2.544,
               "value": 0.476
             },
             {
               "label": "Smoother than the author's baseline",
-              "contribution": -1.775,
+              "contribution": -1.859,
               "value": 1.377
             },
             {
               "label": "Average predictability",
-              "contribution": 1.323,
+              "contribution": 1.365,
               "value": -2.547
             },
             {
               "label": "Curvature vs the author's baseline",
-              "contribution": -1.074,
+              "contribution": -1.166,
               "value": 1.485
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "doc_id": "hybrid_claude:007",
+      "set": "adversarial",
+      "source": "hybrid_claude",
+      "label": 1,
+      "docP": 0.048051051156059586,
+      "share": 0.0,
+      "nSentences": 26,
+      "topSentences": [
+        {
+          "p": 0.5353,
+          "text": "Soon, however, I became more confident and adventurous with my designs.",
+          "start": 3026,
+          "end": 3097,
+          "label": 0,
+          "evidence": [
+            {
+              "label": "Smoother than the author's baseline",
+              "contribution": -2.516,
+              "value": 1.891
+            },
+            {
+              "label": "Average predictability",
+              "contribution": 1.388,
+              "value": -2.534
+            },
+            {
+              "label": "Probability curvature",
+              "contribution": 1.261,
+              "value": 0.295
+            },
+            {
+              "label": "Curvature vs the author's baseline",
+              "contribution": -1.17,
+              "value": 1.491
+            }
+          ]
+        },
+        {
+          "p": 0.0301,
+          "text": "Legos hold a special place in my mind and my heart due to the effect they have had on my curiosity, creativity",
+          "start": 3410,
+          "end": 3542,
+          "label": 0,
+          "evidence": [
+            {
+              "label": "Smoother than the author's baseline",
+              "contribution": -2.148,
+              "value": 1.603
+            },
+            {
+              "label": "Average predictability",
+              "contribution": 1.128,
+              "value": -2.68
+            },
+            {
+              "label": "Local rhythm",
+              "contribution": 0.963,
+              "value": 0.162
+            },
+            {
+              "label": "Position in essay",
+              "contribution": 0.878,
+              "value": 0.92
             }
           ]
         }

@@ -12,7 +12,7 @@ hand-picked to flatter the tool.
 
 # Part 1 — three essays it gets confidently wrong
 
-## 1. A real student essay on distance learning, called machine with P = 0.999
+## 1. A real student essay on distance learning, called machine with P = 0.998
 
 `persuade:b69e0a7afc9a` — PERSUADE corpus, written by a US school student between 2010 and
 2020, years before ChatGPT existed. 25 sentences, 95% of them flagged.
@@ -24,8 +24,8 @@ The two sentences that carry the verdict, with the evidence the model actually s
 
 | sentence | top contributions |
 |---|---|
-| "Distance learning is a way of going to school without actually going there physically…" | smoother than the author's baseline **+4.45**, curvature vs baseline **+1.44** |
-| "Clearly, distance learning is a beneficial option for many students because it can help them get more sleep" | average predictability **+1.59**, local rhythm **+1.37** |
+| "Distance learning is a way of going to school without actually going there physically…" | smoother than the author's baseline **+4.71**, curvature vs baseline **+1.55** |
+| "Clearly, distance learning is a beneficial option for many students because it can help them get more sleep" | average predictability **+1.64**, local rhythm **+1.38** |
 
 **Theory.** This is a five-paragraph school essay executed correctly. The definitional
 sentence and the signposted conclusion are the two most formulaic sentences in it — and they
@@ -46,7 +46,7 @@ were taught the structure most rigidly.
 
 | sentence | top contributions |
 |---|---|
-| "Therefore, I prefer computer science." | **stock vocabulary +3.92**, smoother than baseline −3.62, average predictability +2.84 |
+| "Therefore, I prefer computer science." | **stock vocabulary +4.12**, smoother than baseline −3.81, average predictability +2.93 |
 
 **Theory.** "Therefore, I prefer computer science" is a five-word sentence whose entire
 content is a discourse marker plus a restatement. Our `machine_word_rate` lexicon contains
@@ -63,12 +63,12 @@ features compare a sentence against the rest of its essay, and with six other se
 baseline is extremely noisy. Short documents are where we are least trustworthy and we do not
 currently refuse to score them, which we should.
 
-## 3. Machine-polished prose it misses entirely, P = 0.030
+## 3. Machine-polished prose it misses entirely, P = 0.031
 
 `hybrid_claude:004` — a real human essay with a paragraph rewritten to be more polished.
 
-Only one sentence in the document scored high (0.760: *"Good mortaring requires technical
-precision, speed and strength"*), and the document verdict stayed at 0.030.
+Only one sentence in the document scored high (0.786: *"Good mortaring requires technical
+precision, speed and strength"*), and the document verdict stayed at 0.031.
 
 **Theory.** Two causes, and they compound. First, the rewrite was composed by hand rather
 than sampled from a model, and part 2 below explains why that alone makes it nearly
@@ -148,18 +148,46 @@ sentences means machine — because the machine essays in our corpus happen to b
 (median 261 words against 642). That is a fact about how Liang et al. generated their data,
 not about machine writing.
 
-Its consequence was not abstract. TOEFL essays are short. That one feature was producing a
-**41% false-positive rate on short essays by non-native speakers**: the artifact landed
-hardest on precisely the group this class of tool is already documented to harm.
+Its consequence was not abstract. TOEFL essays are short, so the artifact landed hardest on
+precisely the group this class of tool is already documented to harm.
 
-| | with `log_sentences` | without |
+**And then the interesting part happened.** We first measured this early, reported that
+removing the feature took TOEFL false positives from 40.7% to 19.8% at no cost, and wrote
+that down. Later changes — mixed documents added to training, the operating point moved onto
+the at-risk population — made that measurement unreproducible, and the write-up went on
+asserting it. We caught it by turning the ablation into a script
+([`scripts/ablate_length.py`](../scripts/ablate_length.py)) and re-running it. The current
+result is **substantially less flattering than what we had written**:
+
+| | with `log_sentences` | without (shipped) |
 |---|---|---|
-| TOEFL document FPR | 40.7% | **19.8%** |
-| ESL overall document FPR | 13.3% | **7.3%** |
-| In-domain document AUROC | 1.000 | 1.000 |
+| TOEFL document FPR | 33.3% (15/45) | **24.4% (11/45)** |
+| ESL overall document FPR | **5.6% (22/395)** | 7.3% (29/395) |
+| domain-shift document FPR | 0.0% | 0.0% |
+| In-domain document AUROC | **0.998** | 0.959 |
+| weight the fit gave it | **−3.09** | — |
 
-Removing it halved the harm and cost nothing measurable. Document length is not evidence of
-authorship and the model is no longer allowed to see it.
+Three things are true here and the first two argue *against* the decision we made:
+
+1. **The TOEFL improvement is not statistically significant.** The same 45 essays are scored
+   by both arms, so the honest test is paired. McNemar's exact test: 6 essays fixed by the
+   removal, 2 broken, **p = 0.29**. On this evidence we cannot claim the removal helps TOEFL.
+2. **Aggregate ESL false positives got *worse*,** 5.6% → 7.3%. Keeping the feature does not
+   spread harm evenly — it concentrates it on short essays while lowering the average.
+3. **It cost real in-domain accuracy**, document AUROC 0.998 → 0.959.
+
+We removed it anyway, and the reason is not in the table. A weight of −3.09 on document
+length means the model's single strongest document-level input was *"short essays are
+machine-written"* — which is true of our corpus (Liang's machine essays run to a median 261
+words against 642) and true of nothing else. It is a fact about a data-collection procedure,
+being used as though it were a fact about writing. The population it misclassifies is not
+random: it is exam-condition writing, which is short because the exam is timed, by students
+least able to contest an accusation.
+
+So the honest statement is: **the case for removing it is principled, and the measurements
+mildly disagree.** We would rather ship 0.959 that generalises than 0.998 that is partly a
+word-count detector. Anyone who thinks that trade is wrong can re-run the script and take the
+other arm — which is precisely why the script exists.
 
 ---
 

@@ -37,6 +37,43 @@ def test_fit_predict_and_contributions_sum_to_the_logit():
     assert abs(total - pred.logit) < 1e-9
 
 
+def test_displayed_evidence_plus_remainder_reconstructs_the_logit():
+    """What the interface SHOWS must add up to the verdict it shows next to it.
+
+    The panel displays the six largest terms out of forty-three. That is a useful summary
+    and a bad explanation on its own: the omitted terms are individually small but there are
+    thirty-seven of them, and measured across the training corpus they outweigh the six
+    shown on **30.9% of sentences** (median |remainder| 0.89, max 6.35). The intercept is
+    larger still at -2.26 -- most sentences are human and the model knows it -- so a panel
+    showing only feature bars omits the single biggest term in the sum.
+
+    So the panel prints the intercept and the summed remainder too, and this asserts that
+    those numbers really do reconstruct the logit rather than approximately gesturing at it.
+    """
+    feats, y, g = toy()
+    det = SentenceDetector().fit(feats, y, g)
+    for row in feats[:25]:
+        pred = det.predict(row)
+        shown = sum(c.contribution for c in pred.top(6))
+        rebuilt = pred.intercept + shown + pred.remainder(6)
+        assert abs(rebuilt - pred.logit) < 1e-9, (
+            "intercept + shown + remainder does not equal the logit; the evidence panel "
+            "would be printing arithmetic that does not close"
+        )
+
+
+def test_remainder_covers_every_feature_not_displayed():
+    """No term may be counted twice or dropped between the bars and the remainder."""
+    feats, y, g = toy()
+    det = SentenceDetector().fit(feats, y, g)
+    pred = det.predict(feats[0])
+    for k in (0, 1, 6, len(pred.contributions)):
+        shown = pred.top(k)
+        assert len(shown) == min(k, len(pred.contributions))
+        total = sum(c.contribution for c in shown) + pred.remainder(k)
+        assert abs(total - sum(c.contribution for c in pred.contributions)) < 1e-9
+
+
 def test_unmeasured_features_contribute_exactly_zero():
     """A NaN feature must not silently vote."""
     feats, y, g = toy()

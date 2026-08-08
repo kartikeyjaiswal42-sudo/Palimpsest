@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img"
+     aria-label="Palimpsest: an underlayer of writing showing through a later one">
+  <!-- A palimpsest: earlier writing showing through the later hand. The faint slanted
+       lines are the scraped-off layer; the solid horizontal ones are what was written
+       over it, with one line highlighted the way the interface flags a passage. -->
+  <rect width="32" height="32" rx="6" fill="#1c1917"/>
+  <g stroke="#78716c" stroke-width="1.6" stroke-linecap="round" opacity="0.55"
+     transform="rotate(-14 16 16)">
+    <path d="M7 10h18"/>
+    <path d="M7 16h18"/>
+    <path d="M7 22h13"/>
+  </g>
+  <g stroke="#e7e5e4" stroke-width="2.2" stroke-linecap="round">
+    <path d="M8 11h16"/>
+    <path d="M8 21h11"/>
+  </g>
+  <path d="M8 16h16" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

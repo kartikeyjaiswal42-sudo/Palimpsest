@@ -191,13 +191,19 @@ def document_statistics(probs: np.ndarray, words: np.ndarray, threshold: float) 
 
 #: The document model reads ONLY these. `log_sentences` is deliberately absent.
 #:
-#: It was included at first and the fit gave it a large negative weight -- fewer sentences
-#: meant "machine" -- because the machine essays in our training corpus happen to be shorter
-#: than the human ones (median 261 words against 642). That is a fact about how Liang et al.
-#: generated their data, not about machine writing. Left in, it produced a 41% false-positive
-#: rate on short TOEFL essays written by non-native speakers: the artefact landed hardest on
-#: exactly the group this kind of detector is already known to harm. Document length is not
-#: evidence of authorship and the model is not allowed to see it.
+#: It was included at first and the fit gave it a weight of -3.09 -- by some margin the
+#: largest document-level weight, and it says "fewer sentences means machine". It says that
+#: because the machine essays in our training corpus happen to be shorter than the human ones
+#: (median 261 words against 642). That is a fact about how Liang et al. generated their data,
+#: not about machine writing, and the essays it misreads are short because they were written
+#: under exam conditions, by the group this kind of detector is already known to harm.
+#:
+#: Removing it is NOT free, and scripts/ablate_length.py re-measures the cost on the current
+#: build rather than trusting this comment: in-domain document AUROC 0.998 -> 0.959, and
+#: aggregate ESL false positives actually rise (5.6% -> 7.3%). The TOEFL improvement that
+#: motivated the removal (33.3% -> 24.4%) does not survive a paired test (McNemar p = 0.29).
+#: We removed it on the principle -- a corpus artefact must not be the model's strongest
+#: input -- while reporting that the measurements mildly disagree. docs/04-failures.md #6.
 DOC_FEATURES: tuple[str, ...] = ("mean_p", "max_p", "q90_p", "share")
 
 

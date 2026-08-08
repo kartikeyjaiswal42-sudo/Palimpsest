@@ -70,9 +70,20 @@ signal from artifact, and preferred to lose it.
 
 **Decision.** `log_sentences` removed from the document model.
 
-**Why.** It learned "shorter ⇒ machine" from a quirk of the corpus and produced a 41%
-false-positive rate on short TOEFL essays. **Cost:** none measurable — in-domain AUROC was
-unchanged at 1.000.
+**Why.** The fit gave document length a weight of **−3.09** — its strongest document-level
+input was "short essays are machine-written", learned from the fact that our corpus's machine
+essays are shorter (median 261 words against 642). That is a property of how Liang et al.
+generated their data, not of machine writing, and the essays it misreads are short because
+they were written under exam conditions.
+
+**Cost: real, and we report it because the measurements do not support us.** Re-running the
+ablation on the current build ([`scripts/ablate_length.py`](../scripts/ablate_length.py)):
+in-domain document AUROC **0.998 → 0.959**, aggregate ESL false positives **5.6% → 7.3%**,
+and the TOEFL improvement (33.3% → 24.4%) is **not significant** under a paired McNemar test
+(p = 0.29). We removed it on the principle rather than the numbers: a corpus artifact holding
+the largest weight in the model will not survive contact with a different corpus. An earlier
+version of this document claimed the removal was free; that claim was measured on a since-
+superseded pipeline and was wrong. See [04-failures.md](04-failures.md#6).
 
 ---
 
@@ -92,7 +103,7 @@ interface still shows the user's own paragraphs.
 **Decision.** Half the real spliced hybrids go into the training pool.
 
 **Why.** The in-document context features exist for the mixed case and had never seen one, so
-the fit ignored them. Localisation AUROC 0.745 → 0.878, seam within two sentences 43% → 66%.
+the fit ignored them. Localisation AUROC 0.745 → 0.883, seam within two sentences 43% → 70%.
 **Cost:** in-domain sentence AUROC fell 0.988 → 0.958. The task genuinely got harder; we
 preferred the capability the brief asks for over the better-looking number.
 
@@ -106,7 +117,7 @@ out-of-domain human writing, using half that data with the other half reserved f
 **Alternative.** P ≥ 0.5, or a threshold tuned in-domain — which gave 5% false positives
 in-domain and 26–52% on ESL writing. The operating point did not transfer.
 
-**Cost, and it is large.** Recall on prompt-engineered machine text falls from 41.9% to 9.7%.
+**Cost, and it is large.** Recall on prompt-engineered machine text falls from 41.9% to 6.5%.
 We would defend it: a tool that is wrong about a student one time in three should not exist,
 while a tool that misses evasive text is merely limited.
 
