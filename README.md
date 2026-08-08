@@ -52,7 +52,7 @@ uvicorn palimpsest.api.app:app --port 8123     # first run downloads GPT-2 (~500
 open http://127.0.0.1:8123
 ```
 
-Paste an essay, or press **Load an example**. Click any sentence to see the evidence behind
+Paste an essay, or press **Example it catches** / **Example it misses** — the demo deliberately ships a case we get wrong as well as one we get right. Click any sentence to see the evidence behind
 its score. Analysis takes about 2 seconds for a 650-word essay on a laptop CPU.
 
 To rebuild everything from scratch:
@@ -64,7 +64,8 @@ python scripts/build_features.py --sets all
 python scripts/train.py               # fit + report cross-validated performance
 python scripts/evaluate.py            # every held-out set
 python scripts/find_failures.py       # the essays it gets confidently wrong
-pytest                                # 40 tests, no network, no model download
+pytest                                # 103 tests, no network, no model download
+node scripts/verify_ui.cjs            # 19 end-to-end browser checks (needs the server up)
 ```
 
 ## What it does, honestly
@@ -74,19 +75,19 @@ trade-off curve, is in [docs/03-evaluation.md](docs/03-evaluation.md).
 
 | | |
 |---|---|
-| Sentence AUROC, out-of-fold | **0.958** |
-| Document AUROC, out-of-fold | **0.961** |
-| Locating machine text inside a mixed essay | **AUROC 0.878**, seam found within 2 sentences in **66%** of documents |
+| Sentence AUROC, out-of-fold | **0.960** |
+| Document AUROC, out-of-fold | **0.959** |
+| Locating machine text inside a mixed essay | **AUROC 0.883**, seam found within 2 sentences in **70%** of documents |
 | False positives on out-of-domain human essays | **0.0%** of documents |
-| False positives on essays by English-language learners | **6.8%** of documents |
+| False positives on essays by English-language learners | **7.3%** of documents |
 
 And the part that a leaderboard would hide:
 
 | | |
 |---|---|
-| GPT-3.5 **prompted to evade detection** | only **9.7%** of essays caught |
+| GPT-3.5 **prompted to evade detection** | only **6.5%** of essays caught |
 | Prose a careful writer composed to imitate a model | **0 of 11** caught |
-| TOEFL essays by non-native writers, wrongly flagged | **22.2%** |
+| TOEFL essays by non-native writers, wrongly flagged | **24.4%** |
 
 The operating point is deliberately tuned so the tool almost never accuses a real student,
 and it pays for that in recall. That is a choice, not a result, and
@@ -94,7 +95,7 @@ and it pays for that in recall. That is a choice, not a result, and
 
 **For context on that last number:** Liang et al. (2023) measured a **61.22%** average false
 positive rate across seven commercial detectors on the same 91 TOEFL essays. Palimpsest
-scores 22.2% on that set. Better, and still far too high to use as evidence against anyone.
+scores 24.4% on that set. Better, and still far too high to use as evidence against anyone.
 
 ## The cleanest evidence that it measures what it claims
 
@@ -147,7 +148,7 @@ The measurement that supports this: on ELLIPSE, where every writer is an English
 learner and each has a graded proficiency score, the false-positive rate **rises with
 proficiency** rather than falling. And on PERSUADE, where the ELL flag is the only difference
 between otherwise matched essays, the ELL group is flagged *less* often (0.0%) than the
-native group (8.3%). Fluency is what we measure, not nativeness.
+native group (8.9%). Fluency is what we measure, not nativeness.
 
 Full analysis: [docs/05-esl.md](docs/05-esl.md).
 

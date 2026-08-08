@@ -25,10 +25,10 @@ mixed documents. 4,895 sentences from 201 essays, 15.5% machine.
 
 | | |
 |---|---|
-| Sentence AUROC (out-of-fold) | 0.958 |
-| Sentence average precision | 0.808 (baseline 0.155) |
+| Sentence AUROC (out-of-fold) | 0.960 |
+| Sentence average precision | 0.810 (baseline 0.155) |
 | Sentence Brier score | 0.054 |
-| Document AUROC (out-of-fold) | 0.961 |
+| Document AUROC (out-of-fold) | 0.959 |
 
 **The length guard.** Human and machine sentences in the training pool average 18.5 and 17.4
 words; sentence length alone gives AUROC 0.494. The classifier cannot reach the right answer
@@ -65,8 +65,8 @@ other half reserved for reporting. Calibrating on in-domain essays instead gave 
 
 | operating point | ESL doc FPR | domain-shift doc FPR | prompt-engineered recall | localisation AUROC |
 |---|---|---|---|---|
-| P ≥ 0.50, calibrated in-domain | 34.8% | 31.8% | 41.9% | 0.878 |
-| **P ≥ 0.977, calibrated on at-risk writing (shipped)** | **6.8%** | **0.0%** | **9.7%** | **0.878** |
+| P ≥ 0.50, calibrated in-domain | 34.8% | 31.8% | 41.9% | 0.883 |
+| **P ≥ 0.974, calibrated on at-risk writing (shipped)** | **7.3%** | **0.0%** | **6.5%** | **0.883** |
 
 We ship the second row. It costs three quarters of the recall on evasive text. That is the
 trade we chose and we would defend it: a tool that is wrong about a student one time in three
@@ -78,7 +78,7 @@ has no business existing, while a tool that misses evasive text is merely limite
 
 | set | what it is | document recall |
 |---|---|---|
-| `unseen_prompting` | GPT-3.5 prompted to evade detection (31 essays) | **9.7%** |
+| `unseen_prompting` | GPT-3.5 prompted to evade detection (31 essays) | **6.5%** |
 | `adversarial` | prose composed by hand to imitate a model (21 docs) | **0.0%** |
 
 Both are honest failures and both are discussed in [04-failures.md](04-failures.md).
@@ -87,11 +87,11 @@ Both are honest failures and both are discussed in [04-failures.md](04-failures.
 
 | set | documents | sentence FPR | document FPR |
 |---|---|---|---|
-| `domain_shift` (ASAP 8th-grade essays) | 44 | 8.1% | **0.0%** |
-| `esl` overall | 395 | 11.4% | **6.8%** |
-| ├─ ELLIPSE (all ELL, graded proficiency) | — | 6.9% | 2.3% |
-| ├─ PERSUADE (matched ELL flag) | — | 14.2% | 7.4% |
-| └─ Liang TOEFL (short, non-native) | — | 24.9% | **22.2%** |
+| `domain_shift` (ASAP 8th-grade essays) | 44 | 8.3% | **0.0%** |
+| `esl` overall | 395 | 11.4% | **7.3%** |
+| ├─ ELLIPSE (all ELL, graded proficiency) | — | 6.8% | 2.3% |
+| ├─ PERSUADE (matched ELL flag) | — | 14.3% | 8.0% |
+| └─ Liang TOEFL (short, non-native) | — | 23.8% | **24.4%** |
 
 ### Localisation inside mixed documents
 
@@ -99,18 +99,18 @@ Both are honest failures and both are discussed in [04-failures.md](04-failures.
 
 | | |
 |---|---|
-| Sentence AUROC within mixed documents | **0.878** |
-| Precision / recall at threshold | 0.787 / 0.566 |
-| Seam located at all | 58 of 70 documents |
+| Sentence AUROC within mixed documents | **0.883** |
+| Precision / recall at threshold | 0.805 / 0.573 |
+| Seam located at all | 57 of 70 documents |
 | Median seam offset | **1 sentence** |
-| Seam within 2 sentences | **66%** |
+| Seam within 2 sentences | **70%** |
 
 By rewrite direction — the two are genuinely different problems:
 
 | pair | rewrite | AUROC | recall |
 |---|---|---|---|
-| ASAP | model *simplified* the second half | 0.911 | 0.635 |
-| TOEFL | model *polished* the second half | 0.833 | 0.434 |
+| ASAP | model *simplified* the second half | 0.912 | 0.635 |
+| TOEFL | model *polished* the second half | 0.845 | 0.455 |
 
 **This capability had to be trained for.** With no mixed documents in the training pool, the
 in-document context features had nothing to detect — every training document was entirely one
@@ -118,9 +118,9 @@ class — so the fit learned to ignore them:
 
 | | without mixed training | with |
 |---|---|---|
-| Localisation AUROC | 0.745 | **0.878** |
-| Recall | 0.200 | **0.566** |
-| Seam within 2 sentences | 43% | **66%** |
+| Localisation AUROC | 0.745 | **0.883** |
+| Recall | 0.200 | **0.573** |
+| Seam within 2 sentences | 43% | **70%** |
 | Median offset | 3 sentences | **1** |
 
 ## The controlled ablation
@@ -133,7 +133,7 @@ only authorship of the surface.
 | 88 original ASAP student essays | **0.0%** |
 | the same 88, rewritten by a model | **65.9%** |
 | 91 original TOEFL essays | 18.7% |
-| the same 91, polished by GPT-4 | 25.3% |
+| the same 91, polished by GPT-4 | 24.2% |
 
 The ASAP pair is clean evidence that we respond to machine rewriting rather than to topic,
 author or corpus. The TOEFL pair moves much less, and the reason is visible in the baseline:
@@ -148,7 +148,7 @@ Liang et al. (2023) scored seven commercial detectors on `TOEFL_real_91`.
 |---|---|
 | Seven commercial detectors, average | 61.22% |
 | Unanimously misclassified by all seven | 19.78% |
-| **Palimpsest** | **22.2%** |
+| **Palimpsest** | **24.4%** |
 
 Substantially better, and still far too high to use against a person.
 

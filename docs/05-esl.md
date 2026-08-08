@@ -14,12 +14,12 @@ At the shipped operating point, on held-out human writing:
 |---|---|---|
 | ASAP 8th-grade essays (native, out-of-domain) | 44 | **0.0%** |
 | ELLIPSE (100% English-language learners) | — | **2.3%** |
-| PERSUADE (mixed, carries an ELL flag) | — | **7.4%** |
-| Liang TOEFL (non-native, short) | — | **22.2%** |
+| PERSUADE (mixed, carries an ELL flag) | — | **8.0%** |
+| Liang TOEFL (non-native, short) | — | **24.4%** |
 
 For external context, Liang et al. (2023) measured **61.22%** average false-positive rate
 across seven commercial detectors on that same TOEFL set, with 19.78% misclassified
-unanimously by all seven. We are roughly three times better and still not good enough to be
+unanimously by all seven. We are roughly 2.5 times better and still not good enough to be
 used against a person.
 
 ## The measurement that changes the story
@@ -34,8 +34,8 @@ same years. The only structured difference is the `ell_status` field.
 
 | group | sentences | sentence FPR | document FPR |
 |---|---|---|---|
-| ELL | 282 | 11.0% | **0.0%** |
-| non-ELL | 3,170 | 14.4% | **8.3%** |
+| ELL | 282 | 11.3% | **0.0%** |
+| non-ELL | 3,170 | 14.6% | **8.9%** |
 
 **The ELL group is flagged less often than the native group.** If non-nativeness were the
 trigger, this table would look the other way round.
@@ -48,15 +48,15 @@ proficiency rises. Measured across the full corpus:
 
 | proficiency | sentences | sentence FPR |
 |---|---|---|
-| 2.0 | 371 | 3.0% |
-| 2.5 | 882 | 4.9% |
-| 3.0 | 1,923 | 7.6% |
+| 2.0 | 371 | 2.7% |
+| 2.5 | 882 | 4.3% |
+| 3.0 | 1,923 | 7.4% |
 | 3.5 | 1,447 | 9.7% |
-| 4.0 | 1,002 | 12.0% |
-| 4.5 | 231 | **23.8%** |
-| 5.0 | 127 | 12.6% |
+| 4.0 | 1,002 | 11.9% |
+| 4.5 | 231 | **24.2%** |
+| 5.0 | 127 | 13.4% |
 
-The rate **rises with proficiency**, by roughly a factor of eight from 2.0 to 4.5. The
+The rate **rises with proficiency**, by roughly a factor of nine from 2.0 to 4.5. The
 strongest non-native writers are flagged most.
 
 ## The theory
@@ -112,7 +112,7 @@ also with being a diligent native student, which is why failure #1 in
 
 ## What we did not fix
 
-The 22.2% on TOEFL. We know the mechanism and we know two things that would help — refusing
+The 24.4% on TOEFL. We know the mechanism and we know two things that would help — refusing
 to score documents under about ten sentences, and modelling essay position so a formulaic
 conclusion is expected rather than surprising — and we ran out of time to do either properly.
 Reporting it is not a substitute for fixing it.
