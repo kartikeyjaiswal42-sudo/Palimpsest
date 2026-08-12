@@ -163,3 +163,51 @@ summary { cursor: pointer; font-size: 14px; font-weight: 560; }
 
 .footnote { color: var(--ink-faint); font-size: 13px; padding-bottom: 40px; }
 code { font: 12.5px var(--mono); background: #f0ebdf; padding: 1px 5px; border-radius: 4px; }
+
+
+/* --- calibrated verdict band ------------------------------------------------
+   Three states, three colours, and the middle one is deliberately as prominent as
+   the other two. An "insufficient evidence" result is a real answer, not a
+   degraded one, and styling it as a muted footnote would recreate the failure it
+   exists to prevent. Nothing here is green: the tool cannot clear anybody, so no
+   state gets the colour that means "all good". */
+.band { border-radius: 10px; padding: 1rem 1.15rem; margin-bottom: 1.1rem;
+        border-left: 5px solid currentColor; }
+.band-label { font-size: 1.15rem; font-weight: 650; margin-bottom: 0.3rem; }
+.band-detail { font-size: 0.9rem; line-height: 1.5; opacity: 0.85; color: inherit; }
+.band-likely_machine        { color: #b3261e; background: rgba(179, 38, 30, 0.09); }
+.band-insufficient_evidence { color: #8a6100; background: rgba(138, 97, 0, 0.10); }
+.band-no_evidence           { color: #3f4a57; background: rgba(63, 74, 87, 0.09); }
+/* out_of_scope was added after the other three and had NO rule, so it rendered with a
+   transparent background -- found by screenshotting the page, not by reading the markup.
+   Informational blue: it is not a finding about the writer, it is a statement about us. */
+.band-out_of_scope          { color: #1f5673; background: rgba(31, 86, 115, 0.10); }
+
+@media (prefers-color-scheme: dark) {
+  .band-likely_machine        { color: #ff8a80; background: rgba(255, 138, 128, 0.12); }
+  .band-insufficient_evidence { color: #ffc65c; background: rgba(255, 198, 92, 0.12); }
+  .band-no_evidence           { color: #b6c2d1; background: rgba(182, 194, 209, 0.12); }
+  .band-out_of_scope          { color: #7fc4e8; background: rgba(127, 196, 232, 0.12); }
+}
+
+
+/* ---- abstention must not look like an acquittal -------------------------------------
+   The two big percentages are the most misreadable thing on the page when the tool has
+   declined to answer: a reader takes "19% machine" as "81% human". Muting them whenever
+   the band is not a finding keeps them available as evidence while removing their claim to
+   be the answer -- the band above stays at full contrast and remains the headline. */
+.verdict-grid[data-band="insufficient_evidence"] .metric-value,
+.verdict-grid[data-band="out_of_scope"] .metric-value {
+  opacity: 0.5;
+  font-weight: 500;
+}
+.verdict-caveat {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--ink-faint);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft, var(--ink-faint));
+  background: rgba(127, 127, 127, 0.06);
+}
+.verdict-caveat[hidden] { display: none; }

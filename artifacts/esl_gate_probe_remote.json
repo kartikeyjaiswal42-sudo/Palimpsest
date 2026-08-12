@@ -1,0 +1,31 @@
+{
+ "threshold": 0.1101,
+ "matchedPrompts": 9,
+ "nEll": 24,
+ "nNonEll": 152,
+ "shift": {
+  "corpus_surprisal_mean": 0.07696342423630675,
+  "novel_trigram_rate": 0.012147694965027512,
+  "first_person_rate": 0.6270956689544733,
+  "specificity_rate": -1.9566810044659668
+ },
+ "baselineRefusal": 0.007380073800738007,
+ "transplantRefusal": {
+  "1x ELL shift": 0.0018450184501845018,
+  "2x  (a stronger effect than measured)": 0.0018450184501845018,
+  "3x  (deliberately pessimistic)": 0.0
+ },
+ "proficiencySlope": {
+  "corpus_surprisal_mean": 0.01334536138975668,
+  "novel_trigram_rate": -0.009251737361230479,
+  "first_person_rate": 0.7740405447520817,
+  "specificity_rate": 1.094316078753884
+ },
+ "proficiencyTransplantRefusal": {
+  "-0.5": 0.016605166051660517,
+  "-1.0": 0.01845018450184502,
+  "-1.5": 0.025830258302583026,
+  "-2.0": 0.033210332103321034
+ },
+ "nAdmissions": 542
+}

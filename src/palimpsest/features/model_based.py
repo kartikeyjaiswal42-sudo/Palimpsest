@@ -59,9 +59,27 @@ def extract_model_features(scores: TokenScores) -> dict[str, float]:
     # DetectLLM's Log-Likelihood Log-Rank Ratio. Both terms are means, so the ratio is
     # already length-invariant. Machine text is both more likely and more highly ranked,
     # but rank collapses faster than likelihood, which pushes the ratio up.
+    #
+    # The denominator is a mean of non-negative terms and is zero in exactly one case: the
+    # observer ranked EVERY token in the span first. The ratio is then undefined, not
+    # enormous, and the old guard -- dividing by 1e-6 -- claimed it was enormous. With
+    # GPT-2 that case essentially never arose. With the 30 B observer 48% of all tokens are
+    # rank 1, so short spans reach it routinely: 11 of 6,941 training sentences (0.16%),
+    # scoring up to 7.4e5.
+    #
+    # Those 11 rows did not merely score wrongly. They set the column's standard deviation
+    # to 11,625 (its true value is 0.356), so every OTHER sentence standardised to
+    # z ~= -0.03 and lrr -- a feature carrying one of the largest fitted weights -- stopped
+    # voting at all. The failure is silent and it is worst on exactly the text this project
+    # struggles with: fluent prose produces rank-1 tokens, so a stronger generator makes the
+    # degenerate case likelier and the feature deader.
+    #
+    # Undefined is reported as not-measured, which the classifier already handles by
+    # imputing the training mean -- standardising to zero, contributing zero. See the module
+    # docstring in detect/classifier.py: an unmeasured feature must not silently vote.
     mean_nll = float(-lp.mean())
     mean_log_rank = float(log_rank.mean())
-    lrr = mean_nll / max(mean_log_rank, 1e-6)
+    lrr = mean_nll / mean_log_rank if mean_log_rank > 0.0 else float("nan")
 
     # Fast-DetectGPT's conditional probability curvature: how far the observed tokens sit
     # above what the model itself expects to see, in units of its own standard deviation.

@@ -1,0 +1,49 @@
+{
+  "name": "palamiassist_college_essays_500",
+  "description": "500 synthetic machine-written college admissions essays for PalamiAssist.",
+  "count": 500,
+  "seed": 20260810,
+  "min_words_filter": 400,
+  "authorship": "machine",
+  "role": "palamiassist-train",
+  "synthetic": true,
+  "family_counts": {
+    "claude": 250,
+    "gemini": 239,
+    "gpt3_5": 11
+  },
+  "source_file_counts": {
+    "data/generated/claude_modern.jsonl": 147,
+    "data/generated/claude_modern_heldout.jsonl": 103,
+    "data/generated/machine_essays.jsonl": 11,
+    "data/generated/modern_control.jsonl": 24,
+    "data/generated/modern_holdout.jsonl": 42,
+    "data/generated/modern_train.jsonl": 61,
+    "data/generated/modern_unseen.jsonl": 98,
+    "data/generated/modern_unseen_family.jsonl": 14
+  },
+  "model_counts": {
+    "claude-opus-5": 11,
+    "fable": 40,
+    "gemini-3-flash-preview": 6,
+    "gemini-3.1-flash-lite": 127,
+    "gemini-3.5-flash": 4,
+    "gemini-3.5-flash-lite": 98,
+    "gemini-3.6-flash": 4,
+    "haiku": 72,
+    "opus": 76,
+    "sonnet": 62
+  },
+  "word_counts": {
+    "min": 401,
+    "p25": 487,
+    "median": 557,
+    "p75": 625,
+    "max": 966
+  },
+  "outputs": {
+    "document_jsonl": "data/generated/palamiassist_college_essays_500.jsonl",
+    "chat_jsonl": "data/generated/palamiassist_college_essays_500_chat.jsonl"
+  },
+  "source_note": "Built only from generated corpora already present in this repository; no model or network call was made by this builder."
+}

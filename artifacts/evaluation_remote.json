@@ -1,0 +1,160 @@
+{
+  "flagThreshold": 0.3004,
+  "sets": {
+    "modern_holdout": {
+      "nSentences": 2592,
+      "nDocuments": 115,
+      "sentenceRecall": 0.9537,
+      "documentRecall": 0.9478,
+      "medianShare": 1.0
+    },
+    "modern_unseen_family": {
+      "nSentences": 529,
+      "nDocuments": 22,
+      "sentenceRecall": 0.8242,
+      "documentRecall": 0.6364,
+      "medianShare": 0.904
+    },
+    "modern_claude": {
+      "nSentences": 5541,
+      "nDocuments": 160,
+      "sentenceRecall": 0.3404,
+      "documentRecall": 0.0563,
+      "medianShare": 0.4026,
+      "byModel": {
+        "fable": {
+          "nSentences": 723,
+          "nDocuments": 30,
+          "sentenceRecall": 0.3001,
+          "medianP": 0.0801
+        },
+        "haiku": {
+          "nSentences": 2079,
+          "nDocuments": 42,
+          "sentenceRecall": 0.5628,
+          "medianP": 0.4185
+        },
+        "opus": {
+          "nSentences": 1795,
+          "nDocuments": 46,
+          "sentenceRecall": 0.0563,
+          "medianP": 0.0319
+        },
+        "sonnet": {
+          "nSentences": 944,
+          "nDocuments": 42,
+          "sentenceRecall": 0.4216,
+          "medianP": 0.1518
+        }
+      },
+      "byStyle": {
+        "constrained": {
+          "nSentences": 533,
+          "nDocuments": 16,
+          "sentenceRecall": 0.5047,
+          "medianP": 0.307
+        },
+        "evasive": {
+          "nSentences": 452,
+          "nDocuments": 13,
+          "sentenceRecall": 0.1947,
+          "medianP": 0.0378
+        },
+        "notes": {
+          "nSentences": 440,
+          "nDocuments": 13,
+          "sentenceRecall": 0.2364,
+          "medianP": 0.0457
+        },
+        "persona": {
+          "nSentences": 1053,
+          "nDocuments": 31,
+          "sentenceRecall": 0.3352,
+          "medianP": 0.0851
+        },
+        "plain": {
+          "nSentences": 3063,
+          "nDocuments": 87,
+          "sentenceRecall": 0.35,
+          "medianP": 0.1016
+        }
+      }
+    },
+    "domain_shift": {
+      "nSentences": 1011,
+      "nDocuments": 44,
+      "sentenceFPR": 0.1236,
+      "documentFPR": 0.0
+    },
+    "esl": {
+      "nSentences": 25877,
+      "nDocuments": 1566,
+      "sentenceFPR": 0.2033,
+      "documentFPR": 0.0434,
+      "breakdown": {
+        "ellipse": {
+          "nSentences": 25606,
+          "sentenceFPR": 0.2019,
+          "documentFPR": 0.0414
+        },
+        "liang_toefl": {
+          "nSentences": 271,
+          "sentenceFPR": 0.3321,
+          "documentFPR": 0.1087
+        },
+        "ellipse_prof_1.5": {
+          "nSentences": 80,
+          "sentenceFPR": 0.0
+        },
+        "ellipse_prof_2.0": {
+          "nSentences": 1167,
+          "sentenceFPR": 0.0771
+        },
+        "ellipse_prof_2.5": {
+          "nSentences": 3187,
+          "sentenceFPR": 0.0944
+        },
+        "ellipse_prof_3.0": {
+          "nSentences": 9179,
+          "sentenceFPR": 0.1685
+        },
+        "ellipse_prof_3.5": {
+          "nSentences": 6129,
+          "sentenceFPR": 0.2359
+        },
+        "ellipse_prof_4.0": {
+          "nSentences": 4409,
+          "sentenceFPR": 0.2713
+        },
+        "ellipse_prof_4.5": {
+          "nSentences": 1052,
+          "sentenceFPR": 0.3783
+        },
+        "ellipse_prof_5.0": {
+          "nSentences": 384,
+          "sentenceFPR": 0.4922
+        }
+      }
+    },
+    "localisation": {
+      "nSentences": 847,
+      "sentenceAuroc": 0.8346,
+      "precision": 0.6865,
+      "recall": 0.6007,
+      "seam": {
+        "documentsWithSeamFound": 63,
+        "totalDocuments": 70,
+        "medianOffsetSentences": 2,
+        "withinTwoSentences": 0.5238
+      },
+      "hewlett": {
+        "auroc": 0.865,
+        "recall": 0.6243
+      },
+      "toefl": {
+        "auroc": 0.7291,
+        "recall": 0.5556
+      }
+    }
+  }
+}

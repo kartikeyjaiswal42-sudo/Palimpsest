@@ -111,6 +111,19 @@ async function launch() {
   check('limitations shown with every result', limits >= 3, `${limits} items`);
   check('ESL false-positive rate disclosed in the UI', /non-native|TOEFL/i.test(limitsText));
 
+  // ---- the privacy claim must match the observer actually serving this page.
+  // The footer read "Nothing you paste leaves this machine" for as long as the default
+  // observer had been Workers AI, contradicting /api/health in the same process. This is
+  // the only claim the tool makes about the user's own text, so it is checked against the
+  // server rather than against the markup.
+  const health = await page.evaluate(async () => (await fetch('/api/health')).json());
+  const privacy = ((await page.textContent('#privacy')) || '').replace(/\s+/g, ' ').trim();
+  const saysLocal = /nothing you paste leaves this machine/i.test(privacy);
+  const saysSent = /sent to|leaves? (this|your) machine/i.test(privacy) && !saysLocal;
+  check('the privacy claim agrees with the observer',
+    health.textLeavesMachine ? saysSent : saysLocal,
+    `textLeavesMachine=${health.textLeavesMachine} · "${privacy.slice(0, 80)}…"`);
+
   await page.screenshot({ path: `${OUT}/caught.png`, fullPage: true });
 
   // ---- the example the detector misses
@@ -122,8 +135,14 @@ async function launch() {
     () => document.getElementById('status').textContent.includes('flagged'),
     null, { timeout: 180000 });
   const share2 = (await page.textContent('#share')).trim();
+  // The bound is 50, not 30. This example is the demo's honest failure: the highlighting
+  // lands on the rewritten paragraph and the DOCUMENT verdict still declines to flag it.
+  // After the modern-generator retrain the share rose 24% -> 34%, which is the detector
+  // getting better at exactly this, and a bound of 30 would have failed for that reason.
+  // What the demo actually claims is that the share stays a minority while the document
+  // verdict stays under threshold -- the next two checks are the load-bearing ones.
   check('the documented failure case is reported honestly as low',
-    parseInt(share2, 10) < 30, `share ${share2}`);
+    parseInt(share2, 10) < 50, `share ${share2}`);
 
   // The interesting half of this example: the SENTENCE layer gets it right even though the
   // DOCUMENT verdict declines to flag. If the highlighting ever stops landing on the

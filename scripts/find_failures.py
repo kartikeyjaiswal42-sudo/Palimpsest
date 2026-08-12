@@ -21,7 +21,11 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from palimpsest.data.fetch import read_jsonl  # noqa: E402
 from palimpsest.detect.classifier import SentenceDetector  # noqa: E402
-from palimpsest.detect.document import DocumentDetector, document_statistics  # noqa: E402
+from palimpsest.detect.document import (  # noqa: E402
+    MAX_SENTENCE_WORDS,
+    DocumentDetector,
+    document_statistics,
+)
 from palimpsest.features.registry import FEATURES_BY_NAME  # noqa: E402
 
 SETS = ("esl", "domain_shift", "unseen_prompting", "adversarial", "localisation")
@@ -65,6 +69,16 @@ def main() -> int:
         for i, r in enumerate(rows):
             by_doc.setdefault(r["doc_id"], []).append(i)
         for doc_id, ii in by_doc.items():
+            # Same reliability rule as the serving path and evaluate.py. Without it this
+            # script reports failures the shipped tool does not make: the three unpunctuated
+            # run-on essays were listed here as confident false positives after they had
+            # already stopped being scored at all.
+            measurable = [i for i in ii
+                          if float(rows[i]["features"].get("n_words") or 1.0)
+                          <= MAX_SENTENCE_WORDS]
+            if not measurable:
+                continue
+            ii = measurable
             w = np.array([rows[i]["features"].get("n_words", 1.0) for i in ii])
             w = np.where(np.isfinite(w), w, 1.0)
             stats = document_statistics(p[ii], w, det.flag_threshold)

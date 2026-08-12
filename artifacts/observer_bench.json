@@ -1,0 +1,127 @@
+{
+ "remote|lrr|gemini_flash_lite": {
+  "auroc": 0.6593333333333333,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|lrr|gemini_flash": {
+  "auroc": 0.6618181818181819,
+  "tpr_at_5fpr": 0.0,
+  "n": 22
+ },
+ "remote|lrr|claude_haiku": {
+  "auroc": 0.858,
+  "tpr_at_5fpr": 0.06666666666666667,
+  "n": 30
+ },
+ "remote|lrr|claude_sonnet": {
+  "auroc": 0.7573333333333333,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|lrr|claude_opus": {
+  "auroc": 0.6426666666666667,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|mean_logprob|gemini_flash_lite": {
+  "auroc": 0.8946666666666667,
+  "tpr_at_5fpr": 0.3,
+  "n": 30
+ },
+ "remote|mean_logprob|gemini_flash": {
+  "auroc": 0.7418181818181818,
+  "tpr_at_5fpr": 0.045454545454545456,
+  "n": 22
+ },
+ "remote|mean_logprob|claude_haiku": {
+  "auroc": 0.9553333333333334,
+  "tpr_at_5fpr": 0.7333333333333333,
+  "n": 30
+ },
+ "remote|mean_logprob|claude_sonnet": {
+  "auroc": 0.7346666666666667,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|mean_logprob|claude_opus": {
+  "auroc": 0.6306666666666667,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|frac_rank_top10|gemini_flash_lite": {
+  "auroc": 0.8426666666666667,
+  "tpr_at_5fpr": 0.06666666666666667,
+  "n": 30
+ },
+ "remote|frac_rank_top10|gemini_flash": {
+  "auroc": 0.6972727272727273,
+  "tpr_at_5fpr": 0.045454545454545456,
+  "n": 22
+ },
+ "remote|frac_rank_top10|claude_haiku": {
+  "auroc": 0.952,
+  "tpr_at_5fpr": 0.8,
+  "n": 30
+ },
+ "remote|frac_rank_top10|claude_sonnet": {
+  "auroc": 0.795,
+  "tpr_at_5fpr": 0.03333333333333333,
+  "n": 30
+ },
+ "remote|frac_rank_top10|claude_opus": {
+  "auroc": 0.6953333333333334,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|mean_log_rank|gemini_flash_lite": {
+  "auroc": 0.8626666666666667,
+  "tpr_at_5fpr": 0.03333333333333333,
+  "n": 30
+ },
+ "remote|mean_log_rank|gemini_flash": {
+  "auroc": 0.7136363636363636,
+  "tpr_at_5fpr": 0.045454545454545456,
+  "n": 22
+ },
+ "remote|mean_log_rank|claude_haiku": {
+  "auroc": 0.9446666666666667,
+  "tpr_at_5fpr": 0.6666666666666666,
+  "n": 30
+ },
+ "remote|mean_log_rank|claude_sonnet": {
+  "auroc": 0.7393333333333333,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|mean_log_rank|claude_opus": {
+  "auroc": 0.6093333333333333,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|logprob_sd|gemini_flash_lite": {
+  "auroc": 0.8406666666666667,
+  "tpr_at_5fpr": 0.03333333333333333,
+  "n": 30
+ },
+ "remote|logprob_sd|gemini_flash": {
+  "auroc": 0.6136363636363636,
+  "tpr_at_5fpr": 0.0,
+  "n": 22
+ },
+ "remote|logprob_sd|claude_haiku": {
+  "auroc": 0.9313333333333333,
+  "tpr_at_5fpr": 0.5333333333333333,
+  "n": 30
+ },
+ "remote|logprob_sd|claude_sonnet": {
+  "auroc": 0.718,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ },
+ "remote|logprob_sd|claude_opus": {
+  "auroc": 0.7593333333333333,
+  "tpr_at_5fpr": 0.0,
+  "n": 30
+ }
+}

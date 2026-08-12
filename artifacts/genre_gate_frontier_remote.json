@@ -1,0 +1,35 @@
+{
+ "feature_names": [
+  "corpus_surprisal_mean",
+  "novel_trigram_rate",
+  "first_person_rate",
+  "specificity_rate"
+ ],
+ "mean": [
+  6.461379026985633,
+  0.8025928621894296,
+  7.465677275029579,
+  6.646170740691987
+ ],
+ "scale": [
+  0.39346210402749177,
+  0.05023226882602251,
+  3.4425491603631997,
+  5.493493929034735
+ ],
+ "coef": [
+  2.7030373678283044,
+  -1.7245510181081691,
+  0.4797848174663016,
+  0.06540686532492629
+ ],
+ "intercept": -2.414871894752494,
+ "threshold": 0.024,
+ "metadata": {
+  "falseRefusalBudget": 0.02,
+  "observedFalseRefusal": 0.0038910505836575876,
+  "nInDomain": 542,
+  "nOutOfDomain": 2977,
+  "observer": "remote"
+ }
+}

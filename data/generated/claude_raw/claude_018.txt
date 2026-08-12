@@ -1,0 +1,18 @@
+My dad still hasn't forgiven me for what happened with the robot, and I think that's what bothers me most. Not the failure itself, but the fact that I did it differently than he would have.
+
+We spent eight months building that robot together. The regional competition was months away when we first sketched the design on his garage workbench, and I can still see him there, older glasses sliding down his nose, pointing at the schematics and saying this will work, this will actually work. He had competed in robotics in college. He had won. So when our school needed someone to lead the build team for the first time, everyone assumed he would do it. Instead, he asked me to lead it, and told me he would just help in his spare time.
+
+It wasn't like that, though. It was never like that. He didn't just help. He was everywhere—recalculating the torque specs, fixing the wiring when my solder joints weren't clean enough, staying up until 2 a.m. to print replacement parts when I made mistakes. I learned all of it from him, which meant I also learned his need for perfection, his inability to accept anything that was "good enough." By month seven, I realized I was rebuilding the robot he would have built, not the one I would have built.
+
+So I made changes. Not big ones, just different ones. I used a simpler grip mechanism that I had designed myself, even though his design was more elegant. I rewrote parts of the code to do things in a different order. They were small choices, but they were mine. He noticed immediately. I remember him holding the revised schematic, reading it twice, and saying nothing. Then: "This won't work as well."
+
+He was right, probably. But I left my design in anyway.
+
+The competition was at a hotel an hour away. My mom packed a cooler of sandwiches like it was the most important thing in the world. My little sister wore our school colors even though she didn't go to our school. My dad sat three rows back, quiet the whole drive over.
+
+The robot made it through the first round fine. The second round it jammed. The third round it jammed worse. By the time we got to the final test, something in the grip mechanism was clearly broken. My mechanism. The one I had insisted on keeping. We had maybe three minutes to fix it, and I just sat there while my dad came up from the audience and without asking, started making adjustments. He did what I knew he wanted to do from the beginning—reverted the grip system back to his original design. It didn't matter. We didn't have time to properly calibrate it. The robot failed on stage in front of judges and other schools and everyone.
+
+In the car ride home, he said if I had listened to him, if I had trusted his experience, we would have placed. He didn't yell or cry or anything dramatic. He just stated it like fact. And the terrible part is that he might be right. I learned something that day, but not the lesson he wanted to teach me. I learned that sometimes you grow up by making the wrong choice, and sometimes the people who love you can't forgive you for it, even when you're just trying to become your own person.
+
+I'm still not sure I was wrong, and I think that's what he can't stand about me.
+

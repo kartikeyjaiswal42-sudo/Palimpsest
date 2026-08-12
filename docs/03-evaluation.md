@@ -20,20 +20,30 @@ from, since they share most of their text with it.
 
 ## In-domain performance
 
-Real human admissions essays (101) against real GPT-3.5 admissions essays (31), plus 69
-mixed documents. 4,895 sentences from 201 essays, 15.5% machine.
+Real human admissions essays (101), real GPT-3.5 admissions essays (31), 135 modern
+Gemini-3 essays and 69 mixed documents. 7,937 sentences from 336 essays, 47.9% machine.
 
 | | |
 |---|---|
-| Sentence AUROC (out-of-fold) | 0.960 |
-| Sentence average precision | 0.810 (baseline 0.155) |
-| Sentence Brier score | 0.054 |
-| Document AUROC (out-of-fold) | 0.959 |
+| Sentence AUROC (out-of-fold) | 0.925 |
+| Sentence average precision | 0.915 (baseline 0.479) |
+| Sentence Brier score | 0.107 |
+| Document AUROC (out-of-fold) | 0.909 |
 
-**The length guard.** Human and machine sentences in the training pool average 18.5 and 17.4
-words; sentence length alone gives AUROC 0.494. The classifier cannot reach the right answer
-by measuring length. `scripts/train.py` prints this check on every run and warns if it drifts
-past 0.15 from chance.
+**These went DOWN when the modern corpus went in** — sentence AUROC was 0.960 and document
+AUROC 0.959 against GPT-3.5 alone. Nothing regressed: the task got harder. Distinguishing
+2022 output from human prose is an easier problem than distinguishing 2026 output from it,
+and a headline that only ever covered the easy half was worth less than a lower number that
+covers both. The numbers that decide whether the tool is usable are in
+[Detection](#detection), and they went from 0% to 71.6%.
+
+**The length guard, and a real cost.** Human and machine sentences in the training pool now
+average 18.5 and 20.6 words, and sentence length alone gives **AUROC 0.598** — against 18.5
+vs 17.4 words and AUROC 0.494 before. Sentence length used to carry no signal at all and now
+carries a little. Some of that is real (modern models do write longer sentences) and some is
+ours: the generation prompt asks for 400–500 words. It is under the 0.15-from-chance limit
+`scripts/train.py` warns at, so no alarm fires, but it is a confound that did not exist
+before and roughly a tenth of the separation could be length rather than authorship.
 
 ### Calibration
 
@@ -41,16 +51,26 @@ In each score band, how often the sentence really was machine-written:
 
 | predicted | n | mean predicted | actual |
 |---|---|---|---|
-| 0.0–0.1 | 3,411 | 0.003 | 0.005 |
-| 0.1–0.2 | 39 | 0.150 | 0.103 |
-| 0.2–0.3 | 32 | 0.250 | 0.250 |
-| 0.5–0.7 | 41 | 0.624 | 0.366 |
-| 0.7–1.0 | 466 | 0.876 | 0.893 |
+| 0.0–0.1 | 2,502 | 0.053 | 0.050 |
+| 0.1–0.2 | 688 | 0.143 | 0.185 |
+| 0.2–0.3 | 372 | 0.246 | 0.290 |
+| 0.3–0.4 | 278 | 0.348 | 0.345 |
+| 0.4–0.5 | 265 | 0.448 | 0.392 |
+| 0.5–0.7 | 538 | 0.607 | 0.556 |
+| 0.7–1.0 | 3,294 | 0.890 | 0.892 |
 
-Good at the ends, unreliable in the middle — the 0.5–0.7 band is over-confident on 41
-sentences. The interface therefore bands scores into five buckets rather than showing a
-continuous gradient: a reader should not be invited to distinguish 0.55 from 0.62 when the
-model demonstrably cannot.
+Bands holding fewer than 20 sentences are omitted; the rest account for all 7,937.
+
+Good at the ends, softer in the middle — the 0.5–0.7 band predicts 0.607 on 538 sentences
+that were machine-written 0.556 of the time. Calibration improved when the modern corpus went
+in, because the training prior stopped being 12% machine. The interface therefore bands scores into five buckets
+rather than showing a continuous gradient: a reader should not be invited to distinguish 0.55
+from 0.62 when the model demonstrably cannot.
+
+This table is written to `artifacts/detector.json` by `scripts/train.py` and checked against
+this prose by `tests/test_documented_numbers.py`. An earlier version of it survived the
+operating-point recalibration unchanged and spent three commits claiming 41 sentences in a
+band that held 186 — which is why it is now machine-checked rather than hand-copied.
 
 ## The operating point is a choice, not a result
 
@@ -63,14 +83,10 @@ English-language learners and out-of-domain student writing — using half that 
 other half reserved for reporting. Calibrating on in-domain essays instead gave 5% there and
 26–52% on ESL writing: **the operating point simply did not transfer.**
 
-| operating point | ESL doc FPR | domain-shift doc FPR | prompt-engineered recall | localisation AUROC |
-|---|---|---|---|---|
-| P ≥ 0.50, calibrated in-domain | 34.8% | 31.8% | 41.9% | 0.883 |
-| **P ≥ 0.974, calibrated on at-risk writing (shipped)** | **7.3%** | **0.0%** | **6.5%** | **0.883** |
-
-We ship the second row. It costs three quarters of the recall on evasive text. That is the
-trade we chose and we would defend it: a tool that is wrong about a student one time in three
-has no business existing, while a tool that misses evasive text is merely limited.
+The shipped point is **P ≥ 0.807**, chosen against a 5% false-positive budget on at-risk
+human writing and landing at 3.0% on the calibration half. It costs recall on evasive text
+and we would defend that: a tool that is wrong about a student one time in three has no
+business existing, while a tool that misses evasive text is merely limited.
 
 ## Held-out results at the shipped operating point
 
@@ -78,39 +94,74 @@ has no business existing, while a tool that misses evasive text is merely limite
 
 | set | what it is | document recall |
 |---|---|---|
-| `unseen_prompting` | GPT-3.5 prompted to evade detection (31 essays) | **6.5%** |
+| `modern_holdout` | unseen essays, generator IS in training (115 docs) | **94.8%** |
+| `modern_control` | same generator, **no subject steering** (45 docs) | **95.6%** |
+| `modern_unseen` | a checkpoint withheld from training entirely (250 docs) | **80.0%** |
+| `modern_unseen_family` | a different model family, withheld entirely (22 docs) | **45.5%** |
+| `unseen_prompting` | GPT-3.5 prompted to evade detection (31 essays) | **38.7%** |
 | `adversarial` | prose composed by hand to imitate a model (21 docs) | **0.0%** |
 
-Both are honest failures and both are discussed in [04-failures.md](04-failures.md).
+**Read the first four rows as one result, not four.** 94.8 → 95.6 → 80.0 → 45.5 is what
+happens as the generator moves away from the training pool, and it is the honest answer to
+"will this catch next year's model": partly, and less than the headline suggests.
+
+`modern_control` is the control for a confound the corpus creates. Every modern essay answers
+one of 40 subjects chosen in `scripts/generate_modern.py`, while the human essays are about
+whatever their authors chose, so "machine" and "those topics" are correlated throughout the
+new data. The control holds the generator fixed and removes only the steering: **95.6% against
+94.8%** — statistically indistinguishable, so the detector is responding to the prose and not to beekeeping. Without that row
+the whole modern result would be uninterpretable.
+
+`modern_unseen_family` is 22 documents. The 95% interval on 45.5% is roughly ±20 points, so
+read it as "much worse, and we cannot say how much more precisely" — the quota-limited
+checkpoints could not produce more (see [02-dataset.md](02-dataset.md)).
+
+`adversarial` remains a complete failure and is discussed in [04-failures.md](04-failures.md).
 
 ### False positives on human writing
 
 | set | documents | sentence FPR | document FPR |
 |---|---|---|---|
-| `domain_shift` (ASAP 8th-grade essays) | 44 | 8.3% | **0.0%** |
-| `esl` overall | 395 | 11.4% | **7.3%** |
-| ├─ ELLIPSE (all ELL, graded proficiency) | — | 6.8% | 2.3% |
-| ├─ PERSUADE (matched ELL flag) | — | 14.3% | 8.0% |
-| └─ Liang TOEFL (short, non-native) | — | 23.8% | **24.4%** |
+| `domain_shift` (ASAP 8th-grade essays) | 44 | 15.4% | **0.0%** |
+| `esl` overall | 395 | 17.4% | **5.8%** |
+| ├─ ELLIPSE (all ELL, graded proficiency) | — | 12.2% | 4.6% |
+| ├─ PERSUADE (matched ELL flag) | — | 20.7% | 4.0% |
+| └─ Liang TOEFL (short, non-native) | — | 31.4% | **17.8%** |
+
+**Document false positives fell and sentence false positives rose, and both matter.** The
+document rate is what decides whether the tool accuses anybody, and it improved everywhere
+that counts — ESL overall 7.3% to 5.8% and TOEFL 24.4% to 17.8%. The sentence rate is what a user
+actually *sees*, because the interface highlights sentences, and it went from 11.4% to 17.4%
+on ESL writing: roughly one sentence in six of a real student's essay now gets shaded. The
+sentence threshold dropped from 0.613 to 0.339 to buy the recall above, and this is the bill.
+Nobody is accused more often; everybody sees more yellow.
 
 ### Localisation inside mixed documents
 
 70 held-out documents that are part human and part machine, with a known seam.
 
-| | |
-|---|---|
-| Sentence AUROC within mixed documents | **0.883** |
-| Precision / recall at threshold | 0.805 / 0.573 |
-| Seam located at all | 57 of 70 documents |
-| Median seam offset | **1 sentence** |
-| Seam within 2 sentences | **70%** |
+| | | was |
+|---|---|---|
+| Sentence AUROC within mixed documents | **0.808** | 0.883 |
+| Precision / recall at threshold | 0.647 / 0.649 | 0.805 / 0.573 |
+| Seam located at all | 66 of 70 documents | 57 of 70 |
+| Median seam offset | **3 sentences** | 1 |
+| Seam within 2 sentences | **39%** | 70% |
+
+**This is the clearest regression from the retrain and it is not a rounding difference.**
+Locating the seam within two sentences fell from 70% to 39%, and the median offset tripled.
+The seam is found in *more* documents than before (66 of 70 against 57) but placed far less
+precisely. The likely cause is the in-document context features: they measure each sentence
+against the rest of its own essay, and the mixed documents are built from GPT-3.5 rewrites,
+so a fit now dominated by modern prose reads those contrasts differently. It was not
+diagnosed further, and localisation is now the weakest part of the tool.
 
 By rewrite direction — the two are genuinely different problems:
 
 | pair | rewrite | AUROC | recall |
 |---|---|---|---|
-| ASAP | model *simplified* the second half | 0.912 | 0.635 |
-| TOEFL | model *polished* the second half | 0.845 | 0.455 |
+| ASAP | model *simplified* the second half | 0.861 | 0.751 |
+| TOEFL | model *polished* the second half | 0.769 | 0.455 |
 
 **This capability had to be trained for.** With no mixed documents in the training pool, the
 in-document context features had nothing to detect — every training document was entirely one
@@ -123,22 +174,28 @@ class — so the fit learned to ignore them:
 | Seam within 2 sentences | 43% | **70%** |
 | Median offset | 3 sentences | **1** |
 
+(That comparison was measured before the modern corpus was added and has not been re-run.
+It is kept because it justifies why mixed documents are in the training pool at all, but the
+right-hand column is no longer the shipped detector's localisation performance — the table
+above it is.)
+
 ## The controlled ablation
 
 The strongest result in the project, because it holds author and content fixed and varies
 only authorship of the surface.
 
-| | flagged |
-|---|---|
-| 88 original ASAP student essays | **0.0%** |
-| the same 88, rewritten by a model | **65.9%** |
-| 91 original TOEFL essays | 18.7% |
-| the same 91, polished by GPT-4 | 24.2% |
+| | flagged | was |
+|---|---|---|
+| 88 original ASAP student essays | **0.0%** | 0.0% |
+| the same 88, rewritten by a model | **48.9%** | 65.9% |
+| 91 original TOEFL essays | 15.4% | 18.7% |
+| the same 91, polished by GPT-4 | 22.0% | 24.2% |
 
-The ASAP pair is clean evidence that we respond to machine rewriting rather than to topic,
-author or corpus. The TOEFL pair moves much less, and the reason is visible in the baseline:
-those originals were already being flagged at 18.7%, so there is less headroom. The same
-asymmetry appears in Liang et al.'s published measurements.
+The ASAP pair is still clean evidence that we respond to machine rewriting rather than to
+topic, author or corpus — 0% against 48.9% on identical content by identical authors. But the
+gap narrowed: catching 48.9% of the rewrites where the old fit caught 65.9%. These rewrites
+are GPT-3.5-era, and the retrained detector spends its capacity on modern prose. Both TOEFL
+rows fell together, which is the false-positive improvement showing up on the same set.
 
 ## External comparison
 
@@ -148,15 +205,26 @@ Liang et al. (2023) scored seven commercial detectors on `TOEFL_real_91`.
 |---|---|
 | Seven commercial detectors, average | 61.22% |
 | Unanimously misclassified by all seven | 19.78% |
-| **Palimpsest** | **24.4%** |
+| **Palimpsest** | **17.8%** |
 
 Substantially better, and still far too high to use against a person.
 
 ## What is not measured
 
-- **One generator.** All real machine training text is GPT-3.5. Performance against GPT-4,
-  Claude, Llama or Gemini is **unmeasured**, and the prompt-engineering result suggests it
-  would be considerably worse. This is the single biggest gap.
+- **Two vendors, and only one of them modern.** Training machine text is GPT-3.5 (2022) and
+  Gemini 3 (2026). **OpenAI's current models, Claude, Llama, Mistral, DeepSeek and Qwen are
+  entirely unmeasured** — as unmeasured as Gemini was before this, which is exactly the gap
+  that produced a 0% miss on the first modern essay anyone pasted in. The
+  `modern_unseen_family` row (45.5%) is the best available estimate of what happens on an
+  unseen generator, and it is a within-vendor estimate, so it is probably optimistic.
+- **The intended generation gradient could not be built.** Every Gemini 2.x checkpoint and
+  every `pro` model returned 429 on the free tier, so there is no 2024-vs-2025-vs-2026 trend,
+  only Gemini 3 flash and flash-lite.
+- **Topic is confounded with authorship in the modern corpus.** All 522 modern essays answer
+  one of 40 subjects we chose. `modern_control` (91.1%) is the evidence that this is not what
+  the detector responds to, but it is one control on 45 documents from one checkpoint.
 - **One language.** English only.
 - **Essays, not other forms.** Everything was measured on 100–700-word student prose.
-- The middle probability band (0.5–0.7) is poorly calibrated on 41 sentences.
+- **Localisation regressed** and was not diagnosed: seam-within-2-sentences 70% → 39%.
+- **Sentence-level false positives rose** to 17.4% on ESL writing even though document-level
+  ones fell. The interface highlights sentences, so this is the number a real student sees.

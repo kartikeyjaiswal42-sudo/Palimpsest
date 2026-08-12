@@ -31,7 +31,26 @@
   </section>
 
   <section class="panel hidden" id="verdict-panel">
-    <div class="verdict-grid">
+    <!--
+      The band comes FIRST and the two percentages follow it. Ordering is the fix, not
+      decoration: the two live failures that prompted this were an AI essay reported as
+      "35% machine" and another as "0%", both read by a human as acquittals. A number
+      without a calibrated band invites that reading, so the band leads and the numbers
+      are supporting detail.
+    -->
+    <div class="band" id="band">
+      <div class="band-label" id="band-label">—</div>
+      <div class="band-detail" id="band-detail"></div>
+    </div>
+    <!--
+      The percentages are EVIDENCE, not the verdict, and when the tool abstains they are the
+      most misreadable thing on the page: "19% machine" is read as "81% human", i.e. as an
+      acquittal, which is exactly the mistake the three-band design exists to prevent. So the
+      grid carries the band on a data attribute, the stylesheet mutes it whenever the band is
+      not a finding, and #verdict-caveat says in words what a low number does and does not
+      mean. See renderVerdict() in app.js.
+    -->
+    <div class="verdict-grid" id="verdict-grid">
       <div class="metric">
         <div class="metric-label">How much reads as machine-written</div>
         <div class="metric-value" id="share">—</div>
@@ -43,6 +62,7 @@
         <div class="metric-sub" id="doc-sub"></div>
       </div>
     </div>
+    <p class="verdict-caveat" id="verdict-caveat" hidden></p>
     <p class="two-numbers">
       These are two different questions, kept apart on purpose. An essay with one polished
       paragraph has a <em>low share</em> and a <em>high confidence</em>. A single percentage
@@ -92,10 +112,21 @@
 
 </main>
 
+<!--
+  The privacy sentence is written for the REMOTE observer, which is the default, and is
+  narrowed to the local claim by app.js only once /api/health confirms the observer really
+  is in-process. That direction is deliberate: this page is served for both configurations,
+  so whichever claim is hardcoded is false in the other one -- and if the health probe fails
+  the page must overstate what leaves the machine, never understate it. It said "Nothing you
+  paste leaves this machine" while the default observer was already Workers AI.
+-->
 <footer class="wrap footnote">
-  <p>
+  <p id="privacy">
     The language model is read for token probabilities only — it is never asked for a verdict.
-    Nothing you paste leaves this machine.
+    <strong>Your essay is sent to Cloudflare Workers AI to be scored</strong>, because the
+    observer is a 30-billion-parameter model that is not run in this process. It is not
+    stored or logged by this application, but it does leave this machine. To score entirely
+    locally, restart with <code>PALIMPSEST_OBSERVER=gpt2</code>.
   </p>
 </footer>
 

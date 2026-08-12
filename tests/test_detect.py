@@ -160,3 +160,58 @@ def test_aggregate_handles_empty_input():
 def test_unfitted_document_model_falls_back_to_peak():
     stats = document_statistics(np.array([0.1, 0.8]), np.array([10.0, 10.0]), 0.5)
     assert DocumentDetector().predict(stats) == pytest.approx(0.8)
+
+
+# ---------------------------------------------------------------------------------------
+# Unmeasurable spans must not decide a verdict.
+#
+# These exist because the tool accused three real students. ELLIPSE and PERSUADE contain
+# essays written with no sentence-ending punctuation at all, so the segmenter returns the
+# whole essay as one 312-, 313- or 466-word "sentence". Every per-sentence feature is then
+# computed on a document: `n_words` landed 50 standard deviations above the training mean and
+# all three were flagged as machine at P > 0.90. `reliable` was already being computed and
+# reported at the time -- and then ignored by the aggregator, which made it decoration.
+
+
+def test_an_unmeasurable_span_is_excluded_from_the_verdict():
+    """A long run-on span must not drag the document verdict with it."""
+    ordinary = [
+        SentenceVerdict(i, i * 10, i * 10 + 9, "x", 0.02, 20, 0.02, True) for i in range(5)
+    ]
+    runon = SentenceVerdict(5, 60, 600, "x " * 466, 0.99, 466, 0.99, False)
+
+    without = aggregate(ordinary, threshold=0.5)
+    with_runon = aggregate([*ordinary, runon], threshold=0.5)
+
+    assert with_runon.machine_share == pytest.approx(without.machine_share), (
+        "an unreliable span changed machine_share; it must be excluded from both the "
+        "numerator and the denominator"
+    )
+    assert with_runon.n_sentences == 6, "the span should still be counted and shown"
+    assert with_runon.n_reliable_sentences == 5
+
+
+def test_a_document_with_nothing_measurable_is_not_accused():
+    """The three ESL run-on essays: one span, unreliable, nothing else to go on."""
+    only_runon = [SentenceVerdict(0, 0, 600, "x " * 466, 0.99, 466, 0.99, False)]
+    v = aggregate(only_runon, threshold=0.5)
+    assert v.machine_share == 0.0
+    assert v.any_machine_probability == 0.0, (
+        "a document whose only span is unmeasurable was scored anyway -- this is the exact "
+        "path that flagged three second-language students at P > 0.90"
+    )
+    assert v.n_reliable_sentences == 0
+
+
+def test_standardised_features_are_clipped():
+    """No single feature may win by arithmetic on an out-of-distribution value."""
+    from palimpsest.detect.classifier import Z_CLIP
+
+    feats, labels, groups = toy()
+    det = SentenceDetector(feature_names=tuple(FEATURE_NAMES)).fit(feats, labels, groups)
+    absurd = {name: 1e9 for name in FEATURE_NAMES}
+    z = det.to_matrix([absurd])[0]
+    assert np.all(np.abs(z) <= Z_CLIP + 1e-9), (
+        f"a feature standardised past +/-{Z_CLIP}; a 466-word 'sentence' reached z=+50 and "
+        "its 0.148 weight became the largest term in the model"
+    )

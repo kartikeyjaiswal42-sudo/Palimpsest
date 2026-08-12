@@ -55,7 +55,7 @@ open http://127.0.0.1:8123
 Paste an essay, or press **Example it catches** / **Example it lets through** — the demo
 deliberately ships a failure alongside the success. The second one is the more instructive:
 the highlighting lands on the rewritten paragraph exactly, and the tool *still declines to
-flag the essay*, because 74% document confidence is under the 97.4% threshold we ship. That
+flag the essay*, because 38% document confidence is under the 80.7% threshold we ship. That
 is the operating point costing us a catch, visible on screen rather than buried in a table.
 
 Click any sentence to see the evidence behind its score. Analysis takes about 2 seconds for a
@@ -71,7 +71,7 @@ python scripts/train.py               # fit + report cross-validated performance
 python scripts/evaluate.py            # every held-out set
 python scripts/find_failures.py       # the essays it gets confidently wrong
 python scripts/ablate_length.py       # re-run the document-length ablation
-pytest                                # 118 tests, no network, no model download
+pytest                                # 127 tests, no network, no model download
 node scripts/verify_ui.cjs            # 23 end-to-end browser checks (needs the server up)
 ```
 
@@ -82,19 +82,37 @@ trade-off curve, is in [docs/03-evaluation.md](docs/03-evaluation.md).
 
 | | |
 |---|---|
-| Sentence AUROC, out-of-fold | **0.960** |
-| Document AUROC, out-of-fold | **0.959** |
-| Locating machine text inside a mixed essay | **AUROC 0.883**, seam found within 2 sentences in **70%** of documents |
+| Sentence AUROC, out-of-fold | **0.925** |
+| Document AUROC, out-of-fold | **0.909** |
+| Locating machine text inside a mixed essay | **AUROC 0.808**, seam found within 2 sentences in **39%** of documents |
 | False positives on out-of-domain human essays | **0.0%** of documents |
-| False positives on essays by English-language learners | **7.3%** of documents |
+| False positives on essays by English-language learners | **5.8%** of documents |
+
+### The number that decides whether this is useful
+
+A detector is only worth anything against the model a student would actually use. Recall on
+modern (2026) essays, by how far the generator sits from the training pool:
+
+| the generator is... | caught |
+|---|---|
+| in the training pool, these essays are not (n=115) | **94.8%** |
+| in the training pool, and **no topic steering** (n=45) | **95.6%** |
+| a checkpoint withheld from training entirely (n=250) | **80.0%** |
+| a different model family, withheld entirely (n=22) | **45.5%** |
+
+**That gradient is the finding.** Skill falls from 95% to 46% as the generator moves away
+from what was trained on, which puts a number on how much of any detector's score is
+recognising *one generator* rather than recognising machine prose. The second row is the
+control: same generator, but the essays answer bare prompts instead of the 40 subjects used
+to build the corpus, so the gain is not topic memorisation.
 
 And the part that a leaderboard would hide:
 
 | | |
 |---|---|
-| GPT-3.5 **prompted to evade detection** | only **6.5%** of essays caught |
+| GPT-3.5 **prompted to evade detection** | only **38.7%** of essays caught |
 | Prose a careful writer composed to imitate a model | **0 of 11** caught |
-| TOEFL essays by non-native writers, wrongly flagged | **24.4%** |
+| TOEFL essays by non-native writers, wrongly flagged | **17.8%** |
 
 The operating point is deliberately tuned so the tool almost never accuses a real student,
 and it pays for that in recall. That is a choice, not a result, and
@@ -102,7 +120,7 @@ and it pays for that in recall. That is a choice, not a result, and
 
 **For context on that last number:** Liang et al. (2023) measured a **61.22%** average false
 positive rate across seven commercial detectors on the same 91 TOEFL essays. Palimpsest
-scores 24.4% on that set. Better, and still far too high to use as evidence against anyone.
+scores 17.8% on that set. Better, and still far too high to use as evidence against anyone.
 
 ## The cleanest evidence that it measures what it claims
 
@@ -112,15 +130,29 @@ rewrote. Same author, same content, same subject — only the surface differs.
 | | flagged as machine |
 |---|---|
 | The 88 original student essays | **0.0%** |
-| The same 88 essays, rewritten by a model | **65.9%** |
+| The same 88 essays, rewritten by a model | **48.9%** |
 
 That is a controlled comparison, not a correlation, and it is the strongest thing in the
 evaluation.
 
-## Three things this project got wrong first
+## Four things this project got wrong first
 
 The interesting work was mostly in catching our own mistakes. Full write-ups in
 [docs/04-failures.md](docs/04-failures.md).
+
+0. **It scored 0.96 and then missed a real essay completely.** Somebody pasted in an essay
+   written by Gemini. Eighteen sentences, **none flagged**, machine share 0.0%, median
+   sentence probability **0.019**. Not a near miss and not a threshold that wanted nudging:
+   every real machine essay in the training pool was GPT-3.5 output from 2022, so the
+   features encoded a *2022* model's habits. Two of the learned priors were pointing the
+   wrong way for modern prose — `specificity_rate` carried weight −0.50 toward *human*
+   ("concrete detail means a person wrote it"), and the opening sentence scored −0.86 on
+   *distance from applicant prose*, i.e. it read as more typical of admissions essays than
+   admissions essays do. Modern models write specifically and idiomatically. Fixed by
+   building a 567-essay modern corpus and refitting; that same essay now shows **72% machine
+   share with 13 of 18 sentences flagged**. The generalisation gradient it left behind —
+   95% on a trained-on generator, 46% on an unseen family — is in the table above, and it
+   is the most useful thing the project has measured.
 
 1. **We wrote the machine essays ourselves, and it destroyed the detector.** Eleven essays
    composed to read like LLM output. The strongest feature that emerged was
@@ -141,7 +173,7 @@ The interesting work was mostly in catching our own mistakes. Full write-ups in
    be shorter. We removed it, measured a large improvement on short TOEFL essays, and wrote
    that down. Later pipeline changes invalidated the measurement and the write-up kept
    asserting it. Re-running the ablation as a script showed the improvement is **within
-   noise** (p = 0.29) and that removal *costs* in-domain AUROC. We still removed it, on the
+   noise** (p = 0.062) and that removal *costs* in-domain AUROC. We still removed it, on the
    principle that a corpus artifact should not be the model's strongest input — but the
    [docs now say the numbers disagree with us](docs/04-failures.md).
 
@@ -157,10 +189,16 @@ The detector is not detecting non-native writing. It is detecting **taught struc
 non-native writers use more because they were taught it more recently and more explicitly.
 
 The measurement that supports this: on ELLIPSE, where every writer is an English-language
-learner and each has a graded proficiency score, the false-positive rate **rises with
-proficiency** rather than falling. And on PERSUADE, where the ELL flag is the only difference
-between otherwise matched essays, the ELL group is flagged *less* often (0.0%) than the
-native group (8.9%). Fluency is what we measure, not nativeness.
+learner and each has a graded proficiency score, the false-positive rate is **highest at the
+top** — 11.6% at a holistic score of 3.0 and **53.8%** at 5.0. And on PERSUADE, where the ELL
+flag is the only difference between otherwise matched essays, the two groups are flagged at
+**5.6%** and **3.8%** — the ELL group slightly *more*, on 282 sentences against 3,170, which
+is well inside noise. Fluency is what we measure, not nativeness.
+
+One honest caveat, because it weakened after the retrain: this gradient used to be monotone
+and is now U-shaped, with the least proficient band elevated too. That bottom end is a
+segmentation artifact of ours rather than a finding about writing —
+[docs/05-esl.md](docs/05-esl.md) separates the two.
 
 Full analysis: [docs/05-esl.md](docs/05-esl.md).
 
@@ -180,7 +218,7 @@ src/palimpsest/
 web/                     the interface (no build step)
 scripts/                 fetch → fit → features → train → evaluate → failures
 docs/                    approach, dataset, evaluation, failures, ESL, decisions, AI use
-tests/                   118 tests: no model is ever asked for a verdict, and
+tests/                   127 tests: no model is ever asked for a verdict, and
                          the documented numbers must match the artifacts
 ```
 
@@ -198,10 +236,11 @@ tests/                   118 tests: no model is ever asked for a verdict, and
 
 ## What this tool must not be used for
 
-It is an instrument for looking at text, not evidence about a person. A 22% false-positive
-rate on non-native writers means that using this to accuse a student of cheating would be
-wrong roughly one time in five for exactly the students least able to contest it. The
-interface says so on every result, and the API returns the error rates in the response body.
+It is an instrument for looking at text, not evidence about a person. An **17.8%**
+false-positive rate on the TOEFL essays means that using this to accuse a student of cheating
+would be wrong roughly one time in six for exactly the students least able to contest it.
+The interface says so on every result, and the API returns the error rates in the response
+body.
 
 ## Licence
 

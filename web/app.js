@@ -13,10 +13,15 @@ const els = {
   sampleMissed: $("load-missed"),
   status: $("status"),
   verdict: $("verdict-panel"),
+  band: $("band"),
+  bandLabel: $("band-label"),
+  bandDetail: $("band-detail"),
   share: $("share"),
   shareInterval: $("share-interval"),
   anyp: $("anyp"),
   docSub: $("doc-sub"),
+  verdictGrid: $("verdict-grid"),
+  verdictCaveat: $("verdict-caveat"),
   textPanel: $("text-panel"),
   rendered: $("rendered"),
   evidence: $("evidence-panel"),
@@ -27,7 +32,31 @@ const els = {
   tokenStrip: $("token-strip"),
   limits: $("limits-panel"),
   limitations: $("limitations"),
+  privacy: $("privacy"),
 };
+
+// The footer claims something about the user's text, so it is answered by the server that
+// handles the text rather than by whatever the page was built with. `textLeavesMachine`
+// tracks the observer, and only a definite `false` narrows the claim -- a failed probe
+// leaves the stronger warning standing, because the cost of the two errors is not
+// symmetric: overstating what leaves the machine misleads nobody into pasting an essay.
+async function statePrivacyHonestly() {
+  if (!els.privacy) return;
+  try {
+    const res = await fetch("/api/health");
+    if (!res.ok) return;
+    const health = await res.json();
+    if (health.textLeavesMachine === false) {
+      els.privacy.textContent =
+        "The language model is read for token probabilities only — it is never asked for " +
+        `a verdict. The observer (${health.observer}) runs in this process, so nothing you ` +
+        "paste leaves this machine.";
+    }
+  } catch {
+    /* keep the stronger claim */
+  }
+}
+statePrivacyHonestly();
 
 let current = null;
 
@@ -97,6 +126,13 @@ function renderText(data) {
 
 function renderVerdict(data) {
   const v = data.verdict;
+
+  // The calibrated band, before any percentage. `band` is one of likely_machine,
+  // insufficient_evidence, no_evidence; the class drives the colour so an abstention can
+  // never be styled like a finding.
+  els.band.className = `band band-${v.band || "insufficient_evidence"}`;
+  els.bandLabel.textContent = v.bandLabel || "Insufficient evidence";
+  els.bandDetail.textContent = v.bandDetail || "";
   els.share.textContent = `${(v.machineShare * 100).toFixed(0)}%`;
   els.shareInterval.textContent =
     `90% interval ${(v.machineShareLow * 100).toFixed(0)}–${(v.machineShareHigh * 100).toFixed(0)}%` +
@@ -104,9 +140,31 @@ function renderVerdict(data) {
   els.anyp.textContent = `${(v.anyMachineProbability * 100).toFixed(0)}%`;
 
   const unreliable = v.nSentences - v.nReliableSentences;
-  els.docSub.textContent = unreliable > 0
+  const flagAt = typeof data.documentThreshold === "number"
+    ? ` · flags at ${(data.documentThreshold * 100).toFixed(0)}%` : "";
+  els.docSub.textContent = (unreliable > 0
     ? `${unreliable} sentence${unreliable === 1 ? "" : "s"} too short to measure`
-    : `all sentences long enough to measure`;
+    : `all sentences long enough to measure`) + flagAt;
+
+  // A percentage is a quantity; a verdict is a decision. They come apart precisely when the
+  // tool abstains, and the failure is asymmetric: nobody reads "91% machine, insufficient
+  // evidence" as a conviction, but everybody reads "19% machine" as an acquittal. Both live
+  // failures that motivated the three-band design were of that second kind -- a Gemini essay
+  // at 35% and an Opus statement of purpose at 0%, both read as clearing the writer.
+  const band = v.band || "insufficient_evidence";
+  const decided = band === "likely_machine" || band === "no_evidence";
+  if (els.verdictGrid) els.verdictGrid.dataset.band = band;
+  if (els.verdictCaveat) {
+    els.verdictCaveat.hidden = decided;
+    els.verdictCaveat.textContent = decided ? "" : band === "out_of_scope"
+      ? "These numbers are evidence, not a verdict. This does not read as an admissions " +
+        "essay, which is the only writing this tool was calibrated on, so no verdict is " +
+        "offered at any percentage — high or low."
+      : "These numbers are evidence, not a verdict. This document sits between the two " +
+        "calibrated thresholds, so the tool declines to answer. A low percentage here is " +
+        "NOT a finding that a person wrote it — capable models routinely land in this " +
+        "range, and so does honest human writing.";
+  }
 }
 
 function renderTokens(sentence) {

@@ -1,0 +1,12 @@
+{
+ "tHuman": 0.3776,
+ "tMachine": 0.9329,
+ "fprBudget": 0.05,
+ "missBudget": 0.1,
+ "observedFpr": 0.040106951871657755,
+ "observedMiss": 0.04672897196261682,
+ "abstainHuman": 0.3836898395721925,
+ "abstainMachine": 0.7009345794392523,
+ "nHuman": 1496,
+ "nMachine": 107
+}

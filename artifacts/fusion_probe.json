@@ -1,0 +1,37 @@
+{
+ "gemini_flash_lite": {
+  "auroc": 0.7493333333333333,
+  "tpr_at_5fpr": 0.0,
+  "null_p95": 0.6307333333333334,
+  "p_value": 0.0005,
+  "beats_chance": true
+ },
+ "gemini_flash": {
+  "auroc": 0.6036363636363636,
+  "tpr_at_5fpr": 0.0,
+  "null_p95": 0.6419090909090909,
+  "p_value": 0.124,
+  "beats_chance": false
+ },
+ "claude_haiku": {
+  "auroc": 0.9493333333333334,
+  "tpr_at_5fpr": 0.8,
+  "null_p95": 0.6280666666666667,
+  "p_value": 0.0,
+  "beats_chance": true
+ },
+ "claude_sonnet": {
+  "auroc": 0.616,
+  "tpr_at_5fpr": 0.0,
+  "null_p95": 0.628,
+  "p_value": 0.067,
+  "beats_chance": false
+ },
+ "claude_opus": {
+  "auroc": 0.6373333333333333,
+  "tpr_at_5fpr": 0.0,
+  "null_p95": 0.632,
+  "p_value": 0.044,
+  "beats_chance": true
+ }
+}

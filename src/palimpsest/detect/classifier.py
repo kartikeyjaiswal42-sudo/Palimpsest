@@ -90,6 +90,26 @@ class Prediction:
         return float(sum(c.contribution for c in self.contributions if id(c) not in shown))
 
 
+#: Standardised feature values are clipped to +/- this many standard deviations.
+#:
+#: This is not a tuning knob, it is a guard against a specific harm that was observed. Three
+#: ELLIPSE and PERSUADE essays -- real students, writing in a second language -- contain no
+#: sentence-ending punctuation at all, so the segmenter returns the whole essay as ONE
+#: "sentence" of 312, 313 and 466 words. Against a training mean of 19.5 words that is a
+#: z-score of +33 to +50.
+#:
+#: `n_words` carries a small weight (+0.148). Multiplied by z=+50 it becomes a +7.48 term
+#: that dominates every other feature combined, and all three essays were flagged as machine
+#: at P=0.977. They are not machine-written; they are the least fluent writing in the corpus,
+#: by exactly the students least able to contest an accusation.
+#:
+#: Clipping at 5 keeps every ordinary sentence untouched -- a 63-word sentence is still at
+#: the ceiling -- while denying any single feature the ability to win by arithmetic on an
+#: out-of-distribution input. The alternative, dropping the feature, would lose real signal
+#: for a problem that is about extreme values rather than about the feature.
+Z_CLIP = 5.0
+
+
 @dataclass
 class SentenceDetector:
     """Standardise -> logistic regression -> probability calibration."""
@@ -195,7 +215,7 @@ class SentenceDetector:
         if self.mean is None or self.scale is None:
             raise RuntimeError("detector is not fitted")
         filled = np.where(np.isfinite(raw), raw, self.mean)
-        return (filled - self.mean) / self.scale
+        return np.clip((filled - self.mean) / self.scale, -Z_CLIP, Z_CLIP)
 
     def predict(self, features: dict[str, float]) -> Prediction:
         """Score one sentence and explain the score."""

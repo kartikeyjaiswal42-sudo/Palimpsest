@@ -1,137 +1,230 @@
 {
-  "flagThreshold": 0.6133,
+  "flagThreshold": 0.3392,
   "sets": {
     "unseen_prompting": {
       "nSentences": 356,
       "nDocuments": 31,
-      "sentenceRecall": 0.1096,
-      "documentRecall": 0.0645,
-      "medianShare": 0.0406
+      "sentenceRecall": 0.559,
+      "documentRecall": 0.3871,
+      "medianShare": 0.5983
     },
     "adversarial": {
       "nSentences": 780,
       "nDocuments": 21,
-      "sentenceRecall": 0.0238,
+      "sentenceRecall": 0.2139,
       "documentRecall": 0.0,
-      "medianShare": 0.0,
+      "medianShare": 0.1857,
       "byStyle": {
         "evasive": {
           "n": 180,
-          "flagRate": 0.0222,
-          "medianP": 0.0062
+          "flagRate": 0.0556,
+          "medianP": 0.0422
         },
         "persona": {
           "n": 127,
-          "flagRate": 0.0079,
-          "medianP": 0.0069
+          "flagRate": 0.0472,
+          "medianP": 0.0415
         },
         "plain": {
           "n": 158,
-          "flagRate": 0.0443,
-          "medianP": 0.0241
+          "flagRate": 0.4494,
+          "medianP": 0.2648
         },
         "polish": {
           "n": 40,
-          "flagRate": 0.0,
-          "medianP": 0.0092
+          "flagRate": 0.525,
+          "medianP": 0.5174
+        }
+      }
+    },
+    "modern_holdout": {
+      "nSentences": 2592,
+      "nDocuments": 115,
+      "sentenceRecall": 0.9282,
+      "documentRecall": 0.9478,
+      "medianShare": 0.97
+    },
+    "modern_unseen": {
+      "nSentences": 5249,
+      "nDocuments": 250,
+      "sentenceRecall": 0.8306,
+      "documentRecall": 0.8,
+      "medianShare": 0.8811
+    },
+    "modern_unseen_family": {
+      "nSentences": 529,
+      "nDocuments": 22,
+      "sentenceRecall": 0.6654,
+      "documentRecall": 0.4545,
+      "medianShare": 0.7091
+    },
+    "modern_control": {
+      "nSentences": 997,
+      "nDocuments": 45,
+      "sentenceRecall": 0.9097,
+      "documentRecall": 0.9556,
+      "medianShare": 0.9429
+    },
+    "modern_claude": {
+      "nSentences": 5541,
+      "nDocuments": 160,
+      "sentenceRecall": 0.0657,
+      "documentRecall": 0.0,
+      "medianShare": 0.0098,
+      "byModel": {
+        "fable": {
+          "nSentences": 723,
+          "nDocuments": 30,
+          "sentenceRecall": 0.0456,
+          "medianP": 0.0405
+        },
+        "haiku": {
+          "nSentences": 2079,
+          "nDocuments": 42,
+          "sentenceRecall": 0.1053,
+          "medianP": 0.0531
+        },
+        "opus": {
+          "nSentences": 1795,
+          "nDocuments": 46,
+          "sentenceRecall": 0.0273,
+          "medianP": 0.0387
+        },
+        "sonnet": {
+          "nSentences": 944,
+          "nDocuments": 42,
+          "sentenceRecall": 0.0667,
+          "medianP": 0.0429
+        }
+      },
+      "byStyle": {
+        "constrained": {
+          "nSentences": 533,
+          "nDocuments": 16,
+          "sentenceRecall": 0.0976,
+          "medianP": 0.0525
+        },
+        "evasive": {
+          "nSentences": 452,
+          "nDocuments": 13,
+          "sentenceRecall": 0.031,
+          "medianP": 0.0376
+        },
+        "notes": {
+          "nSentences": 440,
+          "nDocuments": 13,
+          "sentenceRecall": 0.0182,
+          "medianP": 0.0387
+        },
+        "persona": {
+          "nSentences": 1053,
+          "nDocuments": 31,
+          "sentenceRecall": 0.0684,
+          "medianP": 0.0424
+        },
+        "plain": {
+          "nSentences": 3063,
+          "nDocuments": 87,
+          "sentenceRecall": 0.0712,
+          "medianP": 0.0448
         }
       }
     },
     "domain_shift": {
       "nSentences": 1011,
       "nDocuments": 44,
-      "sentenceFPR": 0.0831,
+      "sentenceFPR": 0.1543,
       "documentFPR": 0.0
     },
     "esl": {
       "nSentences": 6694,
       "nDocuments": 395,
-      "sentenceFPR": 0.114,
-      "documentFPR": 0.0734,
+      "sentenceFPR": 0.174,
+      "documentFPR": 0.0582,
       "breakdown": {
         "ellipse": {
           "nSentences": 2965,
-          "sentenceFPR": 0.0681,
-          "documentFPR": 0.0229
+          "sentenceFPR": 0.1224,
+          "documentFPR": 0.0457
         },
         "liang_toefl": {
           "nSentences": 277,
-          "sentenceFPR": 0.2383,
-          "documentFPR": 0.2444
+          "sentenceFPR": 0.3141,
+          "documentFPR": 0.1778
         },
         "persuade": {
           "nSentences": 3452,
-          "sentenceFPR": 0.1434,
-          "documentFPR": 0.08
+          "sentenceFPR": 0.2071,
+          "documentFPR": 0.04
         },
         "persuade_ELL": {
           "nSentences": 282,
-          "sentenceFPR": 0.1135,
-          "documentFPR": 0.0
+          "sentenceFPR": 0.156,
+          "documentFPR": 0.0556
         },
         "persuade_non-ELL": {
           "nSentences": 3170,
-          "sentenceFPR": 0.1461,
-          "documentFPR": 0.0892
+          "sentenceFPR": 0.2117,
+          "documentFPR": 0.0382
         },
         "ellipse_prof_2.0": {
           "nSentences": 181,
-          "sentenceFPR": 0.0442
+          "sentenceFPR": 0.1602
         },
         "ellipse_prof_2.5": {
           "nSentences": 443,
-          "sentenceFPR": 0.0293
+          "sentenceFPR": 0.1106
         },
         "ellipse_prof_3.0": {
           "nSentences": 1050,
-          "sentenceFPR": 0.0543
+          "sentenceFPR": 0.1162
         },
         "ellipse_prof_3.5": {
           "nSentences": 819,
-          "sentenceFPR": 0.0867
+          "sentenceFPR": 0.1172
         },
         "ellipse_prof_4.0": {
           "nSentences": 292,
-          "sentenceFPR": 0.0479
+          "sentenceFPR": 0.0377
         },
         "ellipse_prof_4.5": {
           "nSentences": 120,
-          "sentenceFPR": 0.3083
+          "sentenceFPR": 0.1917
         },
         "ellipse_prof_5.0": {
           "nSentences": 52,
-          "sentenceFPR": 0.0385
+          "sentenceFPR": 0.5385
         }
       }
     },
     "localisation": {
       "nSentences": 847,
-      "sentenceAuroc": 0.8829,
-      "precision": 0.8049,
-      "recall": 0.5729,
+      "sentenceAuroc": 0.8078,
+      "precision": 0.6471,
+      "recall": 0.6493,
       "seam": {
-        "documentsWithSeamFound": 57,
+        "documentsWithSeamFound": 66,
         "totalDocuments": 70,
-        "medianOffsetSentences": 1,
-        "withinTwoSentences": 0.7018
+        "medianOffsetSentences": 3,
+        "withinTwoSentences": 0.3939
       },
       "hewlett": {
-        "auroc": 0.9124,
-        "recall": 0.6349
+        "auroc": 0.8614,
+        "recall": 0.7513
       },
       "toefl": {
-        "auroc": 0.8455,
+        "auroc": 0.7693,
         "recall": 0.4545
       }
     },
     "ablation": {
       "TOEFL essays, GPT-4 'polished'": {
-        "originalFlagged": 0.1868,
-        "rewrittenFlagged": 0.2418
+        "originalFlagged": 0.1538,
+        "rewrittenFlagged": 0.2198
       },
       "ASAP essays, GPT-simplified": {
         "originalFlagged": 0.0,
-        "rewrittenFlagged": 0.6591
+        "rewrittenFlagged": 0.4886
       }
     }
   }

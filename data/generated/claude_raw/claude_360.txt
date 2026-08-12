@@ -1,0 +1,17 @@
+The place is the bottom of the stairwell in our block, between the ground floor and the basement, where there is a window with a wide ledge and a radiator that comes on at six. It is not a nice place. It smells of the bins. But nobody has any reason to go down there, the light is on a timer you can slap back into life, and I have done most of my real thinking on that ledge since I was about fourteen.
+
+What I do there is sit with a problem I cannot solve. Usually physics. For most of last year it was one specific problem.
+
+It was from an old olympiad paper. A ball is dropped onto a fixed incline and bounces elastically, and you are asked where the second bounce lands. That is all. I got an answer in fifteen minutes and it was wrong, and I could not find the error, and I went back to it twenty times over four months.
+
+I want to be honest about those four months. It was irritating. I would get an answer, check it against the back of the book, and be wrong by a factor I could not account for. Twice I gave up in a way that felt permanent.
+
+The moment it turned was in February, on the ledge, and it was not a moment of solving anything. I stopped trying to get the answer and asked myself, out of frustration, why I was so certain the velocity after the bounce should be measured along the ground. The answer was that I had never chosen that. I had inherited it. Every problem I had ever done had horizontal and vertical axes, so I had drawn them on this one too without noticing it was a decision. Rotate the axes so one runs along the slope and the collision becomes trivial — one component flips, one carries on — and the whole thing falls out in four lines.
+
+Four lines. Four months.
+
+What changed my mind that night was not about physics. It was about where I had been looking. For four months I had been checking my working on the assumption that the error was inside the calculation. The error was in the frame I had set up before the calculation started, in a choice so automatic I could not see it as a choice. Since then I have found that most things I get badly wrong are like this. Not mistakes in the argument. Mistakes in the setup, made silently, in the first thirty seconds.
+
+So: the stairwell. I am aware it is an odd answer to the question of where I feel most myself. My mother thinks I go down there to avoid my brother. But it is the only place I know where I am not performing competence at anybody. In a classroom, being stuck is a state to get out of quickly. On that ledge, being stuck is the entire activity, and I can sit inside it for an hour, not interrupted and not helped, which is the thing I actually want and the hardest to ask for.
+
+I have that problem drawn on the back of a receipt, rotated axes and all, stuck inside my locker door. It is not there to remind me of the answer. It is there to remind me that I sat under a bad light next to the bins for four months, being wrong, and that this turned out to be the most useful place I have ever been.

@@ -16,6 +16,8 @@ import numpy as np
 
 from .detect.classifier import Prediction, SentenceDetector
 from .detect.document import (
+    MAX_SENTENCE_WORDS,
+    DocumentDetector,
     DocumentVerdict,
     Passage,
     SentenceVerdict,
@@ -151,10 +153,21 @@ class Analyzer:
         detector: SentenceDetector,
         scorer: LocalLMScorer | None = None,
         reference: NgramReference | None = None,
+        document_model: DocumentDetector | None = None,
     ) -> None:
         self.detector = detector
         self.scorer = scorer or get_scorer()
         self.reference = reference
+        # The FITTED document model. Passing it is not optional in practice: without it
+        # `aggregate` silently falls back to `max_p`, the single strongest sentence, and the
+        # result is not a miscalibrated document score but a different statistic entirely.
+        # This library forgot to load it for a while, and the failure was invisible because
+        # `max_p` looks like a probability, moves in the right direction, and is bounded in
+        # [0, 1]. On one real essay it read 70.9% where the fitted model reads 14.9% -- the
+        # bands turn that difference into two different verdicts. Every script that reports
+        # a number (fit_bands, evaluate, report_product) loaded the model itself, so the
+        # corpus results were never affected; only callers of `Analyzer` were.
+        self.document_model = document_model
 
     # -- construction ------------------------------------------------------------
 
@@ -164,13 +177,30 @@ class Analyzer:
         model_dir: str | Path = "artifacts",
         observer: str = "gpt2",
         device: str = "cpu",
+        suffix: str = "",
     ) -> "Analyzer":
-        """Load the fitted detector and n-gram reference from disk."""
+        """Load the fitted detector and n-gram reference from disk.
+
+        ``observer="remote"`` scores through Workers AI (see ``observer-worker/``) instead of
+        loading GPT-2 locally. The detector must have been FITTED on the same observer --
+        ``suffix="_remote"`` selects it -- because the two instruments disagree about what a
+        given sentence's surprisal is, and a detector scored with the wrong one is not
+        miscalibrated, it is meaningless. docs/09-frontier-ceiling.md measures how far apart
+        they are: on the same essays, one statistic's AUROC moves from 0.132 to 0.895.
+        """
         model_dir = Path(model_dir)
-        detector = SentenceDetector.load(model_dir / "detector.json")
+        detector = SentenceDetector.load(model_dir / f"detector{suffix}.json")
         ref_path = model_dir / "ngram_reference.json"
         reference = NgramReference.load(ref_path) if ref_path.exists() else None
-        return cls(detector, get_scorer(observer, device), reference)
+        doc_path = model_dir / f"document_detector{suffix}.json"
+        document_model = DocumentDetector.load(doc_path) if doc_path.exists() else None
+        if observer == "remote":
+            from .scorer.remote_lm import RemoteObserverScorer
+
+            scorer = RemoteObserverScorer()
+        else:
+            scorer = get_scorer(observer, device)
+        return cls(detector, scorer, reference, document_model)
 
     # -- the pipeline ------------------------------------------------------------
 
@@ -225,7 +255,10 @@ class Analyzer:
         verdicts: list[SentenceVerdict] = []
         for i, span in enumerate(spans):
             n_tokens = len(token_scores.select(span.start, span.end))
-            reliable = n_tokens >= MIN_TOKENS
+            # bool(), not the bare comparison: word_counts is a numpy array, so the
+            # comparison yields numpy.bool_, which pydantic refuses to serialise and the API
+            # answers 500 on every request. Nothing in the type annotation catches it.
+            reliable = bool(n_tokens >= MIN_TOKENS and word_counts[i] <= MAX_SENTENCE_WORDS)
             reports.append(
                 SentenceReport(
                     index=i,
@@ -256,7 +289,16 @@ class Analyzer:
         elapsed = time.perf_counter() - started
         return AnalysisResult(
             text=text,
-            verdict=aggregate(verdicts),
+            # The threshold must be the one the document model was FITTED at
+            # (`document_detector*.json` records it as `sentenceThreshold`), not the 0.65
+            # module default that `find_passages` uses for highlighting. `share` is a
+            # standardised input to that model: computing it at a different cut-off feeds
+            # the fit a column it has never seen.
+            verdict=aggregate(
+                verdicts,
+                threshold=self.detector.flag_threshold,
+                doc_model=self.document_model,
+            ),
             sentences=reports,
             passages=find_passages(verdicts),
             tokens=_token_views(token_scores),

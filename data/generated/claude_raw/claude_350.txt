@@ -1,0 +1,19 @@
+My uncle's radio came to me the same way a lot of broken things do—he mentioned it once and my dad said "oh, my kid might be able to fix that." Uncle Mike had found it at an estate sale for three dollars. It was from 1987. It didn't work. But it was the kind of thing you could see working again if you squinted and imagined it right.
+
+I brought it to my workspace—which is basically a shelf in the garage with some tools and a lot of YouTube access—and I told myself I'd spend maybe an hour trying to figure it out. See if it was worth trying to actually restore. It turned into two years.
+
+That first hour was spent just opening it up and understanding the architecture. There's this moment with old electronics where you open them and the smell just hits you—dust and age and metal oxidation. The guts were pretty simple. A speaker. A power supply. A radio tuner. Capacitors and resistors and a transformer. Nothing was broken exactly. Everything was just old and tired. The capacitors had dried out. The contacts were corroded. Nothing was talking to anything else properly.
+
+I started small. Cleaned the contacts. Replaced the most obviously dead capacitors. Flipped the switch and nothing happened. Which was fine. It was going to take more than that.
+
+For about six months I worked on it in fragments. A weekend afternoon here, an evening there. I'd learn something about circuit boards or transformers and then apply it. I replaced the power supply. Found replacements for the old ceramic capacitors that are just not manufactured anymore. Rewired the speaker. Cleaned every single contact with isopropyl alcohol until the radio looked almost new inside, which was funny because the outside still looked like it had been buried in 1987.
+
+Then there was this period where I just stopped. I looked at the radio and I thought, why am I doing this? It's not my radio. Uncle Mike is never going to care about this radio. It's not useful. It's not impressive. It's just old. And I'm spending time on it that I could spend on literally anything else.
+
+I was right about most of that. But I was also just tired. It was grinding work. It required precision and patience and there was no guarantee that even if I fixed everything, the radio would actually work. That last part, actually, that's the thing that got to me. I could do all this work and it could still just be broken in some final way that I didn't know how to fix.
+
+I talked to my dad about quitting. He said I could. He said Uncle Mike wouldn't care. He said I could just put the radio in a box and return it. The permission to quit actually made me want to keep going. Or maybe the permission to quit meant I actually wanted to do it, and I just needed to feel like I had a choice.
+
+I can't remember what finally made it work. Probably the capacitors. It was probably some stupid combination of old components that just decided to cooperate one afternoon. I powered it on and it crackled and there was actual sound coming through the speaker. AM radio. A distant station. Something. It worked.
+
+I called Uncle Mike and told him it was ready. He came by and listened to it like he couldn't believe it. He said it was exactly like he remembered. And I realized that the point was never about the radio at all. The point was about the person who cared about something enough to restore it.

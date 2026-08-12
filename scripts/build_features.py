@@ -38,10 +38,34 @@ from palimpsest.scorer.ngram import NgramReference  # noqa: E402
 # Human and machine sentences in this pool have the same mean length (19.2 words), so the
 # classifier cannot reach the right answer by measuring length.
 SETS: dict[str, list[str]] = {
-    "train": ["liang_college_human", "jhu", "liang_college_gpt3"],
+    # `modern_train` is Gemini-3 output, added because the detector fitted on GPT-3.5 alone
+    # missed a 2026 essay outright: 18 sentences, none flagged, median sentence probability
+    # 0.019. That is not a threshold that needs moving, it is a generator the features had
+    # never seen. See scripts/split_modern.py for what is deliberately NOT in here.
+    "train": ["liang_college_human", "jhu", "liang_college_gpt3", "modern_train"],
+    # `claude_modern` is deliberately NOT in `train`. Adding it was measured and it makes the
+    # detector worse -- see scripts/vendor_swap_sweep.py and docs/08-cross-vendor.md. Build
+    # its features with this set instead; the sweep reads them from train_with_claude.jsonl.
+    "train_with_claude": ["liang_college_human", "jhu", "liang_college_gpt3", "modern_train",
+                          "claude_modern"],
     # Held out: the same generator, prompted to evade detection. Tests whether the detector
     # survives an adversary who knows it exists.
     "unseen_prompting": ["liang_college_gpt3_prompteng"],
+    # Held out: unseen essays from the modern models that ARE in training. The easier of the
+    # two modern questions -- the fit has seen these generators' habits, just not these
+    # essays.
+    "modern_holdout": ["modern_holdout"],
+    # Held out: every essay from one modern checkpoint kept out of training entirely.
+    "modern_unseen": ["modern_unseen"],
+    # Held out: a different model family, also entirely. The hardest of the three modern
+    # questions and the one that predicts what happens when next year's model arrives.
+    "modern_unseen_family": ["modern_unseen_family"],
+    # Held out CONTROL: same generator as modern_holdout, but written to the bare prompts
+    # with no subject steering. Every other modern set answers one of 40 subjects chosen in
+    # generate_modern.py, so "machine" and "those topics" are correlated across the whole
+    # modern corpus. Holding the generator fixed and removing only the steering is what
+    # separates "it learned machine prose" from "it learned beekeeping".
+    "modern_control": ["modern_control"],
     # Held out: human writing from another domain and school level. Tests false positives
     # when the input is nothing like what we trained on.
     "domain_shift": ["liang_hewlett_human"],
@@ -51,12 +75,37 @@ SETS: dict[str, list[str]] = {
     "localisation": ["real_hybrid"],
     # Held out: prose a careful writer composed to imitate a model. Our clearest failure.
     "adversarial": ["machine_claude", "hybrid_claude"],
+    # Held out: admissions essays written by four checkpoints of the CLAUDE family, on
+    # subjects that appear in no training essay. The split is by subject and was
+    # pre-registered in scripts/plan_claude_corpus.py before a word was generated.
+    #
+    # This is the only set in the project that changes VENDOR. Everything the detector is
+    # fitted on comes from OpenAI (GPT-3.5) or Google (`modern_train`), and `modern_unseen_
+    # family` -- despite its name -- is Gemini throughout, so it varies the checkpoint tier
+    # and not the family. A model from a different lab has different pretraining data,
+    # different post-training and different habits, which makes this the strictest
+    # generalisation question available: does the detector read machine-ness, or does it
+    # read Google?
+    #
+    # It stays held out whatever happens to `claude_modern`. No subject crosses the
+    # boundary, so the number it produces is a generalisation measurement and not a
+    # memorisation one.
+    "modern_claude": ["claude_modern_heldout"],
     # Held out: identical content, one version rewritten by a model. Isolates what the
     # features respond to, holding the writer and the subject fixed.
     "ablation": ["liang_toefl_gpt4polished", "liang_hewlett_gptsimplify"],
+    # Student essays on PERSUADE prompts, machine half contributed by MANY independent
+    # people using many models (`meta.pipeline` names each one). This is the only corpus in
+    # the project where machine text was not produced by our own generation pipeline, which
+    # is what makes it the only one that can distinguish detection from bookkeeping --
+    # docs/09-frontier-ceiling.md records a classifier that scored AUROC 1.000 here and was
+    # really recognising our own file conventions. Fetched by scripts/fetch_external.py.
+    "daigt": ["daigt"],
 }
 
-GENERATED = {"machine_claude", "hybrid_claude", "real_hybrid"}
+GENERATED = {"machine_claude", "hybrid_claude", "real_hybrid",
+             "modern_train", "modern_holdout", "modern_unseen", "modern_unseen_family",
+             "modern_control", "claude_modern", "claude_modern_heldout"}
 _STEMS = {
     "machine_claude": "machine_essays",
     "hybrid_claude": "hybrid_essays",
@@ -121,8 +170,18 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--sets", nargs="*", default=["train"], help="set names, or 'all'")
     ap.add_argument("--limit-per-source", type=int, default=None)
-    ap.add_argument("--observer", default="gpt2")
+    ap.add_argument("--observer", default="gpt2",
+                    help="'gpt2' (local) or 'remote' (Workers AI 30 B, see observer-worker/)")
+    ap.add_argument("--top-k", type=int, default=0,
+                    help="remote only: ask the observer for its k most likely candidates at "
+                         "each position, not just the realised token. k>0 makes entropy and "
+                         "Fast-DetectGPT curvature computable at IDENTICAL neuron cost -- it "
+                         "is the same forward pass. See scorer/remote_lm for what the top-k "
+                         "head does and does not measure.")
     ap.add_argument("--device", default="cpu")
+    ap.add_argument("--out-suffix", default="",
+                    help="appended to each output filename, e.g. '_remote', so the two "
+                         "observers' feature files never overwrite each other")
     args = ap.parse_args()
 
     names = list(SETS) if args.sets == ["all"] else args.sets
@@ -131,7 +190,20 @@ def main() -> int:
     if reference is None:
         print("! no n-gram reference; corpus features will be NaN. Run fit_reference.py.")
 
-    analyzer = Analyzer(SentenceDetector(), get_scorer(args.observer, args.device), reference)
+    # The remote observer is a 30 B model on Cloudflare rather than GPT-2 on this machine.
+    # docs/09-frontier-ceiling.md measures why: GPT-2's statistics are not merely weak on
+    # modern prose, they are INVERTED against ESL writing (AUROC 0.132), which is the
+    # mechanism behind the project's false-positive problem. Both observers go through the
+    # same Analyzer so training and serving cannot drift apart.
+    if args.observer == "remote":
+        from palimpsest.scorer.remote_lm import RemoteObserverScorer
+
+        scorer = RemoteObserverScorer(top_k=args.top_k)
+        print(f"observer: REMOTE {scorer.model_name} top_k={args.top_k} "
+              f"(no local model is loaded)")
+    else:
+        scorer = get_scorer(args.observer, args.device)
+    analyzer = Analyzer(SentenceDetector(), scorer, reference)
     out_dir = ROOT / "data" / "features"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -142,7 +214,7 @@ def main() -> int:
             continue
         print(f"\n=== {name}: {len(docs)} documents")
         started = time.perf_counter()
-        path = out_dir / f"{name}.jsonl"
+        path = out_dir / f"{name}{args.out_suffix}.jsonl"
         n_sentences = 0
         with path.open("w", encoding="utf-8") as fh:
             for i, doc in enumerate(docs):

@@ -75,7 +75,8 @@ bias in this class of tool. It reduced the bias measurably. It did not remove it
 
 **These features have to be trained for.** With only all-human and all-machine documents in
 the training pool they have nothing to detect, and the fit learns to ignore them. Adding real
-mixed documents took localisation AUROC from 0.745 to 0.883.
+mixed documents took localisation AUROC from 0.745 to 0.883 (measured before the
+modern-generator retrain; the shipped figure is now 0.808 -- see 03-evaluation.md).
 
 ## Why logistic regression
 

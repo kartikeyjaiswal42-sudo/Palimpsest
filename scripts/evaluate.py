@@ -7,6 +7,13 @@ Nothing here is fitted. Every set was excluded from training, and each one probe
 different way the detector can be wrong:
 
   unseen_prompting  the same generator, prompted to evade detection
+  modern_holdout    unseen essays from the modern generators that ARE in training
+  modern_unseen     a modern checkpoint withheld from training entirely
+  modern_unseen_family
+                    a different modern model family, withheld entirely -- the set that
+                    predicts what happens when the next model ships
+  modern_control    same generator as modern_holdout, no subject steering -- separates
+                    "learned machine prose" from "learned the 40 subjects we prompted with"
   domain_shift      human writing from another domain -- false positives off-domain
   esl               human writing by English-language learners -- the documented failure
                     mode of every detector in this space
@@ -30,14 +37,23 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from palimpsest.detect.classifier import SentenceDetector  # noqa: E402
-from palimpsest.detect.document import DocumentDetector, document_statistics  # noqa: E402
+from palimpsest.detect.document import (  # noqa: E402
+    MAX_SENTENCE_WORDS,
+    DocumentDetector,
+    document_statistics,
+)
 
 FEATURES_DIR = ROOT / "data" / "features"
 DOC_T = 0.5  # replaced at runtime by the fitted operating point
 
 
+#: Set by main() from --suffix. Evaluation must read the SAME observer's features the
+#: detector was fitted on; mixing them silently scores one model on another's numbers.
+SUFFIX = ""
+
+
 def load(name: str) -> list[dict]:
-    path = FEATURES_DIR / f"{name}.jsonl"
+    path = FEATURES_DIR / f"{name}{SUFFIX}.jsonl"
     if not path.exists():
         return []
     rows = []
@@ -64,6 +80,23 @@ def by_document(rows, probs, det, doc_model):
         idx.setdefault(r["doc_id"], []).append(i)
     ids, dp, dl, shares = [], [], [], []
     for doc_id, ii in idx.items():
+        # Same reliability rule the serving path applies, so evaluation measures the system
+        # that ships. A span longer than MAX_SENTENCE_WORDS is a segmentation failure, not a
+        # sentence, and every per-sentence feature is out of distribution on it.
+        keep = [i for i in ii
+                if float(rows[i]["features"].get("n_words") or 1.0) <= MAX_SENTENCE_WORDS]
+        if not keep:
+            # Nothing in this document is measurable -- it is one long unpunctuated run-on.
+            # `aggregate` returns a neutral verdict in that case and so must this, or
+            # evaluation would report a number the shipped tool does not produce. Declining
+            # to judge counts as "not flagged", which is the whole point: three real ESL
+            # essays were being accused at P > 0.90 on a segmentation artifact.
+            ids.append(doc_id)
+            dp.append(0.0)
+            dl.append(int(any(rows[i]["label"] for i in ii)))
+            shares.append(0.0)
+            continue
+        ii = keep
         p = probs[ii]
         w = np.array([rows[i]["features"].get("n_words", 1.0) for i in ii])
         w = np.where(np.isfinite(w), w, 1.0)
@@ -76,8 +109,25 @@ def by_document(rows, probs, det, doc_model):
 
 
 def main() -> int:
-    det = SentenceDetector.load(ROOT / "artifacts" / "detector.json")
-    doc_model = DocumentDetector.load(ROOT / "artifacts" / "document_detector.json")
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--suffix", default="",
+                    help="'' for the GPT-2 detector, '_remote' for the 30 B observer one")
+    ap.add_argument("--features-suffix", default=None,
+                    help="suffix of the FEATURE files; defaults to --suffix. These come "
+                         "apart once a detector is named for its training set rather than "
+                         "its observer: '_frontier_remote' is fitted on frontier text but "
+                         "reads the same '_remote' features, because the observer is what "
+                         "decides which numbers exist. Mixing observers here would score "
+                         "one model on another's numbers, silently.")
+    args = ap.parse_args()
+    global SUFFIX
+    SUFFIX = args.features_suffix if args.features_suffix is not None else args.suffix
+
+    det = SentenceDetector.load(ROOT / "artifacts" / f"detector{args.suffix}.json")
+    doc_model = DocumentDetector.load(
+        ROOT / "artifacts" / f"document_detector{args.suffix}.json")
     global DOC_T
     DOC_T = doc_model.threshold
     t = det.flag_threshold
@@ -90,7 +140,16 @@ def main() -> int:
     print("\n" + "=" * 74)
     print("DETECTION -- held-out machine text")
     print("=" * 74)
-    for name in ("unseen_prompting", "adversarial"):
+    # modern_holdout and modern_unseen answer two different questions and must never be
+    # collapsed into one "Gemini recall" figure: the first is unseen essays from generators
+    # the fit has seen, the second is a generator withheld entirely. Reporting only the
+    # first would be the flattering number.
+    # `modern_claude` is last because it is the strictest of them: the only set written by a
+    # different vendor's models. Every generator in training is OpenAI's or Google's, so it
+    # is the one number here that answers "does this read machine-ness, or does it read
+    # Google?"
+    for name in ("unseen_prompting", "adversarial", "modern_holdout", "modern_unseen",
+                 "modern_unseen_family", "modern_control", "modern_claude"):
         rows = load(name)
         if not rows:
             continue
@@ -110,6 +169,8 @@ def main() -> int:
         }
         if name == "adversarial":
             _adversarial_breakdown(rows, p, t, report)
+        if name == "modern_claude":
+            _claude_breakdown(rows, p, t, dp, report)
 
     # ---------------------------------------------------------------- false positives
     print("\n" + "=" * 74)
@@ -188,10 +249,48 @@ def main() -> int:
     # ---------------------------------------------------------------- ablation
     _ablation(det, doc_model, report)
 
-    out = ROOT / "artifacts" / "evaluation.json"
+    out = ROOT / "artifacts" / f"evaluation{SUFFIX}.json"
     out.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"\n\nwrote {out.relative_to(ROOT)}")
     return 0
+
+
+def _claude_breakdown(rows, p, t, dp, report):
+    """Recall per generating model and per prompting style.
+
+    Reported separately because a single pooled figure cannot distinguish the two
+    explanations for a low number. If one checkpoint is invisible and the others are caught,
+    that is a model-specific weakness. If all four are equally invisible, the detector is not
+    failing on a model at all -- it is failing on the vendor, and the fix is not a better
+    threshold.
+
+    Style is broken out for the same reason it is on `adversarial`: 47% of this corpus
+    carries no style instruction whatsoever, so if recall lives entirely in the `evasive`
+    slice then what the detector has learnt is our own steering vocabulary rather than
+    machine prose.
+    """
+    for key, label in (("model", "generating model"), ("style", "prompt style")):
+        groups: dict[str, list[float]] = {}
+        docs: dict[str, set] = {}
+        for r, pi in zip(rows, p, strict=True):
+            if r["label"] != 1:
+                continue
+            g = (r["doc_meta"] or {}).get(key, "?")
+            groups.setdefault(g, []).append(pi)
+            docs.setdefault(g, set()).add(r["doc_id"])
+        if len(groups) <= 1:
+            continue
+        print(f"  by {label} (machine sentences only):")
+        out = {}
+        for g, v in sorted(groups.items()):
+            arr = np.array(v)
+            flagged = float((arr >= t).mean())
+            print(f"    {g:<10} n={len(arr):<5} {len(docs[g]):>3} docs  "
+                  f"flagged {flagged:.3f} | median p {float(np.median(arr)):.3f}")
+            out[g] = {"nSentences": len(arr), "nDocuments": len(docs[g]),
+                      "sentenceRecall": round(flagged, 4),
+                      "medianP": round(float(np.median(arr)), 4)}
+        report["sets"]["modern_claude"][f"by{key.capitalize()}"] = out
 
 
 def _adversarial_breakdown(rows, p, t, report):

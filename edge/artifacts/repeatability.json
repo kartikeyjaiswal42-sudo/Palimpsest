@@ -1,0 +1,84 @@
+{
+ "measuredAt": "2026-08-11T20:33:26.441Z",
+ "base": "https://palimpsest.amitynoidalibrary.workers.dev",
+ "runsPerDocument": 3,
+ "nDocuments": 6,
+ "nSentences": 115,
+ "maxSentenceProbDelta": 0.08710000000000001,
+ "maxConfidenceDelta": 0.01730000000000001,
+ "bandStableDocuments": 6,
+ "documents": [
+  {
+   "source": "data/raw/ellipse.jsonl",
+   "id": "ellipse:00046",
+   "runs": 3,
+   "nSentences": 22,
+   "maxSentenceProbDelta": 0,
+   "maxConfidenceDelta": 0,
+   "bandStable": true,
+   "bands": [
+    "out_of_scope"
+   ]
+  },
+  {
+   "source": "data/raw/liang_college_gpt3.jsonl",
+   "id": "liang_college_gpt3:0002",
+   "runs": 3,
+   "nSentences": 14,
+   "maxSentenceProbDelta": 0.0010999999999999899,
+   "maxConfidenceDelta": 0,
+   "bandStable": true,
+   "bands": [
+    "likely_machine"
+   ]
+  },
+  {
+   "source": "data/generated/modern_holdout.jsonl",
+   "id": "modern_gemini-3.1-flash-lite:0170",
+   "runs": 3,
+   "nSentences": 24,
+   "maxSentenceProbDelta": 0.08710000000000001,
+   "maxConfidenceDelta": 0.0015000000000000568,
+   "bandStable": true,
+   "bands": [
+    "likely_machine"
+   ]
+  },
+  {
+   "source": "data/raw/liang_toefl.jsonl",
+   "id": "liang_toefl:0034",
+   "runs": 3,
+   "nSentences": 8,
+   "maxSentenceProbDelta": 0.050899999999999945,
+   "maxConfidenceDelta": 0.01730000000000001,
+   "bandStable": true,
+   "bands": [
+    "insufficient_evidence"
+   ]
+  },
+  {
+   "source": "data/raw/liang_college_human.jsonl",
+   "id": "liang_college_human:0008",
+   "runs": 3,
+   "nSentences": 26,
+   "maxSentenceProbDelta": 0.07240000000000002,
+   "maxConfidenceDelta": 0.00040000000000001146,
+   "bandStable": true,
+   "bands": [
+    "no_evidence"
+   ]
+  },
+  {
+   "source": "data/raw/persuade.jsonl",
+   "id": "persuade:3114a7ac607c",
+   "runs": 3,
+   "nSentences": 21,
+   "maxSentenceProbDelta": 0,
+   "maxConfidenceDelta": 0,
+   "bandStable": true,
+   "bands": [
+    "insufficient_evidence"
+   ]
+  }
+ ]
+}

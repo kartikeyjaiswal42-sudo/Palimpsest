@@ -1,0 +1,32 @@
+[
+ {
+  "variant": "A  generalist _remote",
+  "threshold": 0.9254,
+  "falseAccusation": 0.02681992337164751,
+  "recall": {
+   "modern_holdout": 0.8421052631578947,
+   "modern_unseen_family": 0.09090909090909091,
+   "modern_claude_eval": 0.02631578947368421
+  }
+ },
+ {
+  "variant": "B  specialist _frontier",
+  "threshold": 0.9382,
+  "falseAccusation": 0.02681992337164751,
+  "recall": {
+   "modern_holdout": 0.3684210526315789,
+   "modern_unseen_family": 0.0,
+   "modern_claude_eval": 0.15789473684210525
+  }
+ },
+ {
+  "variant": "A|B  max of both",
+  "threshold": 0.9397,
+  "falseAccusation": 0.02681992337164751,
+  "recall": {
+   "modern_holdout": 0.7543859649122807,
+   "modern_unseen_family": 0.0,
+   "modern_claude_eval": 0.15789473684210525
+  }
+ }
+]

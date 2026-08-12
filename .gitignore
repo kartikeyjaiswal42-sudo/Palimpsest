@@ -16,6 +16,13 @@ data/generated/hybrid_essays.jsonl
 # data/generated/machine_essays.jsonl IS committed -- we wrote those essays, so they
 # are ours to publish, and they are the adversarial set the evaluation reports on.
 
+# The same reasoning covers the modern-generator corpus: our prompts, model output, no human
+# writing embedded, so modern_train/holdout/unseen.jsonl are committed and a reader can check
+# that the split really does keep one model out of training. `parts/` is the per-model
+# scratch the generator writes before the split merges it, and committing it would put every
+# essay in the repository twice.
+data/generated/parts/
+
 .venv/
 __pycache__/
 *.py[cod]
@@ -23,3 +30,26 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .DS_Store
+
+# Fetched by scripts/fetch_external.py, licence undeclared on the mirror -> not
+# redistributed here. See docs/02-dataset.md.
+data/raw/daigt.jsonl
+
+# ---------------------------------------------------------------------------
+# The remote observer's response cache. This is NOT just numbers: each entry stores
+# every token with its character offsets, so the ORIGINAL ESSAY can be reconstructed
+# from it verbatim -- including the ELLIPSE, PERSUADE and TOEFL essays written by real
+# students. Committing it would republish, through the back door, exactly the corpus
+# `data/raw/` above is excluded to protect. It is also ~240 MB and is rebuilt for free
+# by re-running the scorer.
+# ---------------------------------------------------------------------------
+data/cache/
+
+# Snapshots taken before a retrain so the two could be compared. Scratch, not results.
+artifacts/_before/
+
+# Safety nets: no credential or dependency tree belongs in this repository.
+.env
+*.env
+!observer-worker/.env.example
+node_modules/

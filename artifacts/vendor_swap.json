@@ -1,0 +1,34 @@
+[
+ {
+  "claude_share": 0.0,
+  "machine_prior": 0.49766123316796596,
+  "sentence_auroc": 0.925,
+  "esl_sent_fpr": 0.17403645055273378,
+  "claude_flag_rate": 0.06569211333694279,
+  "gemini_flag_rate": 0.8306344065536293
+ },
+ {
+  "claude_share": 0.25,
+  "machine_prior": 0.497803599263143,
+  "sentence_auroc": 0.785,
+  "esl_sent_fpr": 0.16357932476844936,
+  "claude_flag_rate": 0.14347590687601516,
+  "gemini_flag_rate": 0.4827586206896552
+ },
+ {
+  "claude_share": 0.5,
+  "machine_prior": 0.4986561041165653,
+  "sentence_auroc": 0.737,
+  "esl_sent_fpr": 0.08335823125186734,
+  "claude_flag_rate": 0.10395235517054684,
+  "gemini_flag_rate": 0.079253191084016
+ },
+ {
+  "claude_share": 0.75,
+  "machine_prior": 0.4989396295772657,
+  "sentence_auroc": 0.735,
+  "esl_sent_fpr": 0.10890349566776218,
+  "claude_flag_rate": 0.20862660169644467,
+  "gemini_flag_rate": 0.007239474185559154
+ }
+]

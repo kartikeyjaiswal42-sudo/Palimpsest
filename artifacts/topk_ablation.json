@@ -1,0 +1,62 @@
+{
+  "question": "Do Fast-DetectGPT conditional curvature and observer entropy, recovered from the top-20 candidates Workers AI returns, improve detection?",
+  "answer": "No. Measured, not assumed. Abandoned.",
+  "why_it_looked_promising": {
+    "single_feature_auroc_on_7055_training_sentences": {
+      "mean_entropy": 0.2435,
+      "curvature": 0.6518,
+      "entropy_sd": 0.4421,
+      "curvature_z_in_doc": 0.4979
+    },
+    "note": "mean_entropy separates about as well as the strongest features already in the model (mean_log_rank 0.2375, mean_logprob 0.7525). Read alone, it looks like a clear win."
+  },
+  "why_it_bought_nothing": {
+    "pearson_r_with_features_already_in_the_model": {
+      "curvature_vs_mean_logprob": 0.869,
+      "curvature_vs_logprob_sd": -0.844,
+      "mean_entropy_vs_mean_log_rank": 0.657,
+      "mean_entropy_vs_frac_rank_top1": -0.639,
+      "mean_entropy_vs_mean_logprob": -0.593
+    },
+    "reading": "Curvature over a truncated head is close to a linear combination of two columns the model already reads (r^2 0.76 and 0.71). The 39-feature fit had already extracted the information."
+  },
+  "controlled_ab": {
+    "design": "Identical 7055 rows, identical documents, identical fitting procedure; the only difference is whether the four top-20 features are present. Mixed-document rows disabled on both sides.",
+    "in_domain_out_of_fold": {
+      "without": {
+        "sentenceAuroc": 0.9748,
+        "averagePrecision": 0.9708,
+        "documentAuroc": 0.9983
+      },
+      "with": {
+        "sentenceAuroc": 0.9747,
+        "averagePrecision": 0.971,
+        "documentAuroc": 0.998
+      }
+    },
+    "frontier_claude_prose_76_documents_present_in_both_builds": {
+      "without": {
+        "caughtAtOwnThreshold": 0.276,
+        "medianDocumentScore": 0.0016,
+        "meanDocumentScore": 0.2616
+      },
+      "with": {
+        "caughtAtOwnThreshold": 0.276,
+        "medianDocumentScore": 0.0019,
+        "meanDocumentScore": 0.2626
+      },
+      "perDocumentChange": {
+        "mean": 0.001,
+        "median": 0.0001,
+        "higher": 61,
+        "lower": 15
+      }
+    }
+  },
+  "what_this_does_and_does_not_show": [
+    "It shows that curvature estimated over the top-20 head THIS API exposes adds nothing on top of 39 existing features. It is not a refutation of Fast-DetectGPT, which is defined over the full distribution and is strongest when the observer is the generator.",
+    "The truncation is real and was measured: the top-20 candidates hold a median 88% and mean 82% of the probability mass, so mu and sigma2 are computed over a head, not a distribution.",
+    "In-domain detection is already saturated at 0.975 sentence AUROC, so that half of the A/B had no headroom to show a gain in either direction. The frontier set is the one that could have moved, and it did not."
+  ],
+  "cost_avoided": "Completing the top-20 corpus rebuild would have cost several hours and a large share of the 10,000 neuron/day allowance to ship a measured zero."
+}

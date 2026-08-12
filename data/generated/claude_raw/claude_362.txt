@@ -1,0 +1,17 @@
+It was problem seven on the midterm. A block on an inclined plane with friction, a pulley, and a second mass hanging over the side. Standard physics problem. I looked at it and immediately understood the setup. I drew the free body diagrams. I identified the forces. I applied Newton's second law. I solved for the acceleration.
+
+I got it wrong. According to the answer key, my final answer was off by a factor of two. Not just a calculation error—something fundamental in my approach was incorrect. I stared at my work and I couldn't see where I'd gone wrong. My teacher couldn't quite explain it either when I asked her. She said "your method is correct but you're missing something." She wouldn't tell me what.
+
+That was three years ago. I'm serious. Three years. I think about that problem sometimes when I'm trying to fall asleep. I lie there and I mentally reconstruct the diagram and I try every possible configuration of forces and I still can't see what I missed. It's like an itch I can't scratch.
+
+The frustrating part is that the problem itself doesn't matter. I'm not going to be a physicist. I got an A in the class. The midterm grade doesn't follow me anymore. I've taken higher-level physics. I understand calculus and vectors and electromagnetic fields. There's no good reason that a single wrong answer from three years ago should still occupy my brain space at all.
+
+But there's something about being wrong in a way that you can't understand that really gets to me. It's not like making a simple calculation error. I can see those and fix them. It's not like misunderstanding a concept. I can learn those. It's this specific thing where I did everything right and still got the wrong answer, and I don't know why. And my teacher didn't know why. And the answer key just gave me a number without showing the steps.
+
+I've tried looking it up online. I've reconstructed the problem from memory multiple times. I've asked other people about it. Everyone tells me to just move on. It's not important. You don't need to understand every problem you've ever encountered. That's reasonable. That's mature. But I can't stop thinking about it anyway.
+
+What I did next, when I first got it wrong, was not really anything useful. I asked my teacher for help and got non-answers. I studied harder for the next test and did fine. I moved on to other classes and other problems. I essentially did all the things you're supposed to do when you encounter something you don't understand. I accepted that sometimes you don't understand things and that's okay.
+
+Except I didn't actually accept it. I just pretended to. The problem stayed in my head like a splinter. Every few months something will trigger the memory—I'll see an inclined plane or a pulley in real life, or someone will mention physics, and I'll think about it again. And I'll spend twenty minutes trying to figure it out, knowing in advance that I won't be able to, and then I'll give up again.
+
+Maybe the point is just that I'm the kind of person who can't let things go. That I need to understand everything, even unimportant things. Or maybe I'm just stubborn in a way that's not particularly productive. Either way, I've learned something from that wrong answer even though I never figured out why it was wrong. I've learned that there are some questions my brain won't stop asking even when they stop mattering. And I'm not sure if that's a strength or a limitation.

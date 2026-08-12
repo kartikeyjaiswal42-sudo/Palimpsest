@@ -1,0 +1,23 @@
+In Year Ten I won the regional science fair with a project that was wrong.
+
+Not wrong in a small way. The conclusion was wrong, the method was wrong, and the reason it won is that the presentation was excellent and I was very confident, and I have never fully got over how easy that turned out to be.
+
+The project was on the water quality of the Ryhope Beck, which runs behind our estate and comes out near the old sewage works. The idea was to sample at five points along its length and show pollution increasing downstream of the industrial units on Coleman Road, which everyone locally assumes is the source. I bought a kit and tested for nitrate, phosphate, pH and dissolved oxygen. I made a poster with a map on it. My results showed exactly what I expected: readings got worse as you went downstream, with a big jump after Coleman Road.
+
+Here is what I did wrong, and I did not find it out until the following spring.
+
+I sampled all five sites on the same afternoon, in order, starting upstream at about two and finishing downstream at about half four. It is in fact the single thing you must not do, because the beck is affected by the treatment works discharge cycle, and it was a hot day in June, and dissolved oxygen falls through the afternoon as the water warms. So my downstream sites were not just downstream. They were later, and hotter, and I had built a beautiful graph in which the x-axis said distance and actually meant time of day.
+
+I also had one sample per site. One. No repeats. A single reading from a moving body of water, which is roughly as meaningful as one photograph of a road reported as the traffic.
+
+Nobody caught it. Not the judges, not my teacher, not the man from the water company. The only thing anyone asked me was why I had chosen the topic, and I said something about growing up next to it and caring about my community, which was true, and which they liked a lot.
+
+What found the error was a boy called Aidan in the year above, who was not being kind. He said, at lunch, months later, that my graph would look the same if the beck was completely clean, because I had measured a day rather than a river. I was furious for about two hours and then I went home and looked at my times and felt the floor go.
+
+I redid it that spring, properly. Three sites, sampled at the same time of day on nine different days, three replicates each, temperature recorded alongside every reading. It took eleven weeks instead of one afternoon, and the results were much less impressive. There is a real signal after Coleman Road, smaller than my first graph claimed, and a much bigger one after heavy rain everywhere, which turns out to be combined sewer overflow.
+
+The thing I still think about is not that I was wrong. It is that I was wrong and rewarded, and that the reward came from the parts of the work that had nothing to do with whether it was true — the map, the confidence, the answer everybody in the room already believed about the industrial units.
+
+I do not really trust myself when a result comes out the way I hoped. When my chemistry practical works first time I get suspicious rather than pleased, which I think is the most useful thing that fair gave me.
+
+The certificate is still on the wall at my nan's. I have not had the conversation with her about it.

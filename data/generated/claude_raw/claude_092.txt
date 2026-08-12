@@ -1,0 +1,21 @@
+The lighting board at my school is an ETC Express 24/48 that was already old when it was donated in 2009, and nobody who works in the theatre department knows how to use it. This is not an exaggeration. The drama teacher can turn the house lights on. The technician who comes in twice a year to check the rig will do a favour and patch a dimmer if you ask nicely. Beyond that, the board is a two-foot slab of grey plastic with a hundred and something buttons and a manual that was lost before I was born.
+
+I taught myself on it because there was nobody else to do it, and because in Year 10 I found a PDF of the manual online at two in the morning and read the whole thing standing up in my kitchen.
+
+Learning a piece of equipment with no teacher is mostly learning a vocabulary in the wrong order. I knew what a submaster did about eight months before I understood what a cue stack was for, which is roughly like learning the word "adverb" before the word "sentence." Everything I knew arrived out of sequence, in fragments, from forum posts written in 2011 by people who assumed I already knew nine things I did not. So I built my knowledge the only way available: I would press something and watch what happened on stage, and write it in a notebook. Channel 14 is the downstage-left fresnel and it flickers below 20 percent. Record cue and then go, not go and then record. If you hold the clear button too long you clear the whole show.
+
+What I got wrong, and still think about, was the winter production of Our Town in Year 12.
+
+The show ends with Emily returning to the day of her twelfth birthday and then leaving again, and the whole final sequence is written as a slow withdrawal of the living world. Our director, Mr. Halloran, wanted the light to go with her. We had spent three weeks on it. I built a twelve-minute cue that took the warm front light down to almost nothing while a single cool special crept up on her, and it was, honestly, the best thing I had made. On the third night it worked so well that a woman in the second row was crying before Emily had spoken.
+
+On the fourth night, I killed it.
+
+What happened was small and entirely mine. Earlier in that act there is a graveyard scene where the stage manager character speaks, and I had a manual fade I liked to run by hand because the timing shifted with the actor. That night I ran it, and then — thinking about something else, thinking about the fact that my grandmother was in the audience — I hit Go instead of returning the fader. That advanced the stack. So when the final sequence came, the board was one cue ahead of the play. Emily said her last line in the wrong light: bright, warm, the birthday-morning look, holding steady, refusing to fade. She held for the withdrawal that never came. And then she walked off into full light and the house lights came up like nothing had happened.
+
+Nobody in the audience knew. That is the part. My grandmother told me the lighting was lovely. Mr. Halloran said, afterwards, in a corridor, "the end was a bit bright," and did not say anything else, and I have never in my life wanted to be told off so badly.
+
+What I actually learned from teaching myself is not that I am resourceful, though I suppose I am. It is that self-taught knowledge has holes in exactly the shapes nobody warned you about. A person with a teacher would have been told, in the first week, to build the show so that a manual override cannot desync the stack. It is such basic practice that no forum post bothers to mention it. My entire competence was assembled from the parts of the craft that people found interesting enough to write down, and the boring, load-bearing parts — the discipline, the redundancy, the habit of asking what happens when you are tired at 9:40 on a fourth night — were simply absent, and I could not know they were absent, because absence has no shape.
+
+Since then I write my shows differently. Every manual moment ends in a hard reset to a known state. It costs nothing. I never would have thought of it.
+
+I still have the notebook. Channel 14 still flickers below 20 percent.

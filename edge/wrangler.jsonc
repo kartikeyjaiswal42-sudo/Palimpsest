@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "palimpsest",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-22",
+  "account_id": "225f2c3132920804e70224f830c9aadc",
+
+  // The observer. One forward pass per analysis, `raw: true`, logits read, never prompted.
+  "ai": { "binding": "AI" },
+
+  // The interface AND the 8.5 MB n-gram reference. `ngram.bin` is fetched by the Worker
+  // itself on the first request an isolate serves, not by the browser.
+  "assets": { "directory": "./assets", "binding": "ASSETS" },
+
+  // Per-IP rate limiting and the daily Workers AI neuron budget. See src/budget.js for why
+  // this is a Durable Object and not KV.
+  "durable_objects": {
+    "bindings": [{ "name": "BUDGET", "class_name": "Budget" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Budget"] }],
+
+  "vars": {
+    "RATE_PER_MINUTE": "6",
+    "RATE_PER_HOUR": "60",
+    // The account allowance is 10,000 neurons/day across everything. Leaving headroom so
+    // this demonstration cannot starve the other Workers on the account.
+    "DAILY_NEURON_BUDGET": "7000"
+  },
+
+  "observability": { "enabled": true }
+}

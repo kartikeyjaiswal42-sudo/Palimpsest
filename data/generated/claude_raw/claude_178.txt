@@ -1,0 +1,25 @@
+The internship was supposed to be my first real experience in software engineering. The company was a mid-sized tech firm, everyone said they were good to interns, and I'd somehow managed to get hired despite my limited experience. My first day, I showed up at the office at eight-thirty, checked in with the hiring manager, and was taken to a desk that was apparently now mine.
+
+Then no one gave me anything to do.
+
+I mean, literally nothing. They said I could look at the codebase, familiarize myself with how the systems worked, and they'd get back to me with a project within a week. The first week passed. Then the second. I'd sit at my desk pretending to read through documentation that I'd already read, pretending to understand architectural decisions that made sense from a bird's-eye view but felt impenetrable when I was actually sitting there trying to contribute. My manager kept saying they were still figuring out what I should work on, that they'd have something for me soon.
+
+Three weeks in, I was still sitting at that desk with nothing to do.
+
+I remember the exact moment I realized this was intentional, or at least inevitable. I was in the office kitchen getting coffee and I overheard two full-time engineers talking about how the hiring had been unplanned and chaotic, how they weren't actually set up to onboard interns, how they'd probably brought me on because someone had a vague idea about needing extra bodies but hadn't actually planned the work. There was no malice in their tone. It was just a thing that had happened. The company had hired me without having a real job for me to do.
+
+I felt genuinely sick about it.
+
+The internship was supposed to be for the whole summer, and I still had about eight weeks left. I could have just quietly kept pretending to work, collecting my paycheck, waiting it out until the end of August. Most interns probably would have. It's not like I was going to be fired for not having work assigned to me. But I couldn't accept that. I didn't spend the entire summer sitting at a desk doing nothing. I was too angry about it, too frustrated with the lack of purpose.
+
+So I pushed back. I went to my manager and said I needed a real project, that I wasn't learning anything useful, that I wanted to either work on something meaningful or find another internship. I was polite about it, but I was direct. I told him exactly what I needed and why I needed it.
+
+His response was to set me up with a project that he himself didn't have time to manage properly. He'd given me something to do, technically, but he was also sort of unloading his own work onto me without really supporting me through it. I had to figure out the project specifications on my own. I had to ask other engineers questions, interrupting their actual work. I had to debug my code without really having anyone to explain to me what the existing codebase was supposed to do.
+
+Looking back, I think I should have just accepted the nothing. I should have read programming blogs and worked on my own projects on the company's dime and been grateful for a paycheck during the summer. I was a seventeen-year-old intern. I had nothing to complain about. But I also can't quite feel bad about pushing back, about refusing to accept that wasting an entire summer was just a normal part of the internship experience.
+
+My parents disagreed with how I handled it. They said I should have just accepted what the company was offering, that I was being ungrateful, that I should have recognized I was in no position to demand anything. They worried that I'd burned a bridge or that I'd develop a reputation as difficult.
+
+I think I was right to ask for something real. I think I was wrong to be so angry about it, and I think I should have been more collaborative about finding a solution. But I don't think I was wrong for wanting to actually learn something during an internship.
+
+That's not resolved. I still think about how I could have handled it differently, how I could have been more political about it, more willing to accept a compromise. But I also don't regret insisting that the summer mean something.

@@ -1,0 +1,44 @@
+{
+ "modern_holdout": {
+  "likely_machine": 0.9824561403508771,
+  "insufficient_evidence": 0.017543859649122806,
+  "no_evidence": 0.0,
+  "out_of_scope": 0.0,
+  "n": 57
+ },
+ "modern_unseen_family": {
+  "likely_machine": 0.5454545454545454,
+  "insufficient_evidence": 0.45454545454545453,
+  "no_evidence": 0.0,
+  "out_of_scope": 0.0,
+  "n": 11
+ },
+ "modern_claude": {
+  "likely_machine": 0.075,
+  "insufficient_evidence": 0.7625,
+  "no_evidence": 0.1625,
+  "out_of_scope": 0.0,
+  "n": 80
+ },
+ "modern_claude_eval": {
+  "likely_machine": 0.07894736842105263,
+  "insufficient_evidence": 0.7894736842105263,
+  "no_evidence": 0.13157894736842105,
+  "out_of_scope": 0.0,
+  "n": 38
+ },
+ "esl": {
+  "likely_machine": 0.025290498974709502,
+  "insufficient_evidence": 0.6274777853725222,
+  "no_evidence": 0.05468215994531784,
+  "out_of_scope": 0.29254955570745045,
+  "n": 1463
+ },
+ "domain_shift": {
+  "likely_machine": 0.0,
+  "insufficient_evidence": 0.7727272727272727,
+  "no_evidence": 0.18181818181818182,
+  "out_of_scope": 0.045454545454545456,
+  "n": 44
+ }
+}

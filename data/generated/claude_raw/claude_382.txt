@@ -1,0 +1,21 @@
+I was the only girl on the robotics team, which at first seemed like it might be a problem and turned out to be a different kind of problem than I'd anticipated.
+
+The team had nine people—eight boys and me. The boys were nice enough, mostly. They didn't overtly exclude me. But there was this constant low-level thing where I had to prove myself in ways they didn't. When they wanted to test a new design, they just tested it. When I suggested something, there'd be a beat where they seemed to be evaluating whether my suggestion was worth considering. Not always—sometimes they just did the thing I suggested. But often enough that I noticed it.
+
+The worst part was that I wasn't sure if I was being paranoid. Maybe they were just deliberate about every decision and I was reading too much into their deliberation. Maybe the fact that I was the only girl on the team wasn't actually creating a dynamic, and I was just bringing anxiety into a space where none existed.
+
+There was one project where I suggested we approach the problem differently than they were planning to. They'd been thinking about it as a power management issue, and I suggested it was actually a balance issue. I had reasons for this—I'd studied the problem and I thought I was right. They listened to me and then kind of moved on. They went ahead with their plan.
+
+Their plan didn't work. Three weeks of building and testing, and the robot still couldn't move efficiently. I remember sitting there thinking, I told you so, but also feeling genuinely awful about it because I didn't want to be right in a way that proved me difficult or made things awkward.
+
+They did eventually come back and ask if I still thought it was a balance issue. I said yes. We tried it my way. It worked. The robot moved smoothly. Problem solved.
+
+I should have felt vindicated. Instead, I felt kind of sad about the whole thing. I felt sad that I had to be more right than everyone else just to be considered equally credible. I felt sad that there'd been this moment where my observation could have saved them three weeks of work, but they didn't consider it seriously enough to try it right away. I felt sad that by the time we figured out I was correct, I just wanted to move past it rather than prove a point.
+
+What I think I got wrong was assuming that this dynamic was something I should bear alone, that me being frustrated about it was somehow selfish or would make me unpopular. I should have said something to the team. I should have named what I was observing—that my suggestions seemed to get less weight than my counterparts' suggestions, and that if they wanted the best solutions, they probably shouldn't dismiss an idea based on who suggested it.
+
+But I didn't say that. I just worked harder to be undeniably correct so that my credibility wouldn't ever be questioned.
+
+The thing that bothers me still is that I'm not even sure if the problem was real or if I invented it. Maybe I was just more insecure than the boys and I was reading into normal team dynamics. Maybe if I do robotics in the future I'll find that this was a one-time thing specific to that particular team. Or maybe it's a real pattern that I'll keep running into and I'll have to keep figuring out how to navigate.
+
+What I know is that I learned how to make myself indispensable, which was effective but also exhausting. I wonder if there was a way to belong without doing that. I wonder if I'll ever find it.

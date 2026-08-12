@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "palimpsest-observer",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-22",
+  "account_id": "225f2c3132920804e70224f830c9aadc",
+  "ai": { "binding": "AI" },
+  "observability": { "enabled": true }
+}

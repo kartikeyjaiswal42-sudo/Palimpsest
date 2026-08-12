@@ -1,0 +1,244 @@
+{
+ "A|char|mistral7binstruct_v2": {
+  "auroc": 0.9973565541906391,
+  "tpr_at_5fpr": 0.981651376146789,
+  "n": 109
+ },
+ "A|char|darragh_claude_v6": {
+  "auroc": 0.9963133199272239,
+  "tpr_at_5fpr": 0.9830508474576272,
+  "n": 118
+ },
+ "A|char|mistral7binstruct_v1": {
+  "auroc": 0.9999692950135102,
+  "tpr_at_5fpr": 1.0,
+  "n": 184
+ },
+ "A|char|llama_70b_v1": {
+  "auroc": 0.9870092482637015,
+  "tpr_at_5fpr": 0.9171974522292994,
+  "n": 157
+ },
+ "A|char|darragh_claude_v7": {
+  "auroc": 0.9995252338223425,
+  "tpr_at_5fpr": 1.0,
+  "n": 119
+ },
+ "A|char|falcon_180b_v1": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n": 91
+ },
+ "A|char|llama2_chat": {
+  "auroc": 0.9970152435774438,
+  "tpr_at_5fpr": 0.9937106918238994,
+  "n": 159
+ },
+ "A|char|radek_500": {
+  "auroc": 0.9461770244821093,
+  "tpr_at_5fpr": 0.8,
+  "n": 150
+ },
+ "A|char|mistralai/Mistral-7B-Instruct-v0.1": {
+  "auroc": 0.9996610169491525,
+  "tpr_at_5fpr": 1.0,
+  "n": 50
+ },
+ "A|char|kingki19_palm": {
+  "auroc": 0.9999423498212845,
+  "tpr_at_5fpr": 1.0,
+  "n": 196
+ },
+ "A|char|Intel-neural-chat-7b-v3-1_LLMEssays_v1": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n": 200
+ },
+ "A|char|Mistral7B_CME_v7": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n": 191
+ },
+ "A|char|llama_falcon_v3_falcon_180b": {
+  "auroc": 0.9950970842262484,
+  "tpr_at_5fpr": 0.9827586206896551,
+  "n": 174
+ },
+ "A|char|llama_falcon_v3_llama_70b": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n": 194
+ },
+ "A|char|text-curie-001": {
+  "auroc": 0.9868535419382877,
+  "tpr_at_5fpr": 0.9423076923076923,
+  "n": 52
+ },
+ "A|char|text-davinci-001": {
+  "auroc": 0.9975988700564972,
+  "tpr_at_5fpr": 1.0,
+  "n": 40
+ },
+ "A|char|text-davinci-003": {
+  "auroc": 0.9999646892655367,
+  "tpr_at_5fpr": 1.0,
+  "n": 160
+ },
+ "A|func|mistral7binstruct_v2": {
+  "auroc": 0.9562535634686156,
+  "tpr_at_5fpr": 0.8073394495412844,
+  "n": 109
+ },
+ "A|func|darragh_claude_v6": {
+  "auroc": 0.9774490089054869,
+  "tpr_at_5fpr": 0.8983050847457628,
+  "n": 118
+ },
+ "A|func|mistral7binstruct_v1": {
+  "auroc": 0.9907885040530582,
+  "tpr_at_5fpr": 0.967391304347826,
+  "n": 184
+ },
+ "A|func|llama_70b_v1": {
+  "auroc": 0.9584727769980927,
+  "tpr_at_5fpr": 0.8089171974522293,
+  "n": 157
+ },
+ "A|func|darragh_claude_v7": {
+  "auroc": 0.9823861748089067,
+  "tpr_at_5fpr": 0.9243697478991597,
+  "n": 119
+ },
+ "A|func|falcon_180b_v1": {
+  "auroc": 0.9879555472775812,
+  "tpr_at_5fpr": 0.945054945054945,
+  "n": 91
+ },
+ "A|func|llama2_chat": {
+  "auroc": 0.9366805244643428,
+  "tpr_at_5fpr": 0.7044025157232704,
+  "n": 159
+ },
+ "A|func|radek_500": {
+  "auroc": 0.9395103578154426,
+  "tpr_at_5fpr": 0.7333333333333333,
+  "n": 150
+ },
+ "A|func|mistralai/Mistral-7B-Instruct-v0.1": {
+  "auroc": 0.9959322033898305,
+  "tpr_at_5fpr": 1.0,
+  "n": 50
+ },
+ "A|func|kingki19_palm": {
+  "auroc": 0.9892770667589069,
+  "tpr_at_5fpr": 0.9336734693877551,
+  "n": 196
+ },
+ "A|func|Intel-neural-chat-7b-v3-1_LLMEssays_v1": {
+  "auroc": 0.9972598870056497,
+  "tpr_at_5fpr": 1.0,
+  "n": 200
+ },
+ "A|func|Mistral7B_CME_v7": {
+  "auroc": 0.9944094418315733,
+  "tpr_at_5fpr": 0.9842931937172775,
+  "n": 191
+ },
+ "A|func|llama_falcon_v3_falcon_180b": {
+  "auroc": 0.985908175855575,
+  "tpr_at_5fpr": 0.9367816091954023,
+  "n": 174
+ },
+ "A|func|llama_falcon_v3_llama_70b": {
+  "auroc": 0.9991263323431766,
+  "tpr_at_5fpr": 1.0,
+  "n": 194
+ },
+ "A|func|text-curie-001": {
+  "auroc": 0.9496957844415471,
+  "tpr_at_5fpr": 0.6923076923076923,
+  "n": 52
+ },
+ "A|func|text-davinci-001": {
+  "auroc": 0.9689265536723164,
+  "tpr_at_5fpr": 0.775,
+  "n": 40
+ },
+ "A|func|text-davinci-003": {
+  "auroc": 0.9895480225988701,
+  "tpr_at_5fpr": 0.95625,
+  "n": 160
+ },
+ "B|char|gemini_flash_lite": {
+  "flag_rate": 1.0,
+  "n": 115
+ },
+ "B|char|gemini_flash": {
+  "flag_rate": 1.0,
+  "n": 22
+ },
+ "B|char|claude_haiku": {
+  "flag_rate": 0.8571428571428571,
+  "n": 42
+ },
+ "B|char|claude_sonnet": {
+  "flag_rate": 0.47619047619047616,
+  "n": 42
+ },
+ "B|char|claude_opus": {
+  "flag_rate": 0.34782608695652173,
+  "n": 46
+ },
+ "B|char|claude_fable": {
+  "flag_rate": 0.4,
+  "n": 30
+ },
+ "B|char|liang_college_human": {
+  "flag_rate": 0.9142857142857143,
+  "n": 70
+ },
+ "B|char|liang_hewlett_human": {
+  "flag_rate": 0.6923076923076923,
+  "n": 65
+ },
+ "B|char|ellipse_esl": {
+  "flag_rate": 0.7425,
+  "n": 400
+ },
+ "B|func|gemini_flash_lite": {
+  "flag_rate": 0.8260869565217391,
+  "n": 115
+ },
+ "B|func|gemini_flash": {
+  "flag_rate": 0.8181818181818182,
+  "n": 22
+ },
+ "B|func|claude_haiku": {
+  "flag_rate": 0.38095238095238093,
+  "n": 42
+ },
+ "B|func|claude_sonnet": {
+  "flag_rate": 0.35714285714285715,
+  "n": 42
+ },
+ "B|func|claude_opus": {
+  "flag_rate": 0.2608695652173913,
+  "n": 46
+ },
+ "B|func|claude_fable": {
+  "flag_rate": 0.36666666666666664,
+  "n": 30
+ },
+ "B|func|liang_college_human": {
+  "flag_rate": 0.5714285714285714,
+  "n": 70
+ },
+ "B|func|liang_hewlett_human": {
+  "flag_rate": 0.13846153846153847,
+  "n": 65
+ },
+ "B|func|ellipse_esl": {
+  "flag_rate": 0.15,
+  "n": 400
+ }
+}

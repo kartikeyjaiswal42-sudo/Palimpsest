@@ -1,0 +1,224 @@
+/* Palimpsest — the layers under the polish.
+   Paper-coloured, because the thing being examined is a document. */
+
+:root {
+  --ink: #1b1a17;
+  --ink-soft: #5c584f;
+  --ink-faint: #8a8478;
+  --paper: #f6f3ec;
+  --card: #fffdf8;
+  --rule: #ddd6c7;
+  --accent: #7a4a2b;
+  --machine: #a8402b;
+  --human: #3f6f52;
+  --focus: #2f5d8a;
+  --radius: 10px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  background: linear-gradient(180deg, #fffdf8, var(--paper));
+  padding: 34px 0 26px;
+  margin-bottom: 28px;
+}
+.masthead h1 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+  font-weight: 620;
+}
+.tagline { margin: 6px 0 0; color: var(--ink-soft); }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 22px;
+}
+.panel.hidden { display: none; }
+
+.panel-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 4px;
+}
+h2 { font-size: 17px; margin: 0 0 8px; letter-spacing: -0.01em; }
+
+.label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+
+textarea {
+  width: 100%; padding: 14px; border: 1px solid var(--rule); border-radius: 8px;
+  font: 15px/1.65 Georgia, "Iowan Old Style", serif; background: #fff; color: var(--ink);
+  resize: vertical;
+}
+textarea:focus, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.controls { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+
+button {
+  font: inherit; font-size: 14px; font-weight: 560; border-radius: 8px;
+  padding: 9px 18px; cursor: pointer; border: 1px solid transparent;
+}
+button.primary { background: var(--accent); color: #fff; }
+button.primary:hover { background: #643c22; }
+button.primary:disabled { background: var(--ink-faint); cursor: progress; }
+button.ghost { background: transparent; color: var(--ink-soft); border-color: var(--rule); }
+button.ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+.status { color: var(--ink-soft); font-size: 13px; }
+.hint { color: var(--ink-soft); font-size: 13.5px; margin: 6px 0 14px; }
+
+/* ---- verdict ---- */
+.verdict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 640px) { .verdict-grid { grid-template-columns: 1fr; } }
+
+.metric { border: 1px solid var(--rule); border-radius: 8px; padding: 16px; background: #fffefb; }
+.metric-label { font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
+.metric-value { font-size: 32px; font-weight: 640; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.metric-sub { font-size: 12.5px; color: var(--ink-faint); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.two-numbers { font-size: 13.5px; color: var(--ink-soft); margin: 14px 0 0; }
+
+/* ---- rendered essay ---- */
+.rendered { font: 16px/1.9 Georgia, "Iowan Old Style", serif; }
+.sentence {
+  cursor: pointer; padding: 1px 2px; border-radius: 3px;
+  border-bottom: 2px solid transparent; transition: background 90ms ease;
+}
+.sentence:hover { background: #f0ebdf; }
+.sentence.selected { box-shadow: 0 0 0 2px var(--focus); }
+.sentence.unreliable { opacity: 0.62; font-style: italic; }
+
+/* Five bands rather than a continuous gradient: a continuous ramp invites the reader to
+   over-read a 3% difference that the model cannot actually resolve. */
+.s0 { background: transparent; }
+.s1 { background: #f6e9dd; }
+.s2 { background: #f2d9c4; }
+.s3 { background: #ecc3a5; border-bottom-color: #d9906a; }
+.s4 { background: #e3a986; border-bottom-color: var(--machine); }
+
+.legend { font-size: 12.5px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; }
+.swatch {
+  display: inline-block; width: 15px; height: 15px; border-radius: 3px;
+  border: 1px solid var(--rule); vertical-align: -3px; margin-left: 8px;
+}
+
+/* ---- evidence ---- */
+.pill {
+  font: 600 12.5px var(--mono); padding: 4px 10px; border-radius: 999px;
+  background: #f0ebdf; color: var(--ink-soft); white-space: nowrap;
+}
+blockquote {
+  margin: 6px 0 12px; padding: 12px 16px; border-left: 3px solid var(--accent);
+  background: #fbf7ef; font: 15.5px/1.7 Georgia, serif;
+}
+
+.bar-row { display: grid; grid-template-columns: 190px 1fr 78px; gap: 12px; align-items: center; margin: 7px 0; }
+@media (max-width: 640px) { .bar-row { grid-template-columns: 130px 1fr 66px; } }
+.bar-name { font-size: 13px; text-align: right; color: var(--ink-soft); }
+.bar-name .grp { display: block; font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+.bar-track { position: relative; height: 20px; background: #f2eee4; border-radius: 4px; }
+.bar-track::after {
+  content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--rule);
+}
+.bar-fill { position: absolute; top: 3px; bottom: 3px; border-radius: 3px; }
+.bar-fill.machine { background: var(--machine); left: 50%; }
+.bar-fill.human { background: var(--human); right: 50%; }
+.bar-val { font: 12.5px var(--mono); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.bar-row.unmeasured { opacity: 0.5; }
+/* The aggregate of the features not shown individually. Separated by a rule because it is
+   a different kind of thing from a named feature -- it closes the sum, it does not explain. */
+.bar-row.remainder { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--rule); }
+.bar-row.remainder .bar-name { font-style: italic; }
+
+.evidence-desc { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-faint); margin: -3px 0 8px 202px; }
+@media (max-width: 640px) { .evidence-desc { margin-left: 142px; } }
+
+/* ---- tokens ---- */
+.tokens { margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 12px; }
+summary { cursor: pointer; font-size: 14px; font-weight: 560; }
+.token-strip { font: 13px/2.1 var(--mono); word-break: break-word; }
+.tok { padding: 1px 1px; border-radius: 2px; }
+.tok.top10 { background: #cfe6d4; }
+.tok.top100 { background: #e6edc6; }
+.tok.top1000 { background: #f5e3c0; }
+.tok.tail { background: #e6e2d8; }
+
+/* ---- limitations ---- */
+#limits-panel { border-color: #d8c4b4; background: #fdf6f1; }
+#limitations { margin: 8px 0 12px; padding-left: 20px; }
+#limitations li { margin: 7px 0; font-size: 14.5px; }
+
+.footnote { color: var(--ink-faint); font-size: 13px; padding-bottom: 40px; }
+code { font: 12.5px var(--mono); background: #f0ebdf; padding: 1px 5px; border-radius: 4px; }
+
+
+/* --- calibrated verdict band ------------------------------------------------
+   Three states, three colours, and the middle one is deliberately as prominent as
+   the other two. An "insufficient evidence" result is a real answer, not a
+   degraded one, and styling it as a muted footnote would recreate the failure it
+   exists to prevent. Nothing here is green: the tool cannot clear anybody, so no
+   state gets the colour that means "all good". */
+.band { border-radius: 10px; padding: 1rem 1.15rem; margin-bottom: 1.1rem;
+        border-left: 5px solid currentColor; }
+.band-label { font-size: 1.15rem; font-weight: 650; margin-bottom: 0.3rem; }
+.band-detail { font-size: 0.9rem; line-height: 1.5; opacity: 0.85; color: inherit; }
+.band-likely_machine        { color: #b3261e; background: rgba(179, 38, 30, 0.09); }
+.band-insufficient_evidence { color: #8a6100; background: rgba(138, 97, 0, 0.10); }
+.band-no_evidence           { color: #3f4a57; background: rgba(63, 74, 87, 0.09); }
+/* out_of_scope was added after the other three and had NO rule, so it rendered with a
+   transparent background -- found by screenshotting the page, not by reading the markup.
+   Informational blue: it is not a finding about the writer, it is a statement about us. */
+.band-out_of_scope          { color: #1f5673; background: rgba(31, 86, 115, 0.10); }
+
+@media (prefers-color-scheme: dark) {
+  .band-likely_machine        { color: #ff8a80; background: rgba(255, 138, 128, 0.12); }
+  .band-insufficient_evidence { color: #ffc65c; background: rgba(255, 198, 92, 0.12); }
+  .band-no_evidence           { color: #b6c2d1; background: rgba(182, 194, 209, 0.12); }
+  .band-out_of_scope          { color: #7fc4e8; background: rgba(127, 196, 232, 0.12); }
+}
+
+
+/* ---- abstention must not look like an acquittal -------------------------------------
+   The two big percentages are the most misreadable thing on the page when the tool has
+   declined to answer: a reader takes "19% machine" as "81% human". Muting them whenever
+   the band is not a finding keeps them available as evidence while removing their claim to
+   be the answer -- the band above stays at full contrast and remains the headline. */
+.verdict-grid[data-band="insufficient_evidence"] .metric-value,
+.verdict-grid[data-band="out_of_scope"] .metric-value {
+  opacity: 0.5;
+  font-weight: 500;
+}
+.verdict-caveat {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--ink-faint);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft, var(--ink-faint));
+  background: rgba(127, 127, 127, 0.06);
+}
+.verdict-caveat[hidden] { display: none; }
+
+/* Added by edge/scripts/sync_web.py -- the hosted build surfaces one extra condition. */
+.notice {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid #b8860b;
+  background: rgba(184, 134, 11, 0.08);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.notice.hidden { display: none; }

@@ -1,0 +1,170 @@
+{
+ "shared-human|char|gemini_flash_lite": {
+  "auroc": 0.9963922294172063,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 115,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|char|gemini_flash": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 22,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|char|claude_haiku": {
+  "auroc": 0.9868287740628167,
+  "tpr_at_5fpr": 0.8809523809523809,
+  "n_target": 42,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|char|claude_sonnet": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 42,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|char|claude_opus": {
+  "auroc": 0.987627197039778,
+  "tpr_at_5fpr": 0.9347826086956522,
+  "n_target": 46,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|char|claude_fable": {
+  "auroc": 0.9984042553191489,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 30,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|func|gemini_flash_lite": {
+  "auroc": 0.9590656799259945,
+  "tpr_at_5fpr": 0.8,
+  "n_target": 115,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|func|gemini_flash": {
+  "auroc": 0.9842843326885881,
+  "tpr_at_5fpr": 0.9545454545454546,
+  "n_target": 22,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|func|claude_haiku": {
+  "auroc": 0.9612462006079028,
+  "tpr_at_5fpr": 0.7857142857142857,
+  "n_target": 42,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|func|claude_sonnet": {
+  "auroc": 0.9769503546099291,
+  "tpr_at_5fpr": 0.8809523809523809,
+  "n_target": 42,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|func|claude_opus": {
+  "auroc": 0.9638066604995374,
+  "tpr_at_5fpr": 0.8260869565217391,
+  "n_target": 46,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "shared-human|func|claude_fable": {
+  "auroc": 0.9831560283687943,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 30,
+  "n_human_test": 188,
+  "human_test": "pooled (seen)"
+ },
+ "unseen-human|char|gemini_flash_lite": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 115,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|char|gemini_flash": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 22,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|char|claude_haiku": {
+  "auroc": 0.9998015873015873,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 42,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|char|claude_sonnet": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 42,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|char|claude_opus": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 46,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|char|claude_fable": {
+  "auroc": 1.0,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 30,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|func|gemini_flash_lite": {
+  "auroc": 0.9670289855072464,
+  "tpr_at_5fpr": 0.7739130434782608,
+  "n_target": 115,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|func|gemini_flash": {
+  "auroc": 0.9912878787878788,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 22,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|func|claude_haiku": {
+  "auroc": 0.9859126984126985,
+  "tpr_at_5fpr": 0.9523809523809523,
+  "n_target": 42,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|func|claude_sonnet": {
+  "auroc": 0.9888888888888889,
+  "tpr_at_5fpr": 0.9761904761904762,
+  "n_target": 42,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|func|claude_opus": {
+  "auroc": 0.9869565217391304,
+  "tpr_at_5fpr": 0.9347826086956522,
+  "n_target": 46,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ },
+ "unseen-human|func|claude_fable": {
+  "auroc": 0.9952777777777778,
+  "tpr_at_5fpr": 1.0,
+  "n_target": 30,
+  "n_human_test": 120,
+  "human_test": "human_persuade (unseen)"
+ }
+}

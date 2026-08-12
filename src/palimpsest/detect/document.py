@@ -42,6 +42,22 @@ __all__ = [
 #: text than accuse a student. docs/03-evaluation.md shows the full trade-off curve.
 FLAG_THRESHOLD = 0.65
 
+#: A "sentence" longer than this many words is not scored into the document verdict.
+#:
+#: Defined here, in words, so the serving path and the evaluation scripts share one number.
+#: The features are per-sentence; applied to a 466-word span every one of them is out of the
+#: distribution it was fitted on. `n_words` lands 50 standard deviations high and `root_ttr`
+#: -- distinct words over the square root of the count -- is inflated by construction.
+#:
+#: This is not hypothetical. Three ELLIPSE and PERSUADE essays by second-language writers
+#: contain no sentence-ending punctuation at all, so each segments to a single 312-, 313- or
+#: 466-word "sentence", and all three were flagged as machine at P > 0.90. They are the least
+#: fluent writing in the corpus, by the students least able to contest an accusation.
+#:
+#: 90 words is far above any real sentence (the 99.9th percentile in the corpus is near 60)
+#: and far below a run-on essay, so ordinary prose is untouched.
+MAX_SENTENCE_WORDS = 90
+
 #: A run of flagged sentences shorter than this is reported as a weaker "isolated sentence"
 #: signal rather than a passage. Single-sentence flags are the noisiest thing we produce.
 MIN_PASSAGE_WORDS = 25
@@ -148,8 +164,20 @@ def aggregate(
     if not sentences:
         return DocumentVerdict(0.0, 0.0, 0.0, 0.0, 0, 0, 0)
 
-    probs = np.array([s.probability for s in sentences], dtype=np.float64)
-    words = np.array([s.n_words for s in sentences], dtype=np.float64)
+    # A sentence the tool has said it cannot measure must not decide the answer. `reliable`
+    # used to be reported and then ignored here, which made it decoration: the three run-on
+    # ESL essays above were each marked unreliable AND flagged as machine at P > 0.90 in the
+    # same response. Unreliable spans are dropped from both the numerator and the denominator
+    # -- counting them as human would be just as much of a claim as counting them as machine.
+    scored = [s for s in sentences if s.reliable] or []
+    if not scored:
+        # Nothing measurable. Say so with a neutral verdict rather than a confident one
+        # computed from spans we have just declared out of distribution.
+        return DocumentVerdict(0.0, 0.0, 0.0, 0.0, len(sentences),
+                               int(sum(s.n_words for s in sentences)), 0)
+
+    probs = np.array([s.probability for s in scored], dtype=np.float64)
+    words = np.array([s.n_words for s in scored], dtype=np.float64)
     total_words = float(words.sum())
 
     flagged = probs >= threshold

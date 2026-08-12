@@ -1,0 +1,111 @@
+{
+  "essay": "A Gemini-written admissions essay supplied by a user who expected it to be caught.",
+  "verdict_shipped": {
+    "band": "insufficient_evidence",
+    "machineShare": 0.1347,
+    "anyMachineProbability": 0.149,
+    "sentencesFlagged": "4 / 27"
+  },
+  "question": "Gemini holdout recall is 98.2%. Why is this Gemini essay not caught?",
+  "answer": "Because on the statistics this detector measures, the essay is LESS machine-like than the average HUMAN essay in the corpus -- not marginally, by 2+ SD on the load-bearing features. There is no threshold that catches it and leaves the human essays alone.",
+  "document_averaged_features_vs_training_distributions": {
+    "mean_logprob": {
+      "essay": -3.426,
+      "human": [
+        -2.796,
+        0.279
+      ],
+      "machine": [
+        -2.08,
+        0.337
+      ],
+      "z_vs_human": -2.26,
+      "z_vs_machine": -4.0
+    },
+    "mean_log_rank": {
+      "essay": 1.853,
+      "human": [
+        1.369,
+        0.192
+      ],
+      "machine": [
+        0.938,
+        0.193
+      ],
+      "z_vs_human": 2.52,
+      "z_vs_machine": 4.73
+    },
+    "frac_rank_top1": {
+      "essay": 0.377,
+      "human": [
+        0.439,
+        0.038
+      ],
+      "machine": [
+        0.522,
+        0.055
+      ],
+      "z_vs_human": -1.6,
+      "z_vs_machine": -2.64
+    },
+    "lrr": {
+      "essay": 1.876,
+      "human": [
+        2.105,
+        0.135
+      ],
+      "machine": [
+        2.313,
+        0.179
+      ],
+      "z_vs_human": -1.7,
+      "z_vs_machine": -2.44
+    },
+    "specificity_rate": {
+      "essay": 2.396,
+      "human": [
+        2.827,
+        2.104
+      ],
+      "machine": [
+        0.55,
+        0.69
+      ],
+      "z_vs_human": -0.2,
+      "z_vs_machine": 2.68
+    },
+    "novel_trigram_rate": {
+      "essay": 0.88,
+      "human": [
+        0.825,
+        0.031
+      ],
+      "machine": [
+        0.804,
+        0.036
+      ],
+      "z_vs_human": 1.76,
+      "z_vs_machine": 2.1
+    },
+    "corpus_surprisal_mean": {
+      "essay": 7.453,
+      "human": [
+        6.808,
+        0.265
+      ],
+      "machine": [
+        6.733,
+        0.297
+      ],
+      "z_vs_human": 2.44,
+      "z_vs_machine": 2.43
+    }
+  },
+  "reading": [
+    "Every rank/probability feature puts the essay further from the machine distribution than the human essays themselves are. The observer finds this text HARDER to predict than typical human admissions prose.",
+    "specificity_rate 2.396 sits inside the human distribution (z=-0.20) and 2.68 SD above the machine one. Concrete proper nouns -- TheNectar, UP Trade Show, direct-DC solar induction -- are exactly what generic model prose lacks, and this essay is full of them.",
+    "corpus_surprisal_mean is the only feature on the machine side, and it is 2.4 SD from BOTH distributions, so it separates nothing here.",
+    "The essay is Gemini output that has been given real, specific, personal content. That content is what the detector reads as human, and it is not wrong to: rare proper nouns genuinely are improbable tokens."
+  ],
+  "honest_conclusion": "This is the documented ceiling, arriving in a single concrete document rather than an aggregate. The tool reports 'insufficient evidence' and says a low number is not a clearance, which is the correct behaviour for a case it cannot see. Raising sensitivity until this essay is caught would flag human essays that look exactly like it -- the ones with the most specific personal detail."
+}

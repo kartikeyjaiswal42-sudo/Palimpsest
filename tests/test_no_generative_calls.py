@@ -59,3 +59,22 @@ def test_scorer_uses_a_single_forward_pass():
     assert "torch.no_grad()" in source
     assert ".generate(" not in source
     assert "apply_chat_template" not in source
+
+
+def test_privacy_note_matches_the_observer_actually_in_use():
+    """The health note must not claim locality the running configuration does not have.
+
+    Regression guard. The note read "no text is sent anywhere" for as long as the observer
+    was GPT-2 in-process. When the default observer moved to Workers AI the sentence stayed
+    put and became a false privacy claim -- the kind of stale assertion that is worse than
+    silence, because a user checks it precisely when they care about the answer.
+    """
+    from palimpsest.api import app as api
+
+    note = api.health()["note"].lower()
+    if api.OBSERVER == "remote":
+        assert "is sent" in note, "remote observer must disclose that text leaves the machine"
+        assert api.health()["textLeavesMachine"] is True
+    else:
+        assert "no text is sent anywhere" in note
+        assert api.health()["textLeavesMachine"] is False

@@ -1,0 +1,21 @@
+I started learning to code because my cousin Ines was seven and had had a bad year, and I thought I could make her a game about a frog.
+
+That was the whole plan. Her parents had separated, she had moved schools twice, and when she came to us in the summer she mostly sat under the dining table with an iPad. She liked frogs, specifically, with a seven-year-old's total commitment. So I downloaded a Python tutorial and decided I would build her something in a fortnight, because I had assumed that programming was a matter of knowing the right words, and that once you knew them you typed and things happened.
+
+The fortnight became four months. I want to be honest that most of that time I did not enjoy it. I found it humiliating in a way I had not been prepared for. I am the kind of student who is used to being competent quickly, and here was a thing that would refuse to run because of a colon. Not a wrong idea — a colon.
+
+The frog game was, by October, a rectangle that could jump. I showed Ines on a video call and she said, where is the frog, and I said it is being a rectangle at the moment, and she said, oh.
+
+Here is where I changed my mind, and it happened at about eleven at night in November over something small.
+
+I was trying to make the frog fall back down after jumping, and I had written it so that every frame the frog moved down by three pixels. It looked wrong. It looked like the frog was being lowered on a string. I could see it was wrong and I could not say why. And then — I genuinely remember the physical feeling of this — I thought about my mechanics homework, and the fact that falling things do not have a constant speed, they have a constant acceleration. So instead of moving the frog down three, I made a number called velocity, and each frame I added a bit to the velocity, and then moved the frog down by the velocity.
+
+It took two lines. And the frog fell like a real thing falls.
+
+I sat there for a while. What had happened was not that I had learned a coding trick. What had happened was that a piece of physics I had been able to recite for two years — that gravity is an acceleration, not a speed — had for the first time been something I could see. I had written the sentence "a = 9.81" perhaps two hundred times. I had never once believed it in my body until a green rectangle fell correctly off a ledge on my laptop.
+
+That reorganised what I thought I was doing. Until then I had understood code as instructions: a way of getting a machine to perform tasks. From that night I understood it as a way of building a small claim about how something works and then watching whether the claim behaves. If your model of falling is wrong, the frog looks wrong. The screen is not judging your typing. It is judging your understanding.
+
+After that I stopped being humiliated by the errors, mostly, because I had a different relationship with them. An error meant my model was incomplete, which is interesting, rather than that I was slow, which is not.
+
+Ines got her game at Christmas. It has a frog, sprites I drew badly in Piskel, lily pads that sink if you stand on them too long, and a bug where if you jump at the exact edge you can get inside the log. She found the bug in four minutes. She likes the bug more than the game, and she has shown it to her friends, and now she wants to know how to make her own one, which is how I ended up teaching a nine-year-old about velocity over FaceTime on Sundays.

@@ -1,0 +1,66 @@
+{
+ "modern_unseen_family": {
+  "what": "modern model FAMILY withheld entirely",
+  "kind": "recall",
+  "nDocuments": 22,
+  "before": 0.0,
+  "after": 0.4545,
+  "change": 0.4545
+ },
+ "modern_unseen": {
+  "what": "modern checkpoint withheld entirely",
+  "kind": "recall",
+  "nDocuments": 250,
+  "before": 0.0,
+  "after": 0.8,
+  "change": 0.8
+ },
+ "modern_holdout": {
+  "what": "unseen essays, generator seen in training",
+  "kind": "recall",
+  "nDocuments": 115,
+  "before": 0.0,
+  "after": 0.9478,
+  "change": 0.9478
+ },
+ "modern_control": {
+  "what": "same generator, NO subject steering (topic control)",
+  "kind": "recall",
+  "nDocuments": 45,
+  "before": 0.0,
+  "after": 0.9556,
+  "change": 0.9556
+ },
+ "unseen_prompting": {
+  "what": "GPT-3.5 prompted to evade",
+  "kind": "recall",
+  "nDocuments": 31,
+  "before": 0.0645,
+  "after": 0.3871,
+  "change": 0.3226
+ },
+ "adversarial": {
+  "what": "prose composed by hand to imitate a model",
+  "kind": "recall",
+  "nDocuments": 21,
+  "before": 0.0,
+  "after": 0.0,
+  "change": 0.0
+ },
+ "esl": {
+  "what": "essays by English-language learners",
+  "kind": "false positive",
+  "nDocuments": 791,
+  "before": 0.0645,
+  "after": 0.0607,
+  "change": -0.0038
+ },
+ "domain_shift": {
+  "what": "human writing from another domain",
+  "kind": "false positive",
+  "nDocuments": 88,
+  "before": 0.0,
+  "after": 0.0,
+  "change": 0.0
+ }
+}
