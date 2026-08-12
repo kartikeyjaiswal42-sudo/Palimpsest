@@ -201,7 +201,14 @@ class RemoteLMScorer:
             sigma2=_col(toks, "sigma2"),
             top_mass=_col(toks, "mass"),
             model_name=payload.get("model", self.model),
-            clipped=bool(payload.get("clipped")),
+            # The CLIENT is the only party that can see this happen, and it used to be the
+            # only party not asked. `_fetch` sends `text[:MAX_CHARS]`, and the worker derives
+            # its own flag by comparing what it RECEIVED against the same MAX_CHARS -- a
+            # comparison this client has already guaranteed to be false. So `clipped` was
+            # structurally incapable of being true on this path, and an essay scored on its
+            # first 6,000 characters reported no truncation at all. Measured on an 8,496-char
+            # essay: 27 sentences and 453 words were never sent, and nothing said so.
+            clipped=bool(payload.get("clipped")) or len(text) > MAX_CHARS,
             neurons=payload.get("neurons"),
         )
 
@@ -366,6 +373,10 @@ class RemoteObserverScorer:
             sigma2=nan if r.sigma2 is None else r.sigma2,
             model_name=r.model_name,
             device="remote",
+            # Carried across the adapter. Dropping it here is what made the 6,000-character
+            # window invisible to everything downstream: the flag was computed, and then the
+            # only object that reaches `Analyzer` had nowhere to put it.
+            clipped=r.clipped,
         )
 
 

@@ -66,6 +66,12 @@ class SentenceReport:
     reliable: bool
     features: dict[str, float]
     prediction: Prediction
+    #: Why this span could not be measured, or None when it could. The interface used to
+    #: supply this itself, as the single fixed phrase "too short to measure reliably" -- which
+    #: is exactly backwards for the case the reliability rule exists to catch. A 138-word
+    #: run-on was shown to the reader as "97% machine-like -- too short to measure reliably".
+    #: Only the pipeline knows which condition actually failed, so it says.
+    unreliable_reason: str | None = None
 
     def to_dict(self, top_k: int = 6) -> dict:
         return {
@@ -77,6 +83,7 @@ class SentenceReport:
             "smoothed": round(self.smoothed, 4),
             "nWords": self.n_words,
             "reliable": self.reliable,
+            "unreliableReason": self.unreliable_reason,
             "logit": round(self.prediction.logit, 4),
             "evidence": [
                 {
@@ -243,22 +250,30 @@ class Analyzer:
                 sentences=[],
                 passages=[],
                 tokens=[],
-                meta=self._meta(0.0, 0),
+                meta=self._meta(0.0, token_scores),
             )
 
         predictions = [self.detector.predict(f) for f in features]
         probs = np.array([p.probability for p in predictions], dtype=np.float64)
         word_counts = np.array([len(tokenize_words(s.text)) for s in spans], dtype=np.float64)
-        smoothed = smooth_probabilities(probs, word_counts)
+
+        token_counts = [len(token_scores.select(s.start, s.end)) for s in spans]
+        # bool(), not the bare comparison: word_counts is a numpy array, so the comparison
+        # yields numpy.bool_, which pydantic refuses to serialise and the API answers 500 on
+        # every request. Nothing in the type annotation catches it.
+        reliable_flags = [
+            bool(token_counts[i] >= MIN_TOKENS and word_counts[i] <= MAX_SENTENCE_WORDS)
+            for i in range(len(spans))
+        ]
+        # Smoothing is told which spans are measurable, because it is weighted by word count
+        # and the unmeasurable spans are the long ones. See smooth_probabilities.
+        smoothed = smooth_probabilities(probs, word_counts, np.array(reliable_flags, dtype=bool))
 
         reports: list[SentenceReport] = []
         verdicts: list[SentenceVerdict] = []
         for i, span in enumerate(spans):
-            n_tokens = len(token_scores.select(span.start, span.end))
-            # bool(), not the bare comparison: word_counts is a numpy array, so the
-            # comparison yields numpy.bool_, which pydantic refuses to serialise and the API
-            # answers 500 on every request. Nothing in the type annotation catches it.
-            reliable = bool(n_tokens >= MIN_TOKENS and word_counts[i] <= MAX_SENTENCE_WORDS)
+            n_tokens = token_counts[i]
+            reliable = reliable_flags[i]
             reports.append(
                 SentenceReport(
                     index=i,
@@ -271,6 +286,9 @@ class Analyzer:
                     reliable=reliable,
                     features=features[i],
                     prediction=predictions[i],
+                    unreliable_reason=_why_unmeasurable(
+                        n_tokens, int(word_counts[i]), span.start, token_scores
+                    ),
                 )
             )
             verdicts.append(
@@ -302,18 +320,53 @@ class Analyzer:
             sentences=reports,
             passages=find_passages(verdicts),
             tokens=_token_views(token_scores),
-            meta=self._meta(elapsed, len(token_scores)),
+            meta=self._meta(elapsed, token_scores),
         )
 
-    def _meta(self, elapsed: float, n_tokens: int) -> dict:
+    def _meta(self, elapsed: float, scores: TokenScores | None) -> dict:
         return {
             "observer": self.scorer.model_name,
             "device": self.scorer.device,
             "hasCorpusReference": self.reference is not None,
-            "nObserverTokens": n_tokens,
+            "nObserverTokens": 0 if scores is None else len(scores),
             "elapsedMs": round(elapsed * 1000, 1),
+            # Whether the observer saw the whole document, and how much of it it can see at
+            # once. Without these the interface cannot tell a verdict on an essay from a
+            # verdict on its opening. The hosted build has published `clipped` since it
+            # shipped; this build had the flag and threw it away.
+            "clipped": bool(getattr(scores, "clipped", False)),
+            "observerCharLimit": getattr(self.scorer, "max_length", None),
             "trainedOn": self.detector.metadata,
         }
+
+
+def _why_unmeasurable(
+    n_tokens: int, n_words: int, start: int, scores: TokenScores
+) -> str | None:
+    """Which reliability condition failed, or None if none did.
+
+    Three different conditions were being reported to the reader as one sentence -- "too
+    short to measure reliably" -- and for two of them that phrase is false. A 138-word
+    run-on is not short; it is the opposite, and it is the exact shape of writing (ELLIPSE
+    and PERSUADE essays with no sentence-ending punctuation) that the reliability rule was
+    added to protect. Telling that student their sentence was too short is not a wording nit:
+    it misdirects the one person most likely to want to contest the result.
+
+    Order matters. "Never looked at" outranks the others, because a span outside the
+    observer's window has no measurement to be out of distribution in the first place.
+    """
+    if scores.clipped and n_tokens == 0 and start >= _observed_chars(scores):
+        return "beyond_observer_window"
+    if n_words > MAX_SENTENCE_WORDS:
+        return "too_long"
+    if n_tokens < MIN_TOKENS:
+        return "too_short"
+    return None
+
+
+def _observed_chars(scores: TokenScores) -> int:
+    """The last character the observer actually read. 0 when it read nothing."""
+    return int(scores.char_end[-1]) if len(scores) else 0
 
 
 def _token_views(scores: TokenScores) -> list[TokenView]:

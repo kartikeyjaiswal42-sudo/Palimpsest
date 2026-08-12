@@ -29,7 +29,15 @@
         title="An essay with a hand-polished paragraph. We highlight the right paragraph but decline to flag the essay — the operating point, costing us a catch.">Example it lets through</button>
       <span id="status" class="status" role="status" aria-live="polite"></span>
     </div>
-    <div id="notice" class="notice hidden" role="status"></div>
+    <!--
+      The observer reads a bounded number of characters in one pass. Past that boundary the
+      remaining sentences carry no observer tokens at all, are marked unmeasurable, and are
+      dropped from the document verdict -- so the verdict describes a PREFIX while the page
+      shows a whole essay. Announcing that is not a nicety: presenting a verdict on the first
+      6,000 characters as a verdict on the essay is the same quiet overclaim this project
+      exists to avoid. Filled in by app.js from meta.clipped; hidden when nothing was cut.
+    -->
+    <div id="notice" class="notice" role="status" hidden></div>
   </section>
 
   <section class="panel hidden" id="verdict-panel">

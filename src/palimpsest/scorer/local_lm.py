@@ -64,6 +64,14 @@ class TokenScores:
     sigma2: np.ndarray  # float32, Var[log P] under the model's own distribution
     model_name: str
     device: str
+    #: True when the observer did not see the whole document.
+    #:
+    #: Always False for this scorer -- a long essay is scored with a sliding window, so every
+    #: token gets read. It lives here rather than on the remote scorer's own dataclass because
+    #: this is the type `Analyzer` consumes, and a fact that stops at the adapter is a fact the
+    #: interface cannot report. The remote observer has a hard 6,000-character window, and
+    #: whether it was hit changes what the verdict is a verdict ABOUT.
+    clipped: bool = False
 
     def __len__(self) -> int:
         return len(self.tokens)
@@ -87,6 +95,7 @@ class TokenScores:
             sigma2=self.sigma2[keep],
             model_name=self.model_name,
             device=self.device,
+            clipped=self.clipped,
         )
 
 

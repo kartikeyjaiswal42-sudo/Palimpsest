@@ -42,23 +42,6 @@ PATCHES: list[tuple[str, str, str, str]] = [
     locally, run the project yourself with <code>PALIMPSEST_OBSERVER=gpt2</code>.""",
     ),
     (
-        "index.html",
-        "surface observer clipping, which silently limits the verdict to the first 6,000 characters",
-        """      <span id="status" class="status" role="status" aria-live="polite"></span>
-    </div>
-  </section>""",
-        """      <span id="status" class="status" role="status" aria-live="polite"></span>
-    </div>
-    <div id="notice" class="notice hidden" role="status"></div>
-  </section>""",
-    ),
-    (
-        "app.js",
-        "the observer is remote here, so do not tell the user it is local",
-        '''  els.status.textContent = "Scoring with the local model…";''',
-        '''  els.status.textContent = "Scoring…";''',
-    ),
-    (
         "app.js",
         "the Worker answers errors as {error, detail}; report rate limits and budget stops plainly",
         """    if (!res.ok) {
@@ -70,42 +53,16 @@ PATCHES: list[tuple[str, str, str, str]] = [
       throw new Error(body.detail || body.error || `request failed (${res.status})`);
     }""",
     ),
-    (
-        "app.js",
-        "say so when the observer only scored a prefix, rather than presenting a partial verdict as whole",
-        """    [els.verdict, els.textPanel, els.limits].forEach((p) => p.classList.remove("hidden"));""",
-        """    const notice = document.getElementById("notice");
-    if (notice) {
-      // The observer scores at most 6,000 characters. Beyond that, sentences carry no
-      // observer tokens, are marked unreliable, and are dropped from the document verdict --
-      // so the verdict describes a prefix. Presenting that as a verdict on the whole essay
-      // would be the same class of quiet overclaim this project exists to avoid.
-      if (data.meta && data.meta.clipped) {
-        notice.textContent =
-          "This essay is longer than the observer scores in one pass (6,000 characters). " +
-          "The verdict describes the first 6,000 characters only; the rest is shown " +
-          "unhighlighted and was not measured.";
-        notice.classList.remove("hidden");
-      } else {
-        notice.classList.add("hidden");
-      }
-    }
-    [els.verdict, els.textPanel, els.limits].forEach((p) => p.classList.remove("hidden"));""",
-    ),
 ]
 
-EXTRA_CSS = """
-/* Added by edge/scripts/sync_web.py -- the hosted build surfaces one extra condition. */
-.notice {
-  margin-top: 0.75rem;
-  padding: 0.6rem 0.8rem;
-  border-left: 3px solid #b8860b;
-  background: rgba(184, 134, 11, 0.08);
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-.notice.hidden { display: none; }
-"""
+#: Three patches used to live here and no longer do, because what they corrected is now
+#: correct in `web/` itself: the observer-clipping notice, its stylesheet rule, and a status
+#: line that said "Scoring with the local model" while the observer was 30 B parameters away
+#: on Workers AI. Each was a real fix that existed on ONE side of the port, which is the
+#: failure this file's own docstring warns about and the same one that let the limitations
+#: panel publish a different build's error rates. A correction belongs in `web/`; a patch
+#: here is only for what genuinely differs between running locally and running hosted.
+EXTRA_CSS = ""
 
 
 def main() -> int:

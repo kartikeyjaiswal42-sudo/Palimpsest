@@ -8,6 +8,7 @@
  * model for an opinion.
  */
 
+import { MAX_OBSERVER_CHARS } from './observer.js';
 import { splitSentences, tokenizeWords } from './segment.js';
 import {
   extractContextFeatures, extractModelFeatures, extractSurfaceFeatures, MIN_TOKENS,
@@ -177,21 +178,39 @@ export function analyze(text, observation, models, { includeTokens = true, topK 
   const predictions = features.map((fv) => detector.predict(fv));
   const probs = predictions.map((p) => p.probability);
   const wordCounts = spans.map((s) => tokenizeWords(s.text).length);
-  const smoothed = smoothProbabilities(probs, wordCounts.slice());
 
-  const verdicts = spans.map((span, i) => {
-    const nTokens = selectTokens(tokens, span.start, span.end).n;
-    return {
-      index: i,
-      start: span.start,
-      end: span.end,
-      text: span.text,
-      probability: probs[i],
-      nWords: wordCounts[i],
-      smoothed: smoothed[i],
-      reliable: nTokens >= MIN_TOKENS && wordCounts[i] <= MAX_SENTENCE_WORDS,
-    };
-  });
+  const tokenCounts = spans.map((s) => selectTokens(tokens, s.start, s.end).n);
+  const reliableFlags = spans.map((s, i) =>
+    tokenCounts[i] >= MIN_TOKENS && wordCounts[i] <= MAX_SENTENCE_WORDS);
+  // Smoothing is told which spans are measurable. It is weighted by word count and the
+  // unmeasurable spans are the long ones, so without this a 466-word span the verdict
+  // refuses to score still decided its 20-word neighbour's smoothed value, and the smoothed
+  // value is what draws passages. See smooth_probabilities in detect/document.py.
+  const smoothed = smoothProbabilities(probs, wordCounts.slice(), reliableFlags);
+
+  // The last character the observer actually read, used to tell "never looked at" apart from
+  // the other reasons a span is unmeasurable.
+  const observedChars = tokens.length ? tokens[tokens.length - 1].end : 0;
+  const whyUnmeasurable = (i, span) => {
+    if (observation.clipped && tokenCounts[i] === 0 && span.start >= observedChars) {
+      return 'beyond_observer_window';
+    }
+    if (wordCounts[i] > MAX_SENTENCE_WORDS) return 'too_long';
+    if (tokenCounts[i] < MIN_TOKENS) return 'too_short';
+    return null;
+  };
+
+  const verdicts = spans.map((span, i) => ({
+    index: i,
+    start: span.start,
+    end: span.end,
+    text: span.text,
+    probability: probs[i],
+    nWords: wordCounts[i],
+    smoothed: smoothed[i],
+    reliable: reliableFlags[i],
+    unreliableReason: whyUnmeasurable(i, span),
+  }));
 
   // The document verdict uses the FITTED sentence threshold; passages use the display
   // threshold. Both match the Python serving path, which does the same thing.
@@ -231,7 +250,7 @@ export function analyze(text, observation, models, { includeTokens = true, topK 
       inDomainProbability: round(pIn, 4),
     },
     sentences: spans.map((span, i) => sentenceReport(i, span, predictions[i], probs[i],
-      smoothed[i], wordCounts[i], verdicts[i].reliable, topK)),
+      smoothed[i], wordCounts[i], verdicts[i], topK)),
     passages: passages.map((p) => ({
       start: p.start,
       end: p.end,
@@ -251,7 +270,7 @@ export function analyze(text, observation, models, { includeTokens = true, topK 
   };
 }
 
-function sentenceReport(i, span, prediction, probability, smoothed, nWords, reliable, topK) {
+function sentenceReport(i, span, prediction, probability, smoothed, nWords, verdict, topK) {
   const sorted = prediction.contributions
     .map((c, idx) => ({ c, idx }))
     .sort((a, b) => Math.abs(b.c.contribution) - Math.abs(a.c.contribution) || a.idx - b.idx)
@@ -270,7 +289,8 @@ function sentenceReport(i, span, prediction, probability, smoothed, nWords, reli
     probability: round(probability, 4),
     smoothed: round(smoothed, 4),
     nWords,
-    reliable,
+    reliable: verdict.reliable,
+    unreliableReason: verdict.unreliableReason,
     logit: round(prediction.logit, 4),
     evidence: sorted.map(({ c }) => {
       const m = FEATURES_BY_NAME[c.name] ?? {};
@@ -304,6 +324,9 @@ function meta(observation, models, elapsedMs, nTokens) {
     nObserverTokens: nTokens,
     elapsedMs,
     clipped: Boolean(observation.clipped),
+    // Published so the interface can name the window without hard-coding it. A constant
+    // repeated in the page is a constant that drifts from the one the observer used.
+    observerCharLimit: MAX_OBSERVER_CHARS,
     trainedOn: models.detector.metadata,
   };
 }

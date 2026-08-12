@@ -98,21 +98,36 @@ class DocumentVerdict:
     n_reliable_sentences: int
 
 
-def smooth_probabilities(probs: np.ndarray, weights: np.ndarray) -> np.ndarray:
+def smooth_probabilities(
+    probs: np.ndarray, weights: np.ndarray, reliable: np.ndarray | None = None
+) -> np.ndarray:
     """Length-weighted moving average over a +/-1 sentence window.
 
     A single sentence is a small sample and its probability is correspondingly jumpy.
     Smoothing before thresholding is what stops the interface lighting up one clause in the
     middle of an obviously human paragraph. The unsmoothed value is still what the evidence
     panel reports, because that is the number the features actually explain.
+
+    ``reliable`` marks the spans the tool has said it cannot measure, and they are given
+    weight zero here. The window is weighted by WORD COUNT, and the spans that fail the
+    reliability test are the long ones -- a 466-word run-on outweighs a 20-word neighbour
+    23 to 1 even after the neighbour's own vote is doubled, so without this an unmeasurable
+    span decides its neighbour's smoothed value almost by itself, and the smoothed value is
+    what draws passages. An unreliable span keeps its own raw probability: there is nothing
+    to smooth it toward, and it is excluded downstream regardless.
     """
     n = len(probs)
     if n == 0:
         return probs
+    ok = np.ones(n, dtype=bool) if reliable is None else np.asarray(reliable, dtype=bool)
     out = np.empty(n, dtype=np.float64)
     for i in range(n):
+        if not ok[i]:
+            out[i] = probs[i]
+            continue
         lo, hi = max(0, i - 1), min(n, i + 2)
         w = weights[lo:hi].astype(np.float64).copy()
+        w[~ok[lo:hi]] = 0.0
         # The sentence itself counts double; neighbours inform, they do not outvote.
         w[i - lo] *= 2.0
         total = w.sum()
@@ -123,7 +138,20 @@ def smooth_probabilities(probs: np.ndarray, weights: np.ndarray) -> np.ndarray:
 def find_passages(
     sentences: list[SentenceVerdict], threshold: float = FLAG_THRESHOLD
 ) -> list[Passage]:
-    """Maximal contiguous runs of sentences whose smoothed probability clears ``threshold``."""
+    """Maximal contiguous runs of RELIABLE sentences whose smoothed probability clears
+    ``threshold``.
+
+    The reliability rule is the same one ``aggregate`` applies, and it was missing here.
+    Both functions read the same verdicts and are published in the same response, so the
+    omission let one payload say two incompatible things: on the ELLIPSE run-on essays
+    ``aggregate`` correctly answered "nothing here is measurable, 0% machine" while this
+    function answered "characters 0-600 are a machine-written passage, peak 99%" -- naming
+    the whole essay, of a second-language student, as the machine-written part of itself.
+
+    An unreliable span also BREAKS a run rather than being skipped over. A passage carries a
+    single ``start``/``end`` used to point at text, so stepping over an unmeasured span would
+    stretch one passage across prose the tool never scored.
+    """
     passages: list[Passage] = []
     run: list[SentenceVerdict] = []
 
@@ -145,7 +173,7 @@ def find_passages(
         )
 
     for s in sentences:
-        if s.smoothed >= threshold:
+        if s.reliable and s.smoothed >= threshold:
             run.append(s)
         else:
             flush()

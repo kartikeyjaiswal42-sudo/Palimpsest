@@ -212,7 +212,8 @@ code { font: 12.5px var(--mono); background: #f0ebdf; padding: 1px 5px; border-r
 }
 .verdict-caveat[hidden] { display: none; }
 
-/* Added by edge/scripts/sync_web.py -- the hosted build surfaces one extra condition. */
+/* The observer's window notice. Amber rather than red: nothing has gone wrong, but the
+   verdict describes less text than the page shows, and that changes what it means. */
 .notice {
   margin-top: 0.75rem;
   padding: 0.6rem 0.8rem;
@@ -221,4 +222,5 @@ code { font: 12.5px var(--mono); background: #f0ebdf; padding: 1px 5px; border-r
   font-size: 0.9rem;
   line-height: 1.45;
 }
-.notice.hidden { display: none; }
+/* `[hidden]` loses to an author `display` rule, so it is stated explicitly. */
+.notice[hidden] { display: none !important; }

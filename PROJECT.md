@@ -50,12 +50,12 @@ PALIMPSEST_OBSERVER=gpt2 uvicorn palimpsest.api.app:app --port 8123
 
 FastAPI does not run on Workers, so the serving path is ported to JavaScript. Nothing is
 refitted: every weight, scale, calibration knot and threshold is the artifact `train.py`
-wrote. `edge/test/parity.test.mjs` compares the two implementations over **145 real
-documents, 2,801 sentences, 184,688 values** — every feature, logit, calibrated probability,
+wrote. `edge/test/parity.test.mjs` compares the two implementations over **262 real
+documents, 5,527 sentences, 364,056 values** — every feature, logit, calibrated probability,
 evidence bar, passage, gate decision and bootstrap endpoint — with the observer's token
 stream held identical between them. Every probability, logit and threshold decision is
-**exactly** equal; the largest disagreement anywhere is 5e-15 on an n-gram surprisal mean.
-Six mutations confirm the test can fail. In production, `scripts/verify_ui.cjs` passes 24/24
+**exactly** equal; the largest disagreement anywhere is 6e-15 on an n-gram surprisal mean.
+Six mutations confirm the test can fail. In production, `scripts/verify_ui.cjs` passes 28/28
 against the live URL.
 
 **Building it found two things wrong with this project, both in the direction of overclaiming:**
@@ -79,6 +79,42 @@ fails, so neither correction lives in a copy any more: the panel renders from
 rather than hardcoded, in the direction that overstates what leaves the machine if the probe
 fails. `tests/test_limitations.py` (4 checks) and a 24th check in `verify_ui.cjs` fail on the
 old behaviour.
+
+**Going back for the same pattern a third time found four more, and one was not a claim
+about the tool but a claim about a student's essay.** Everything above is a fact the
+interface stated wrongly; these are facts it never stated at all.
+
+* **`find_passages` ignored the reliability rule that `aggregate` enforces.** Both read the
+  same sentence verdicts and are published in the same response, so on the ELLIPSE run-on
+  essays one payload answered *"nothing here is measurable, 0% machine"* and *"characters
+  0–600 are a machine-written passage, peak 99%"* — naming the whole of a second-language
+  student's essay as the machine-written part of itself. The same omission ran through
+  `smooth_probabilities`, which is weighted by word count: a 20-word sentence scoring 5% was
+  smoothed to **91.6%** by one unmeasurable 466-word neighbour, and the smoothed value is
+  what draws passages.
+* **The observer reads 6,000 characters and the API accepts 40,000.** On an 8,496-character
+  essay, 27 sentences and 453 words were never sent to the observer, were dropped from the
+  verdict, and nothing said so — the page showed an essay and the verdict described its
+  opening. The `clipped` flag existed and was *structurally incapable of being true*: the
+  client truncated the text itself and then asked the server whether truncation had happened,
+  a question the server answers by comparing what it received against the same limit. Two
+  further links dropped it anyway — the adapter to `TokenScores`, and `_meta`.
+* **The page said "Scoring with the local model…" while sending the essay to Workers AI** —
+  the same false locality claim as the footer, in the one place the reader is looking while
+  it happens.
+* **Every unmeasurable span was explained as "too short to measure reliably".** For a
+  138-word run-on that is exactly backwards, and those run-ons are written by second-language
+  students — the readers most likely to want to contest a result and least helped by a false
+  explanation. The same spans were shaded in the strongest machine colour and captioned
+  *"97% machine-like"*, which is the claim `aggregate` had just declined to make. The
+  pipeline now says which condition failed and the page renders it; an unscored span is
+  unshaded and carries no percentage.
+
+Three of the four were already correct in the hosted build and had never been carried back,
+which is the same drift as before, so the two edge-only patches for them were deleted and the
+fixes moved into `web/` where both builds read them. `tests/test_unmeasurable_spans.py` (9)
+and `tests/test_observer_window.py` (6) cover the logic, each proved able to fail by
+reverting the fix; four checks in `verify_ui.cjs` cover what the reader sees.
 
 A third limitation is new and only exists in the hosted build: the
 observer is an fp8 mixture-of-experts model on shared hardware and is **not bit-deterministic**

@@ -33,7 +33,22 @@ const els = {
   limits: $("limits-panel"),
   limitations: $("limitations"),
   privacy: $("privacy"),
+  notice: $("notice"),
 };
+
+// How an unmeasurable span is described. The backend says WHICH condition failed, because
+// only it knows; this file used to guess, and always guessed "too short" -- including for a
+// 138-word run-on, where it is precisely backwards. Those run-ons are written by
+// second-language students, which makes a misleading explanation worse than none.
+// Phrased to read correctly in both places they are used: after "Not scored — " on a
+// hovered span, and after "3 spans " in the verdict summary.
+const UNMEASURABLE = {
+  too_short: "too short for the observer to measure",
+  too_long: "longer than any sentence this tool was fitted on",
+  beyond_observer_window: "beyond the observer's window, so never measured",
+};
+const whyUnmeasurable = (s) =>
+  UNMEASURABLE[s.unreliableReason] || "not measurable by this tool";
 
 // The footer claims something about the user's text, so it is answered by the server that
 // handles the text rather than by whatever the page was built with. `textLeavesMachine`
@@ -109,12 +124,17 @@ function renderText(data) {
       frag.appendChild(document.createTextNode(text.slice(cursor, s.start)));
     }
     const span = document.createElement("span");
-    span.className = `sentence ${band(s.probability, data.flagThreshold)}`;
+    // An unmeasurable span gets NO shade and no percentage. `aggregate` already refuses to
+    // let one decide the verdict; painting it in the strongest machine colour and captioning
+    // it "97% machine-like" makes on the page exactly the claim the arithmetic declines to
+    // make, and it does so on the run-on essays of second-language writers.
+    span.className = `sentence ${s.reliable ? band(s.probability, data.flagThreshold) : "s0"}`;
     if (!s.reliable) span.classList.add("unreliable");
     span.textContent = text.slice(s.start, s.end);
     span.dataset.index = String(s.index);
-    span.title = `${(s.probability * 100).toFixed(0)}% machine-like` +
-      (s.reliable ? "" : " — too short to measure reliably");
+    span.title = s.reliable
+      ? `${(s.probability * 100).toFixed(0)}% machine-like`
+      : `Not scored — ${whyUnmeasurable(s)}`;
     span.addEventListener("click", () => selectSentence(s.index));
     frag.appendChild(span);
     cursor = s.end;
@@ -142,9 +162,17 @@ function renderVerdict(data) {
   const unreliable = v.nSentences - v.nReliableSentences;
   const flagAt = typeof data.documentThreshold === "number"
     ? ` · flags at ${(data.documentThreshold * 100).toFixed(0)}%` : "";
+  // Count the reasons rather than asserting one. This line said "N sentences too short to
+  // measure" whatever the cause, so a single 138-word run-on was reported to its author as
+  // being too short.
+  const reasons = (data.sentences || []).filter((s) => !s.reliable)
+    .reduce((acc, s) => acc.set(s.unreliableReason, (acc.get(s.unreliableReason) || 0) + 1),
+      new Map());
+  const summary = [...reasons].map(([reason, n]) =>
+    `${n} ${n === 1 ? "span" : "spans"} ${UNMEASURABLE[reason] || "not measurable"}`).join(" · ");
   els.docSub.textContent = (unreliable > 0
-    ? `${unreliable} sentence${unreliable === 1 ? "" : "s"} too short to measure`
-    : `all sentences long enough to measure`) + flagAt;
+    ? `${summary}, excluded from the verdict`
+    : "every sentence was measurable") + flagAt;
 
   // A percentage is a quantity; a verdict is a decision. They come apart precisely when the
   // tool abstains, and the failure is asymmetric: nobody reads "91% machine, insufficient
@@ -278,6 +306,31 @@ function renderEvidence(sentence) {
   renderTokens(sentence);
 }
 
+// The observer reads a bounded number of characters in one pass. When an essay is longer
+// than that, everything past the boundary is unmeasured and silently absent from the
+// verdict, so the reader is looking at a verdict on an opening and a page showing an essay.
+// Say which. The number comes from the response, not from a constant here, so it cannot
+// drift from the window the observer actually used.
+function renderClipNotice(data) {
+  if (!els.notice) return;
+  const meta = data.meta || {};
+  if (!meta.clipped) {
+    els.notice.hidden = true;
+    return;
+  }
+  const limit = typeof meta.observerCharLimit === "number"
+    ? meta.observerCharLimit.toLocaleString() : null;
+  const unmeasured = (data.sentences || [])
+    .filter((s) => s.unreliableReason === "beyond_observer_window");
+  const words = unmeasured.reduce((a, s) => a + s.nWords, 0);
+  els.notice.textContent =
+    `This essay is longer than the observer reads in one pass${limit ? ` (${limit} characters)` : ""}. ` +
+    `The verdict below describes the opening only` +
+    (words ? `; the remaining ${words} words in ${unmeasured.length} sentences were not ` +
+      `measured and are shown unshaded.` : ".");
+  els.notice.hidden = false;
+}
+
 function selectSentence(index) {
   const sentence = current.data.sentences[index];
   if (!sentence) return;
@@ -309,6 +362,11 @@ async function analyse() {
     return;
   }
   els.analyse.disabled = true;
+  // Not "with the local model". The default observer is a 30-billion-parameter model on
+  // Workers AI, so that line told the reader their essay was staying on their machine at the
+  // exact moment it was being sent off it -- the same false claim the footer used to make,
+  // in the one place the reader is looking while it happens. Neutral wording is correct for
+  // either observer; `meta.device` names the real one once the answer is back.
   els.status.textContent = "Scoring…";
 
   try {
@@ -333,22 +391,7 @@ async function analyse() {
         return li;
       })
     );
-    const notice = document.getElementById("notice");
-    if (notice) {
-      // The observer scores at most 6,000 characters. Beyond that, sentences carry no
-      // observer tokens, are marked unreliable, and are dropped from the document verdict --
-      // so the verdict describes a prefix. Presenting that as a verdict on the whole essay
-      // would be the same class of quiet overclaim this project exists to avoid.
-      if (data.meta && data.meta.clipped) {
-        notice.textContent =
-          "This essay is longer than the observer scores in one pass (6,000 characters). " +
-          "The verdict describes the first 6,000 characters only; the rest is shown " +
-          "unhighlighted and was not measured.";
-        notice.classList.remove("hidden");
-      } else {
-        notice.classList.add("hidden");
-      }
-    }
+    renderClipNotice(data);
     [els.verdict, els.textPanel, els.limits].forEach((p) => p.classList.remove("hidden"));
     els.evidence.classList.add("hidden");
 

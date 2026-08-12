@@ -159,6 +159,75 @@ async function launch() {
     `confidence ${anyp2}% is below the shipped document threshold`);
   await page.screenshot({ path: `${OUT}/missed.png`, fullPage: true });
 
+  // ---- text the tool has REFUSED to measure, and how it is described -------------------
+  //
+  // A span can be unmeasurable for three different reasons and the page used to give one
+  // explanation for all of them: "too short to measure reliably". For the case the rule
+  // exists to protect -- ELLIPSE and PERSUADE essays written without sentence-ending
+  // punctuation, which segment to one 138- to 466-word span -- that is the opposite of
+  // true, and it is told to the writer least able to argue with it. The same span was also
+  // painted in the strongest machine shade and captioned "97% machine-like", which is the
+  // claim `aggregate` had just declined to make.
+  const RUNON = ('my grandmother taught me how to cook in the kitchen and she was very patient '
+    + 'with me even when i burned the rice again and again and she never said anything about '
+    + 'it which was worse than if she had said something because i knew she was disappointed '
+    + 'but she kept letting me try and eventually i got better at it and now i can make the '
+    + 'biryani almost as well as she can and i think about her every time i cook it and that '
+    + 'is what i want to bring with me to college the patience she gave me and the way she '
+    + 'let me fail without making me feel small about failing which is a kind of teaching i '
+    + 'have not found anywhere else since then and i am grateful for it every single day');
+  await page.fill('#essay', RUNON);
+  await page.click('#analyse');
+  await page.waitForFunction(
+    () => document.querySelectorAll('.sentence').length > 0
+      && document.querySelectorAll('.sentence').length < 4,
+    null, { timeout: 180000 });
+  const runonSpans = await page.$$eval('.sentence.unreliable', (els) => els.map((e) => ({
+    title: e.getAttribute('title') || '',
+    shaded: /\bs[1-4]\b/.test(e.className),
+    words: (e.textContent || '').trim().split(/\s+/).length,
+  })));
+  const long = runonSpans.filter((s) => s.words > 90);
+  check('a run-on span is not explained to its author as "too short"',
+    long.length > 0 && long.every((s) => !/too short/i.test(s.title)),
+    long.length ? `${long[0].words} words, titled "${long[0].title}"` : 'no long span produced');
+  check('a span the tool refuses to score is not shaded or given a percentage',
+    long.length > 0 && long.every((s) => !s.shaded && !/machine-like/.test(s.title)),
+    long.length ? `shaded=${long[0].shaded}` : 'no long span produced');
+
+  // ---- an essay longer than the observer's window --------------------------------------
+  //
+  // The API accepts 40,000 characters; the observer reads 6,000 in one pass. Everything past
+  // that carries no observer tokens, is dropped from the verdict, and used to be shown with
+  // no indication that it had never been looked at -- so the page presented a verdict on an
+  // opening as a verdict on an essay.
+  const para = 'The kitchen in Lucknow smelled of cardamom every Sunday morning, and my grandmother '
+    + 'would already be awake, sorting rice into two brass bowls whose purpose she never '
+    + 'explained to me. I asked once, when I was nine, and she told me that some questions '
+    + 'are answered by waiting. I did not understand her then. I am not certain I understand '
+    + 'her now, but I have stopped needing to. ';
+  const longEssay = para.repeat(22)
+    + 'The last thing I want to say is the thing I have avoided saying for four paragraphs. '
+    + 'I did not learn patience in that kitchen. I learned that I am not patient, and that '
+    + 'the people who love me have decided to keep me anyway. ';
+  await page.fill('#essay', longEssay);
+  await page.click('#analyse');
+  // A condition only THIS response can satisfy. #verdict-panel is already visible from the
+  // previous analysis, so waiting on it returns instantly and reads the page mid-flight.
+  await page.waitForFunction(
+    () => document.querySelectorAll('.sentence').length > 50, null, { timeout: 180000 });
+  const noticeShown = await page.isVisible('#notice');
+  const noticeText = ((await page.textContent('#notice')) || '').replace(/\s+/g, ' ').trim();
+  check('an over-length essay says the verdict covers only its opening',
+    noticeShown && /6,000 characters/.test(noticeText),
+    `${longEssay.length} chars — "${noticeText.slice(0, 96)}…"`);
+  const unseen = await page.$$eval('.sentence.unreliable', (els) => els
+    .filter((e) => /never measured/i.test(e.getAttribute('title') || ''))
+    .map((e) => ({ shaded: /\bs[1-4]\b/.test(e.className), title: e.getAttribute('title') })));
+  check('text the observer never read is not shaded as evidence',
+    unseen.length > 0 && unseen.every((s) => !s.shaded),
+    `${unseen.length} unmeasured spans, none shaded`);
+
   // ---- responsive
   await page.setViewportSize({ width: 390, height: 900 });
   await page.waitForTimeout(400);

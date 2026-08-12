@@ -82,13 +82,26 @@ export const MAX_SENTENCE_WORDS = 90;
 export const DOC_FEATURES = ['mean_p', 'max_p', 'q90_p', 'share'];
 
 /** Length-weighted moving average over a +/-1 sentence window; the sentence counts double. */
-export function smoothProbabilities(probs, weights) {
+/**
+ * `reliable` gives weight zero to the spans the tool has said it cannot measure. The window
+ * is weighted by WORD COUNT and the unmeasurable spans are the long ones, so without it a
+ * 466-word run-on decides its 20-word neighbour's smoothed value almost single-handedly --
+ * and the smoothed value is what draws passages. See smooth_probabilities in
+ * `detect/document.py`; the two must agree term for term.
+ */
+export function smoothProbabilities(probs, weights, reliable = null) {
   const n = probs.length;
   const out = new Array(n);
+  const ok = (i) => (reliable === null ? true : Boolean(reliable[i]));
   for (let i = 0; i < n; i += 1) {
+    if (!ok(i)) {
+      out[i] = probs[i];
+      continue;
+    }
     const lo = Math.max(0, i - 1);
     const hi = Math.min(n, i + 2);
     const w = weights.slice(lo, hi);
+    for (let k = lo; k < hi; k += 1) if (!ok(k)) w[k - lo] = 0.0;
     w[i - lo] *= 2.0;
     let total = 0;
     for (const v of w) total += v;
@@ -117,8 +130,13 @@ export function findPassages(sentences, threshold = FLAG_THRESHOLD) {
       peakProbability: Math.max(...run.map((s) => s.probability)),
     });
   };
+  // Reliable AND over the threshold. `aggregate` has always excluded unmeasurable spans;
+  // this function did not, so one response could answer "nothing here is measurable, 0%
+  // machine" and "characters 0-600 are a machine-written passage, peak 99%" about the same
+  // essay. An unreliable span breaks the run rather than being stepped over, so a passage
+  // can never stretch across text the observer did not score.
   for (const s of sentences) {
-    if (s.smoothed >= threshold) {
+    if (s.reliable && s.smoothed >= threshold) {
       run.push(s);
     } else {
       flush();

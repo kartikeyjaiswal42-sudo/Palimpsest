@@ -32,16 +32,16 @@ is for, and it is the main thing in this directory.
 ## Parity
 
 `edge/test/parity.test.mjs` runs both implementations over real corpus documents with the
-observer's token stream held byte-identical between them, and compares **184,688 values**:
+observer's token stream held byte-identical between them, and compares **364,056 values**:
 every sentence's 43 features, its logit, its calibrated probability, the ordering and
 magnitude of its evidence bars, the passages, the document verdict including its seeded
 bootstrap interval, and the genre gate's inputs and decision.
 
 ```
-145 documents, 2,801 sentences, 184,688 comparisons
+262 documents, 5,527 sentences, 364,056 comparisons
 
 largest disagreement by kind:
-  feature      5.329e-15
+  feature      6.217e-15
   gate         2.665e-15
   probability  0.000e+00      exact
   logit        0.000e+00      exact
@@ -90,11 +90,14 @@ Python's stored answers. On 6 documents spanning all four verdict bands, 5 repro
 cached observer scoring exactly and every sentence probability matched to the 4 decimals the
 API publishes; the sixth showed observer drift (below).
 
-`scripts/verify_ui.cjs` — the project's existing browser check — passes **24/24 against the
+`scripts/verify_ui.cjs` — the project's existing browser check — passes **28/28 against the
 live URL**, including that the evidence bars printed on screen sum to the verdict printed on
 screen, that the documented failure case still fails in the documented way, that the footer's
-privacy claim agrees with `/api/health` rather than with whatever the page was built with, no
-horizontal overflow at 390 px, and no console errors.
+privacy claim agrees with `/api/health` rather than with whatever the page was built with,
+that an essay longer than the observer's window says so instead of presenting a verdict on
+its opening as a verdict on the essay, that a span the tool refuses to score is neither
+shaded nor captioned with a percentage, that a 138-word run-on is not explained to its author
+as "too short", no horizontal overflow at 390 px, and no console errors.
 
 ---
 
@@ -103,6 +106,13 @@ horizontal overflow at 390 px, and no console errors.
 Four things, all deliberate. Two are wording; two *were* corrections that have since been
 pushed back into the Python build, because a correction that lives only on one side of a
 port is how the two sides drift.
+
+Three more used to be listed here and are gone, for that reason. The observer-clipping
+notice, its stylesheet rule and a status line reading "Scoring…" instead of "Scoring with the
+local model…" were all real fixes that existed only here, so `web/` went on telling anyone
+running the project locally that their essay was staying on their machine, and went on
+presenting a verdict on 6,000 characters as a verdict on a 40,000-character essay. They now
+live in `web/`, both builds read them, and `sync_web.py` is down from five patches to two.
 
 **1. The privacy claim.** The interface footer said *"Nothing you paste leaves this
 machine."* That was true when the observer was GPT-2 in-process and stopped being true when

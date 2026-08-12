@@ -211,3 +211,16 @@ code { font: 12.5px var(--mono); background: #f0ebdf; padding: 1px 5px; border-r
   background: rgba(127, 127, 127, 0.06);
 }
 .verdict-caveat[hidden] { display: none; }
+
+/* The observer's window notice. Amber rather than red: nothing has gone wrong, but the
+   verdict describes less text than the page shows, and that changes what it means. */
+.notice {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid #b8860b;
+  background: rgba(184, 134, 11, 0.08);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+/* `[hidden]` loses to an author `display` rule, so it is stated explicitly. */
+.notice[hidden] { display: none !important; }
