@@ -63,6 +63,27 @@ jobs:
           fi
           ls -lh edge/assets/ngram.bin
 
+      # THE GENERATED FILES MUST BE REPRODUCIBLE FROM WHAT IS COMMITTED, and
+      # this check exists because they once were not. `highlight_disclosure()`
+      # reads artifacts/polish_head.json and returns an EMPTY LIST when the file
+      # is absent, so a build without it produced a valid-looking artifacts.js
+      # that was simply missing a limitation — and the deploy shipped a live
+      # site disclosing less than the repository said it did. Nothing failed;
+      # the statement just quietly stopped existing.
+      #
+      # Rebuilding and diffing against the committed copy catches the whole
+      # class: an input that is not committed, or a source edit whose generated
+      # file was never regenerated.
+      - name: The rebuild must match what is committed
+        run: |
+          if git diff --quiet -- edge/src/artifacts.js edge/assets; then
+            echo "Generated files reproduce exactly."
+            exit 0
+          fi
+          echo "::error title=Generated files do not match their sources::Rebuilding from committed inputs produced a different result from the committed output. Either an input the build reads is not committed (a missing artifacts/*.json makes limitations silently disappear), or a source was edited without regenerating. Run the three scripts in edge/README.md locally and commit the result."
+          git --no-pager diff --stat -- edge/src/artifacts.js edge/assets
+          exit 1
+
       - name: Install (edge)
         working-directory: edge
         run: npm ci
