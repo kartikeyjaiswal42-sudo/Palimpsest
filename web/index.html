@@ -1,144 +1,199 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Palimpsest — where, and why</title>
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css">
+<title>Palimpsest — where an essay reads as machine-written</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-state="idle">
+
+<a class="skip-link" href="#essay">Skip to the essay box</a>
+
 <header class="masthead">
-  <div class="wrap">
-    <h1>Palimpsest</h1>
-    <p class="tagline">An AI-text detector for admissions essays that shows its working.</p>
+  <div class="masthead-mark">
+    <h1 class="wordmark">Palimpsest</h1>
+    <p class="tagline">Where a college essay reads as machine-written, and the arithmetic behind every number on this page.</p>
   </div>
+  <p class="observer-chip" id="observer-chip" hidden></p>
 </header>
 
-<main class="wrap">
+<main>
 
-  <section class="panel" id="input-panel">
-    <label class="label" for="essay">Paste an essay</label>
+  <!-- ── Composer ───────────────────────────────────────────── -->
+  <section class="composer" aria-labelledby="composer-h">
+    <h2 class="sr-only" id="composer-h">Essay input</h2>
+
+    <label class="field-label" for="essay">Paste an essay</label>
     <textarea id="essay" rows="12" spellcheck="false"
-      placeholder="Paste the essay here. Around 500-700 words works best — that is what the detector was measured on."></textarea>
+      placeholder="Paste the essay here, or load one of the two examples below."></textarea>
+
     <div class="controls">
-      <button id="analyse" class="primary">Analyse</button>
-      <button id="load-sample" class="ghost" type="button">Example it catches</button>
-      <button id="load-missed" class="ghost" type="button"
-        title="An essay with a hand-polished paragraph. We highlight the right paragraph but decline to flag the essay — the operating point, costing us a catch.">Example it lets through</button>
-      <span id="status" class="status" role="status" aria-live="polite"></span>
+      <button type="button" id="analyse" class="btn btn-primary">Analyse this essay</button>
+      <button type="button" id="load-sample" class="btn btn-quiet">Example it catches</button>
+      <button type="button" id="load-missed" class="btn btn-quiet">Example it lets through</button>
+      <span class="kbd-hint" aria-hidden="true"><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
     </div>
-    <!--
-      The observer reads a bounded number of characters in one pass. Past that boundary the
-      remaining sentences carry no observer tokens at all, are marked unmeasurable, and are
-      dropped from the document verdict -- so the verdict describes a PREFIX while the page
-      shows a whole essay. Announcing that is not a nicety: presenting a verdict on the first
-      6,000 characters as a verdict on the essay is the same quiet overclaim this project
-      exists to avoid. Filled in by app.js from meta.clipped; hidden when nothing was cut.
-    -->
-    <div id="notice" class="notice" role="status" hidden></div>
+
+    <div class="progress" aria-hidden="true"><span></span></div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <div class="notice" id="notice" hidden></div>
+
+    <div class="method" aria-labelledby="method-h">
+      <h3 class="method-h" id="method-h">How this works</h3>
+      <ol class="method-steps">
+        <li>
+          <span class="method-n">1</span>
+          <span class="method-t"><b>Two observers, neither asked for a verdict.</b>
+          A language model is read for token probabilities only — how predictable each word
+          was — and a second reference reads the same text. Neither is ever asked
+          <em>is this AI</em>.</span>
+        </li>
+        <li>
+          <span class="method-n">2</span>
+          <span class="method-t"><b>43 interpretable features.</b>
+          Those probabilities become named measurements: average predictability, log rank,
+          rhythm of surprise, distance from applicant prose.</span>
+        </li>
+        <li>
+          <span class="method-n">3</span>
+          <span class="method-t"><b>A calibrated probability whose logit is the explanation.</b>
+          The features are summed into log-odds. That sum <em>is</em> the reason — every
+          number below is arithmetic you can check, not a judgement.</span>
+        </li>
+      </ol>
+    </div>
   </section>
 
-  <section class="panel hidden" id="verdict-panel">
-    <!--
-      The band comes FIRST and the two percentages follow it. Ordering is the fix, not
-      decoration: the two live failures that prompted this were an AI essay reported as
-      "35% machine" and another as "0%", both read by a human as acquittals. A number
-      without a calibrated band invites that reading, so the band leads and the numbers
-      are supporting detail.
-    -->
+  <!-- ── Verdict ────────────────────────────────────────────── -->
+  <div class="skeleton" aria-hidden="true">
+    <div class="sk-band"></div>
+    <div class="sk-grid"><div></div><div></div></div>
+    <div class="sk-rows"><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <section class="panel verdict-panel hidden" id="verdict-panel" aria-labelledby="band-label">
+
     <div class="band" id="band">
-      <div class="band-label" id="band-label">—</div>
-      <div class="band-detail" id="band-detail"></div>
+      <p class="band-label" id="band-label"></p>
+      <p class="band-detail" id="band-detail"></p>
     </div>
-    <!--
-      The percentages are EVIDENCE, not the verdict, and when the tool abstains they are the
-      most misreadable thing on the page: "19% machine" is read as "81% human", i.e. as an
-      acquittal, which is exactly the mistake the three-band design exists to prevent. So the
-      grid carries the band on a data attribute, the stylesheet mutes it whenever the band is
-      not a finding, and #verdict-caveat says in words what a low number does and does not
-      mean. See renderVerdict() in app.js.
-    -->
+
     <div class="verdict-grid" id="verdict-grid">
       <div class="metric">
-        <div class="metric-label">How much reads as machine-written</div>
-        <div class="metric-value" id="share">—</div>
-        <div class="metric-sub" id="share-interval"></div>
+        <p class="metric-label">How much reads as machine-written</p>
+        <p class="metric-value" id="share"></p>
+        <p class="metric-sub" id="share-interval"></p>
       </div>
       <div class="metric">
-        <div class="metric-label">Confidence any of it is machine-written</div>
-        <div class="metric-value" id="anyp">—</div>
-        <div class="metric-sub" id="doc-sub"></div>
+        <p class="metric-label">Confidence any of it is machine-written</p>
+        <p class="metric-value" id="anyp"></p>
+        <p class="metric-sub" id="doc-sub"></p>
       </div>
     </div>
-    <p class="verdict-caveat" id="verdict-caveat" hidden></p>
-    <p class="two-numbers">
-      These are two different questions, kept apart on purpose. An essay with one polished
-      paragraph has a <em>low share</em> and a <em>high confidence</em>. A single percentage
-      would hide exactly that.
-    </p>
+
+    <p class="verdict-caveat hidden" id="verdict-caveat">These numbers are evidence, not a
+    verdict. The tool has not cleared this essay and cannot: a low share means the evidence
+    did not reach the threshold, not that a person wrote it.</p>
+
+    <p class="standing-note">Two different questions, kept apart on purpose. The left figure
+    is how much of the essay carries the signal; the right is how sure the tool is that any
+    of it does. A short polished passage inside honest writing moves the right number and
+    barely touches the left.</p>
+
+    <figure class="profile" aria-labelledby="profile-h">
+      <figcaption>
+        <h3 class="profile-h" id="profile-h">Sentence profile</h3>
+        <p class="profile-sub">One column per sentence, in order. Height is that sentence's
+        probability. Click a column to open its arithmetic.</p>
+      </figcaption>
+      <div class="profile-plot" id="profile-plot" role="group" aria-label="Probability per sentence"></div>
+      <p class="profile-axis"><span>first sentence</span><span>last sentence</span></p>
+    </figure>
+
+    <dl class="ribbon" id="ribbon"></dl>
   </section>
 
-  <section class="panel hidden" id="text-panel">
-    <div class="panel-head">
-      <h2>The essay, sentence by sentence</h2>
-      <div class="legend">
-        <span class="swatch s0"></span> unremarkable
-        <span class="swatch s2"></span> some signal
-        <span class="swatch s4"></span> flagged
+  <!-- ── Workspace: the essay + the evidence rail ───────────── -->
+  <div class="workspace">
+
+    <section class="panel text-panel hidden" id="text-panel" aria-labelledby="text-h">
+      <div class="panel-head">
+        <h2 class="panel-h" id="text-h">The essay</h2>
+        <p class="legend" id="mark-index">
+          <span class="legend-item"><span class="swatch swatch-none"></span>unremarkable<b class="lg-n" data-n="none">—</b></span>
+          <span class="legend-item"><span class="swatch swatch-some"></span>some signal<b class="lg-n" data-n="some">—</b></span>
+          <span class="legend-item"><span class="swatch swatch-flag"></span>flagged<b class="lg-n" data-n="flag">—</b></span>
+          <span class="legend-item"><span class="swatch swatch-un"></span>not measured<b class="lg-n" data-n="un">—</b></span>
+        </p>
       </div>
-    </div>
-    <p class="hint">Click any sentence to see the evidence behind its score.</p>
-    <div id="rendered" class="rendered"></div>
-  </section>
+      <p class="hint">Select any sentence — click, or tab to it and press Enter — to see the
+      measurements that produced its score. Marking is annotation: the shade and the
+      underline weight carry the band, the words stay as written.</p>
+      <nav class="flag-rail" id="flag-rail" aria-label="Flagged sentences"></nav>
+      <div class="rendered" id="rendered"></div>
+    </section>
 
-  <section class="panel hidden" id="evidence-panel">
-    <div class="panel-head">
-      <h2>Why this sentence scored what it did</h2>
-      <span id="evidence-score" class="pill"></span>
-    </div>
-    <blockquote id="evidence-text"></blockquote>
-    <p class="hint" id="evidence-math"></p>
-    <div id="evidence-bars"></div>
-    <details class="tokens">
-      <summary>Word-by-word view from the observer model</summary>
-      <p class="hint">
-        How predictable each word was, given everything before it. Green means the observer's
-        top guess; grey means it was genuinely surprised. Human writing produces more grey.
-      </p>
-      <div id="token-strip" class="token-strip"></div>
-    </details>
-  </section>
+    <aside class="panel evidence-panel hidden" id="evidence-panel" aria-labelledby="evidence-h">
+      <h2 class="panel-h" id="evidence-h">Why this sentence scored what it did</h2>
 
-  <section class="panel hidden" id="limits-panel">
-    <h2>What this tool gets wrong</h2>
-    <ul id="limitations"></ul>
-    <p class="hint">
-      Measured on held-out data and reported here because a detector that hides its error
-      rates is not an instrument. Full numbers in <code>docs/03-evaluation.md</code>.
-    </p>
+      <blockquote class="evidence-quote">
+        <p class="evidence-text" id="evidence-text"></p>
+        <p class="evidence-score-line"><span class="pill" id="evidence-score"></span></p>
+      </blockquote>
+
+      <p class="ev-meta" id="ev-meta"></p>
+
+      <p class="evidence-math" id="evidence-math"></p>
+
+      <div class="ev-actions">
+        <button type="button" class="btn btn-small" id="prev-flag">← Previous flag<span class="kb">p</span></button>
+        <button type="button" class="btn btn-small" id="next-flag">Next flag →<span class="kb">n</span></button>
+        <button type="button" class="btn btn-small" id="copy-working">Copy the working</button>
+      </div>
+
+      <div class="bars-head">
+        <h3 class="bars-h">The terms that were summed</h3>
+        <p class="axis-caption" aria-hidden="true">
+          <span class="axis-human">toward human ←</span>
+          <span class="axis-rule"></span>
+          <span class="axis-machine">→ toward machine</span>
+        </p>
+      </div>
+      <div class="evidence-bars" id="evidence-bars"></div>
+
+      <details class="tokens">
+        <summary>Word-by-word view</summary>
+        <p class="token-legend" aria-hidden="true">
+          <span class="tok-key top10">top-10</span>
+          <span class="tok-key top100">top-100</span>
+          <span class="tok-key top1000">top-1000</span>
+          <span class="tok-key tail">tail</span>
+          <span class="tok-note">how far down the observer's ranked guesses the actual word sat</span>
+        </p>
+        <div class="token-strip" id="token-strip"></div>
+      </details>
+    </aside>
+
+  </div>
+
+  <!-- ── Limits ─────────────────────────────────────────────── -->
+  <section class="panel limits-panel hidden" id="limits-panel" aria-labelledby="limits-h">
+    <div class="limits-head">
+      <h2 class="panel-h" id="limits-h">What this tool gets wrong</h2>
+      <p class="limits-sub">Eight measured failure modes, shipped with every result. Read
+      them before you act on anything above.</p>
+    </div>
+    <ul class="limitations" id="limitations"></ul>
   </section>
 
 </main>
 
-<!--
-  The privacy sentence is written for the REMOTE observer, which is the default, and is
-  narrowed to the local claim by app.js only once /api/health confirms the observer really
-  is in-process. That direction is deliberate: this page is served for both configurations,
-  so whichever claim is hardcoded is false in the other one -- and if the health probe fails
-  the page must overstate what leaves the machine, never understate it. It said "Nothing you
-  paste leaves this machine" while the default observer was already Workers AI.
--->
-<footer class="wrap footnote">
-  <p id="privacy">
-    The language model is read for token probabilities only — it is never asked for a verdict.
-    <strong>Your essay is sent to Cloudflare Workers AI to be scored</strong>, because the
-    observer is a 30-billion-parameter model that is not run in this process. It is not
-    stored or logged by this application, but it does leave this machine. To score entirely
-    locally, restart with <code>PALIMPSEST_OBSERVER=gpt2</code>.
-  </p>
+<footer class="footer">
+  <p class="privacy" id="privacy">Your essay is sent to a remote observer model to be scored, so it leaves this machine. Nothing is stored and nothing is used for training, but the request is real: treat the text as read by a third party.</p>
 </footer>
 
-<script type="module" src="/app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

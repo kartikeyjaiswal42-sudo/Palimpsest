@@ -30,38 +30,33 @@ PATCHES: list[tuple[str, str, str, str]] = [
         # the page and the API contradicting each other in one process. That is now fixed at
         # the source: `web/` states the remote case and narrows it from `/api/health` only
         # when the observer really is in-process, so what is left here is the difference
-        # between the two deployments rather than a correction of a false claim. A reader of
-        # the hosted build has no local process and cannot set an environment variable in
-        # one, so the wording addresses a browser, not an operator.
-        "privacy statement worded for a public deployment rather than a local process",
-        """    observer is a 30-billion-parameter model that is not run in this process. It is not
-    stored or logged by this application, but it does leave this machine. To score entirely
-    locally, restart with <code>PALIMPSEST_OBSERVER=gpt2</code>.""",
-        """    observer is a 30-billion-parameter model that cannot run in your browser. It is not
-    stored or logged by this application, but it does leave your machine. To score entirely
-    locally, run the project yourself with <code>PALIMPSEST_OBSERVER=gpt2</code>.""",
-    ),
-    (
-        "app.js",
-        "the Worker answers errors as {error, detail}; report rate limits and budget stops plainly",
-        """    if (!res.ok) {
-      const detail = await res.json().catch(() => ({}));
-      throw new Error(detail.detail || `request failed (${res.status})`);
-    }""",
-        """    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || body.error || `request failed (${res.status})`);
-    }""",
+        # between the two deployments rather than a correction of a false claim.
+        #
+        # What remains is one word. Locally "this machine" is the machine that makes the
+        # observer call, and the reader is the operator of it. Hosted, the reader is in a
+        # browser and the call is made somewhere else entirely, so "this machine" invites
+        # them to read it as the server's -- the opposite of the warning's meaning. The
+        # hosted build says "your machine", which cannot be read the wrong way round.
+        #
+        # The anchor is deliberately the short clause and not the paragraph: the redesign
+        # rewrote this sentence, and a whole-paragraph anchor would have to be re-typed on
+        # every restyle, which is how a correction gets dropped rather than updated.
+        "privacy statement addressed to a browser rather than to the operator of a local process",
+        "so it leaves this machine",
+        "so it leaves your machine",
     ),
 ]
 
-#: Three patches used to live here and no longer do, because what they corrected is now
-#: correct in `web/` itself: the observer-clipping notice, its stylesheet rule, and a status
+#: Four patches used to live here and no longer do, because what they corrected is now
+#: correct in `web/` itself: the observer-clipping notice, its stylesheet rule, a status
 #: line that said "Scoring with the local model" while the observer was 30 B parameters away
-#: on Workers AI. Each was a real fix that existed on ONE side of the port, which is the
-#: failure this file's own docstring warns about and the same one that let the limitations
-#: panel publish a different build's error rates. A correction belongs in `web/`; a patch
-#: here is only for what genuinely differs between running locally and running hosted.
+#: on Workers AI, and -- as of the interface redesign -- the reading of {error, detail} from
+#: a failed response. That last one only ever patched the hosted build, so a local reader hit
+#: by the same refusal was shown a bare status code; reading both shapes in `web/` fixes it
+#: for both. Each was a real fix that existed on ONE side of the port, which is the failure
+#: this file's own docstring warns about and the same one that let the limitations panel
+#: publish a different build's error rates. A correction belongs in `web/`; a patch here is
+#: only for what genuinely differs between running locally and running hosted.
 EXTRA_CSS = ""
 
 
