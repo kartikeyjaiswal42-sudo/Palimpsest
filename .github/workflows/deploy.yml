@@ -1,0 +1,177 @@
+# Deploy to Cloudflare
+#
+# Every push to `main` — whoever makes it — rebuilds the generated files and
+# ships the Worker, so a change is live at
+# https://palimpsest.amitynoidalibrary.workers.dev without anyone running
+# wrangler by hand.
+#
+# One repository secret is required (Settings → Secrets and variables →
+# Actions):
+#   CLOUDFLARE_API_TOKEN   a token from the "Edit Cloudflare Workers" template
+#
+# The account id is NOT a secret here — it is already in edge/wrangler.jsonc.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never let two deploys overlap, and never cancel one halfway — a cancelled
+# `wrangler deploy` can leave the rollout mid-flight.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # THE REASON THIS JOB CANNOT JUST RUN `wrangler deploy`: the three files
+      # the Worker needs most are generated and deliberately not committed —
+      # above all assets/ngram.bin, the 8.5 MB corpus reference. Deploying
+      # without rebuilding would upload an assets directory missing it and the
+      # detector would lose a feature it has a weight for.
+      #
+      # All three scripts are standard-library Python reading tracked inputs
+      # (artifacts/*.json and web/), so no dependency install is needed —
+      # nothing here imports torch.
+      - name: Rebuild the generated files
+        run: |
+          python3 --version
+          python3 edge/scripts/build_ngram_bin.py
+          python3 edge/scripts/build_artifacts.py
+          python3 edge/scripts/sync_web.py
+
+      # sync_web.py aborts if a deployment correction's target text is missing,
+      # so an interface edit that invalidates a correction fails here rather
+      # than quietly shipping the old claim. Confirm the binary really exists.
+      - name: Check the corpus reference was built
+        run: |
+          if [ ! -s edge/assets/ngram.bin ]; then
+            echo "::error title=ngram.bin missing::The build did not produce edge/assets/ngram.bin. Deploying now would ship a Worker whose detector cannot read the corpus reference."
+            exit 1
+          fi
+          ls -lh edge/assets/ngram.bin
+
+      - name: Install (edge)
+        working-directory: edge
+        run: npm ci
+
+      # Cheap, self-contained guard: this project's central claim is that the
+      # text never reaches a generative model, and this test reads edge/src to
+      # enforce it. It needs no generated fixtures, unlike the parity suites.
+      - name: Guard — the Worker must never make a generative call
+        working-directory: edge
+        run: npm run test:wrapper
+
+      # "Present" is not "accepted". GitHub stores a secret exactly as pasted,
+      # trailing newline included, and a contaminated value fails inside
+      # wrangler in seconds with a generic auth error. Ask Cloudflare directly.
+      - name: Are the credentials accepted?
+        env:
+          RAW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          token=$(printf '%s' "$RAW_TOKEN" | tr -d '[:space:]')
+          if [ -z "$token" ]; then
+            echo "::error title=Deploy not configured::Repository secret CLOUDFLARE_API_TOKEN is not set. Cloudflare dashboard → My Profile → API Tokens → Create Token → 'Edit Cloudflare Workers'."
+            exit 1
+          fi
+          if [ "$token" != "$RAW_TOKEN" ]; then
+            echo "::warning title=Whitespace in a secret::CLOUDFLARE_API_TOKEN had surrounding whitespace or a newline. Stripped for this run; re-pasting it without the trailing newline is tidier."
+          fi
+
+          set +e
+          code=$(curl -sS -o /tmp/verify.json -w '%{http_code}' \
+            https://api.cloudflare.com/client/v4/user/tokens/verify \
+            -H "Authorization: Bearer $token")
+          rc=$?
+          set -e
+          if [ $rc -ne 0 ]; then
+            echo "::error title=Could not reach Cloudflare::curl exited $rc."
+            exit 1
+          fi
+          if [ "$code" != "200" ]; then
+            why=$(jq -r '[.errors[]? | "\(.code): \(.message)"] | join("; ")' /tmp/verify.json 2>/dev/null)
+            echo "::error title=Cloudflare rejected the token::HTTP $code — ${why:-no detail}. Re-copy CLOUDFLARE_API_TOKEN with the dashboard's copy button and check it has not expired."
+            exit 1
+          fi
+          echo "Token accepted: $(jq -r '.result.status' /tmp/verify.json)"
+
+      - name: Deploy
+        working-directory: edge
+        env:
+          RAW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          CLOUDFLARE_API_TOKEN=$(printf '%s' "$RAW_TOKEN" | tr -d '[:space:]')
+          export CLOUDFLARE_API_TOKEN
+
+          set -o pipefail
+          if ! npx wrangler deploy 2>&1 | tee /tmp/deploy.log; then
+            # Surface wrangler's own words as annotations, so the reason is on
+            # the run page instead of in a log only admins can download.
+            tail -n 25 /tmp/deploy.log | while IFS= read -r line; do
+              [ -n "$line" ] && echo "::error::${line}"
+            done
+            exit 1
+          fi
+
+      # Immediately after a deploy two versions briefly serve at once, so a
+      # request can still hit the old one.
+      - name: Wait for the rollout
+        run: sleep 30
+
+      # Read-only, and it checks the thing most likely to break silently:
+      # corpusReferenceLoaded proves the Worker fetched the 8.5 MB ngram.bin
+      # that is not in the repository. A deploy that "succeeded" while dropping
+      # it would serve a quietly degraded detector, which is exactly the
+      # failure this pipeline could otherwise introduce.
+      - name: Verify the deployment
+        env:
+          BASE: https://palimpsest.amitynoidalibrary.workers.dev
+        run: |
+          fail=0
+
+          code=$(curl -sS -o /tmp/page.html -w '%{http_code}' "$BASE/")
+          if [ "$code" != "200" ]; then
+            echo "::error title=The interface is not being served::GET / returned $code"; fail=1
+          else
+            echo "interface: 200"
+          fi
+
+          code=$(curl -sS -o /tmp/health.json -w '%{http_code}' "$BASE/api/health")
+          if [ "$code" != "200" ]; then
+            echo "::error title=The API is not answering::GET /api/health returned $code"; fail=1
+            exit 1
+          fi
+
+          status=$(jq -r '.status' /tmp/health.json)
+          corpus=$(jq -r '.corpusReferenceLoaded' /tmp/health.json)
+          generative=$(jq -r '.usesGenerativeModel' /tmp/health.json)
+
+          [ "$status" = "ok" ] || { echo "::error title=Health is not ok::status=$status $(jq -r '.detail' /tmp/health.json)"; fail=1; }
+          [ "$corpus" = "true" ] || { echo "::error title=Corpus reference missing on the live Worker::corpusReferenceLoaded=$corpus — ngram.bin did not reach the deployment, so the detector is running degraded."; fail=1; }
+          [ "$generative" = "false" ] || { echo "::error title=usesGenerativeModel is not false::The deployment reports $generative."; fail=1; }
+
+          echo "health: status=$status corpusReferenceLoaded=$corpus usesGenerativeModel=$generative"
+          exit $fail
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "### Deployed"
+            echo ""
+            echo "https://palimpsest.amitynoidalibrary.workers.dev"
+            echo ""
+            echo "Interface served, API healthy, corpus reference loaded."
+          } >> "$GITHUB_STEP_SUMMARY"
