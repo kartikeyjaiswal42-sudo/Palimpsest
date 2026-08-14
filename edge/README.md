@@ -217,12 +217,32 @@ entries round-trip before writing the file.
 
 ## Build and deploy
 
+**Pushing to `main` deploys.** `.github/workflows/deploy.yml` runs exactly the
+sequence below and then checks the live `/api/health`, so a change by any
+collaborator reaches https://palimpsest.amitynoidalibrary.workers.dev without
+anyone running wrangler. It needs one repository secret,
+`CLOUDFLARE_API_TOKEN`; the account id is already in `wrangler.jsonc`.
+
+By hand, if you need to:
+
 ```bash
 .venv/bin/python edge/scripts/build_ngram_bin.py    # 18.6 MB JSON -> 8.5 MB binary
 .venv/bin/python edge/scripts/build_artifacts.py    # detector, gate, bands, limitations
 .venv/bin/python edge/scripts/sync_web.py           # web/ -> assets/, with corrections
 cd edge && npm install && npx wrangler deploy
 ```
+
+**If you change anything the build reads, commit the regenerated files too.**
+The workflow rebuilds and then diffs the result against the committed
+`edge/src/artifacts.js` and `edge/assets`, and stops if they differ. That gate
+exists because of a real incident: `highlight_disclosure()` reads
+`artifacts/polish_head.json` and returns an empty list when the file is
+missing, so a build without it produced a perfectly valid `artifacts.js` that
+was simply missing a limitation, and the deploy published a tool disclosing
+less about its own false positives than this repository said it did. Nothing
+errored — the statement just stopped existing. Any input the build reads must
+therefore be committed, and any generated file must be reproducible from what
+is committed.
 
 `sync_web.py` is the only thing that writes `edge/assets/`. Every difference from `web/` is a
 named patch with a reason, and **a patch whose target text is missing aborts the build** — so
