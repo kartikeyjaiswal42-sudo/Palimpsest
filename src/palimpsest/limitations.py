@@ -34,7 +34,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-__all__ = ["CARRIED", "GENERIC", "render"]
+__all__ = ["CARRIED", "CEILING_MARKER", "GENERIC", "render", "highlight_disclosure"]
+
+#: The phrase that identifies the ceiling statement. Exported so `tests/test_limitations.py`
+#: can find it without copying the sentence -- a test that hardcodes the wording turns any
+#: rewording into a failure and, worse, silently stops checking if the wording drifts.
+CEILING_MARKER = "strongest current models"
 
 GENERIC = (
     "Short passages carry little evidence. Anything under about five sentences is reported "
@@ -46,6 +51,44 @@ GENERIC = (
 CARRIED = " (measured on the GPT-2-observer build; not re-run for this observer)"
 
 _UNMEASURED = "Error rates have not been measured for this build."
+
+
+def highlight_disclosure(artifacts: Path) -> list[str]:
+    """What the HIGHLIGHTS cost on an essay nobody edited.
+
+    Every other statement in this panel describes the document verdict. The reader does not
+    consume the document verdict -- they consume the heat map, and the two are calibrated
+    against different budgets. The verdict's false-accusation rate is held at document level;
+    the sentence flag threshold is set per sentence. An essay holds roughly nineteen sentences,
+    so a 5%-per-sentence error becomes a flag *somewhere* in a third of unedited essays.
+
+    docs/12 measures it: 30.7% of clean human documents, and 50-79% of English-learner
+    documents by measured proficiency -- rising with proficiency, because a stronger writer's
+    prose varies more from sentence to sentence and this family reads variation.
+
+    That number was true of the shipped build before this function existed and was never
+    stated. It is the same class of defect as the ``find_passages``/``aggregate`` contradiction
+    in PROJECT.md section 2: a per-sentence claim that the per-document verdict would not make.
+    Silence about it is the part that was wrong, so it is rendered from the artifact rather
+    than left to prose that can go stale.
+    """
+    path = artifacts / "polish_head.json"
+    if not path.exists():
+        return []
+    try:
+        head = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    oof = head.get("out_of_fold") or {}
+    loose = oof.get("false_boundary_doc_rate_at_5pct_sentence_budget")
+    if loose is None:
+        return []
+    return [
+        f"Highlights are not free. At a per-sentence threshold, {loose:.0%} of essays that "
+        "nobody edited contain at least one highlighted sentence, and on "
+        "English-language-learner essays that runs higher still. Read a single highlight as "
+        "'look here', never as a finding."
+    ]
 
 
 def render(artifacts: Path, suffix: str = "", extra: list[str] | None = None) -> list[str]:
@@ -100,10 +143,14 @@ def render(artifacts: Path, suffix: str = "", extra: list[str] | None = None) ->
 
     # The ceiling, in front of the reader rather than in a design document. This is the
     # number that makes "no evidence found" mean what the bottom band says it means.
+    # The ceiling, generically worded on purpose. Naming vendors dates the disclosure and
+    # invites it to be read as a claim about one company's product rather than about this
+    # method's limit, which is what it is: docs/12 reaches the same ceiling from two more
+    # directions, including one where the author's own prose is available as a reference.
     claude, tag = pick("modern_claude")
     if claude.get("documentRecall") is not None:
         out.append(
-            "On frontier prose (Claude opus/sonnet/haiku) it catches "
+            "On prose from the strongest current models it catches "
             f"{claude['documentRecall']:.1%} of essays{tag}. A low score is not evidence "
             "that a person wrote this."
         )
@@ -130,6 +177,7 @@ def render(artifacts: Path, suffix: str = "", extra: list[str] | None = None) ->
             "sentence is not evidence of anything."
         )
 
+    out.extend(highlight_disclosure(artifacts))
     out.extend(extra or [])
     out.append(GENERIC)
     return out

@@ -39,7 +39,25 @@ async function launch() {
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
-  console.log(`\nverifying ${BASE}\n`);
+  // The last /api/analyze payload the PAGE received. Kept so a failing check can say whether
+  // the server omitted a field or the interface failed to render one it was given. Without
+  // this the two are indistinguishable from the DOM, and they have opposite fixes.
+  let lastPayload = null;
+  page.on('response', async (r) => {
+    if (!r.url().includes('/api/analyze')) return;
+    try { lastPayload = await r.json(); } catch { /* non-JSON error page */ }
+  });
+
+  // Printed loudly because BASE DEFAULTS TO LOCALHOST. Running this with no argument tests the
+  // Python build; the hosted build needs its URL passed. Two checks were read as product
+  // defects for exactly this reason -- the harness was pointed at a uvicorn process started
+  // fifteen hours before the source it was supposedly verifying.
+  console.log(`\n${'='.repeat(72)}\nVERIFYING: ${BASE}`);
+  console.log(BASE.includes('127.0.0.1') || BASE.includes('localhost')
+    ? 'target: LOCAL build. Pass a URL to verify the hosted one.\n'
+      + 'NOTE a long-running uvicorn does NOT pick up source changes -- restart it first.'
+    : 'target: HOSTED build.');
+  console.log('='.repeat(72) + '\n');
   await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60000 });
   check('page loads', await page.title() !== '');
 
@@ -211,11 +229,42 @@ async function launch() {
     + 'I did not learn patience in that kitchen. I learned that I am not patient, and that '
     + 'the people who love me have decided to keep me anyway. ';
   await page.fill('#essay', longEssay);
+  // Clear the completion signal so its return can only mean THIS analysis finished. #status is
+  // written LAST in `analyse()` -- after renderText, after the limitations list, and crucially
+  // after renderClipNotice -- so it is the only state that proves the whole render ran.
+  //
+  // Waiting on `.sentence` count instead was wrong and cost a long detour: it is written by
+  // renderText, three statements BEFORE the notice, so the wait could return on a page whose
+  // sentences existed and whose notice had not been set yet. That reported the product as
+  // broken -- 26/28, "0 unmeasured spans" -- while a direct browser probe of the same essay
+  // showed 27 correctly marked spans and the notice visible with the right text. The product
+  // was right and this harness was lying about it, which is the more dangerous direction.
+  //
+  // The general rule, and it is the same one this file's own history already records about
+  // fixed sleeps: wait for the signal the code writes LAST, never for one it writes early.
+  await page.evaluate(() => { document.querySelector('#status').textContent = ''; });
   await page.click('#analyse');
-  // A condition only THIS response can satisfy. #verdict-panel is already visible from the
-  // previous analysis, so waiting on it returns instantly and reads the page mid-flight.
   await page.waitForFunction(
-    () => document.querySelectorAll('.sentence').length > 50, null, { timeout: 180000 });
+    () => /sentences flagged/.test(document.querySelector('#status').textContent || ''),
+    null, { timeout: 180000 });
+  const renderedCount = await page.$$eval('.sentence', (els) => els.length);
+  check('the over-length essay actually re-rendered before these checks read the page',
+    renderedCount > 50, `${renderedCount} sentences rendered`);
+
+  // Attribute the next two checks before making them. The interface can only disclose what the
+  // response carries, so if the server did not send `clipped` and a reason per span, the next
+  // failures are the SERVER's and the UI is blameless -- and the commonest cause of that is a
+  // stale process rather than missing code.
+  const served = (lastPayload && lastPayload.meta) || {};
+  const reasonsSent = ((lastPayload && lastPayload.sentences) || [])
+    .filter((s) => s.unreliableReason === 'beyond_observer_window').length;
+  check('the server tells the page the essay was clipped, and where',
+    served.clipped === true && typeof served.observerCharLimit === 'number' && reasonsSent > 0,
+    `clipped=${served.clipped} limit=${served.observerCharLimit} `
+    + `spans marked beyond_observer_window=${reasonsSent}`
+    + (served.clipped === undefined
+      ? '  <-- server omitted it: restart the server; a running uvicorn does not reload source'
+      : ''));
   const noticeShown = await page.isVisible('#notice');
   const noticeText = ((await page.textContent('#notice')) || '').replace(/\s+/g, ' ').trim();
   check('an over-length essay says the verdict covers only its opening',

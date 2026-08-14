@@ -55,8 +55,26 @@ documents, 5,527 sentences, 364,056 values** — every feature, logit, calibrate
 evidence bar, passage, gate decision and bootstrap endpoint — with the observer's token
 stream held identical between them. Every probability, logit and threshold decision is
 **exactly** equal; the largest disagreement anywhere is 6e-15 on an n-gram surprisal mean.
-Six mutations confirm the test can fail. In production, `scripts/verify_ui.cjs` passes 28/28
-against the live URL.
+Six mutations confirm the test can fail. `scripts/verify_ui.cjs` passes **30/30 against both
+builds** — the hosted URL and a local `uvicorn`.
+
+**"Both" is new, and finding out why is the fourth instance of this project's recurring bug.**
+That script defaults to `http://127.0.0.1:8123` and said nothing about it, so a run with no
+argument verified the *Python* build while appearing to verify the deployed one. Under that
+misdirection two checks failed — the over-length essay disclosed nothing and no span was marked
+unmeasured — and the obvious reading was that the observer-window fix above had regressed. It
+had not. The Worker was correct, the Python source was correct, and the **process** was fifteen
+hours older than the source it was serving: a running `uvicorn` does not reload on edit. A third
+check was quietly wrong for the same reason, passing with a fallback caption rather than the
+real one.
+
+Two harness defects made that possible and both are fixed: the script now prints which build it
+is targeting and warns that a long-running server is stale, and it no longer waits on
+`.sentence` count — a signal `renderText` writes *three statements before* the clip notice, so
+the wait could return on a half-rendered page. It waits on `#status`, which `analyse()` writes
+last. A new check attributes failure before assigning it, reporting whether the *server* omitted
+`clipped` and the per-span reason or the *interface* failed to render what it was given, because
+those have opposite fixes and are indistinguishable from the DOM.
 
 **Building it found two things wrong with this project, both in the direction of overclaiming:**
 
@@ -265,6 +283,61 @@ Consequence built into the product: **a low score is not evidence of a human aut
 bottom band is worded *"no evidence of machine writing"*, never *"human"*, nothing in the UI
 is coloured green, and `canExonerate` is `false` on every response.
 
+### The ceiling was attacked twice more and it held both times
+
+[docs/12-consensus-and-polish.md](docs/12-consensus-and-polish.md).
+
+**Cross-observer disagreement — a negative, and it arrived disguised as the largest result
+here.** Absolute surprisal is confounded by how hard the content is; rare tokens are hard for
+*every* model, so a statistic built from the DISAGREEMENT between independent observers should
+cancel that. Three vendors' models return per-token log-probability and true rank aligned to
+character offsets, so it is buildable. Fourteen disagreement features moved held-out frontier
+prose from AUROC 0.637 / **0% recall** to 0.960 / **100%**, p < 0.0001, with the baseline arm
+reproducing the published table exactly.
+
+It does not survive its controls. Typography folding (a known leak: 83% of the human documents
+carry curly apostrophes against **0%** of every machine set) left it standing at 0.967. A human
+corpus *we did not collect* cut it to **0.167**. Machine essays *somebody else generated*, scored
+against that foreign human reference, cut it to **0.000** — AUROC 0.490, chance. It had learned
+our generation pipeline and one collection's human prose. `scripts/consensus_controls.py` is the
+six-control battery, kept as the gate any future signal has to pass.
+
+This makes docs/09's standing rule stronger than docs/09 stated it: it is not only supervised
+models over *raw text* that this corpus cannot validate, it is **any** fitted combination,
+including one over model logits. Leave-one-generator-out holds out a generator and never holds
+out the pipeline — all five of ours share it.
+
+**Polish localisation — a real gain one era back, and the ceiling again at the frontier.** The
+brief's realistic case is a paragraph a person wrote and a model later polished. Comparing a
+sentence to *the rest of its own document* holds topic, genre and proficiency constant by
+construction. Only 3 of the 43 features were z-scored against the document; z-scoring the other
+37 costs nothing, and it is fitted on one pipeline's rewrites and tested on another's.
+
+| | GPT-era polish | frontier polish |
+|---|---|---|
+| document hit rate @ 5% **sentence** budget | 0.935 | 0.900 |
+| document hit rate @ 5% **document** budget | **0.532** | **0.100** |
+
+The first row is the tempting one and it is not defensible — see §7. At the honest operating
+point this is a real **0.338 → 0.532** improvement at 0.956 precision on the case that matters
+most, and the five self-relative features shipped today contribute **0.072** of it. And the
+ceiling holds: frontier polish reaches 0.100 on n=10, so **frontier prose is not reliably
+detectable at a defensible false-accusation budget even when the author's own prose sits in the
+same document as a reference.** Fitted by `scripts/fit_polish.py` into
+`artifacts/polish_head.json`, with the feature count swept and printed rather than chosen.
+
+**It is deliberately not wired into the verdict, and that is a decision rather than an unfinished
+edge.** Two of its findings *are* shipped — the per-document operating point and the highlight
+disclosure in §7 — because those reduce what the tool claims. The head itself would do the
+opposite: add a second channel capable of flagging a sentence, on a corpus where the honest
+frontier number is 0.100 and where the population most likely to trip a
+"this-does-not-match-its-neighbours" signal is the one whose prose varies most. A second
+accusation surface needs its own error budget in front of the reader, its own port with the
+364,056-value parity test extended to cover it, and a place in the interface that cannot be read
+as a second opinion confirming the first. None of that is hard; all of it is unmeasured. Shipping
+it half-specified to claim a capability would be the exact trade this project spends nine
+documents refusing.
+
 ---
 
 ## 6. The genre gate
@@ -338,7 +411,25 @@ Then six larger mistakes, including two that invalidated earlier results: a **0.
 that was partly a smart-quote detector**, and a length artifact that landed on exactly the
 wrong people. Both were found by us and both are recorded rather than quietly fixed.
 
-A third, from this build: a supervised stylometric classifier scored **AUROC 1.000** on
+### The highlights were never priced, and that is an unreported accusation rate
+
+Every error rate above describes the **document verdict**. A reader does not consume the document
+verdict; they consume the **heat map**, and until now the two were calibrated against different
+budgets — the verdict at document level, the sentence flag threshold per sentence. An essay holds
+roughly nineteen sentences, so a 5%-per-sentence error becomes a highlight *somewhere* in
+**30.7% of essays nobody edited**. On English-learner writing, by measured proficiency, it runs
+**50–79%** — and it *rises* with proficiency (79.3% at holistic 4.5 against 54.4% at 2.0), because
+a stronger writer's prose varies more from sentence to sentence and this family reads variation.
+That is the opposite direction from every other fairness finding in this project.
+
+Nothing here was a false statement; it was a number the interface never made. It is the same
+class as the `find_passages`/`aggregate` contradiction in §2 — a per-sentence claim the
+per-document arithmetic would not make — reached by a third route. The interface now states the
+measured per-document highlight rate, rendered from the artifact rather than from prose that can
+go stale, and the polish head is calibrated on the per-document maximum so that 5% of clean
+documents carry a flag *by construction*.
+
+A third failure, from an earlier build: a supervised stylometric classifier scored **AUROC 1.000** on
 held-out Claude Opus and detected nothing — it flagged 0% of real GPT-3.5 essays from another
 collection and 17% of real students. It had learned *which pipeline produced a file*. Four
 successive controls (typography, length, corpus, genre) failed to break it; only refusing to
@@ -423,7 +514,8 @@ even fifty would tell us more than any of the above.
 | Detection at sentence/passage level (human text later polished) | ✅ hybrids with known spans in training |
 | Dataset sourced, documented, gaps stated | ✅ [docs/02-dataset.md](docs/02-dataset.md), licences per source |
 | **Three essays it gets confidently wrong, with reasons** | ✅ [docs/04-failures.md](docs/04-failures.md) Part 1 |
-| **ESL false positives — did you spot them** | ✅ [docs/05-esl.md](docs/05-esl.md) + mechanism |
+| **ESL false positives — did you spot them** | ✅ [docs/05-esl.md](docs/05-esl.md) + mechanism, + the highlight rate by proficiency (§7) |
+| Report honest accuracy on your own test set | ✅ §5, plus two negative results we found and killed ourselves ([docs/12](docs/12-consensus-and-polish.md)) |
 
 **On "a small local model".** The brief permits a language model as an instrument and draws
 one line: *the model must not make the judgement call while the app relays the verdict.* That
@@ -440,7 +532,13 @@ declares **no licence** on its mirror; it is used only as a diagnostic, appears 
 
 ## 10. What this does not cover
 
-* **Frontier models.** Opus/Sonnet/Gemini-Pro-class prose: 0% recall at a defensible budget.
+* **Frontier models.** The strongest current models: 0% recall at a defensible budget — and
+  0.100 document hit rate even on the *polish* case, where the author's own prose is available
+  in the same document as a reference (docs/12). Three signal families have now been built and
+  measured against this: absolute surprisal, Fast-DetectGPT curvature, and cross-observer
+  disagreement. The one untried lever left is comparison against the same student's other
+  writing, and it is untried for a data reason: no corpus on hand carries multiple documents per
+  identified author in this genre.
 * **Paraphrase and "humanizer" attacks.** Not in the corpus. Published benchmarks find they
   hurt badly, so every number above is an **upper** bound on adversarial performance.
 * **Genres other than admissions essays.** Refused by design — but the gate was fitted
@@ -465,3 +563,4 @@ declares **no licence** on its mirror; it is used only as a diagnostic, appears 
 | [07-ai-usage.md](docs/07-ai-usage.md) | how AI was used to build this |
 | [08-cross-vendor.md](docs/08-cross-vendor.md) | it detects small models, not machines |
 | [09-frontier-ceiling.md](docs/09-frontier-ceiling.md) | the ceiling, measured |
+| [12-consensus-and-polish.md](docs/12-consensus-and-polish.md) | two more attempts on the ceiling, the control that killed the good one, and the highlight cost |

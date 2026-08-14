@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from palimpsest.limitations import CARRIED, GENERIC, render
+from palimpsest.limitations import CARRIED, CEILING_MARKER, GENERIC, render
 
 ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / "artifacts"
@@ -88,7 +88,7 @@ def test_the_ceiling_is_disclosed_when_it_has_been_measured():
     if served.get("modern_claude", {}).get("documentRecall") is None:
         pytest.skip("frontier recall not measured for the served build")
     statements = render(ARTIFACTS, SERVED_SUFFIX)
-    line = next((s for s in statements if "frontier prose" in s), None)
+    line = next((s for s in statements if CEILING_MARKER in s), None)
     assert line is not None, "frontier recall measured but not shown to the user"
     assert _first_percent(line) == pytest.approx(
         served["modern_claude"]["documentRecall"] * 100, abs=0.05
