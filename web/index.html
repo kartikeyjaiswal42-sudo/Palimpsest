@@ -182,8 +182,10 @@
   <section class="panel limits-panel hidden" id="limits-panel" aria-labelledby="limits-h">
     <div class="limits-head">
       <h2 class="panel-h" id="limits-h">What this tool gets wrong</h2>
-      <p class="limits-sub">Eight measured failure modes, shipped with every result. Read
-      them before you act on anything above.</p>
+      <!-- Rewritten by renderLimitations() from the list actually returned. The count is
+           deliberately not maintained here; see app.js. -->
+      <p class="limits-sub" id="limits-sub">Measured failure modes, shipped with every
+      result. Read them before you act on anything above.</p>
     </div>
     <ul class="limitations" id="limitations"></ul>
   </section>

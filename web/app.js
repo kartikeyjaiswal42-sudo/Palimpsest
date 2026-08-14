@@ -314,6 +314,7 @@ window.Palimpsest = (function () {
     evidenceBars: $('evidence-bars'),
     tokenStrip: $('token-strip'),
     limitsPanel: $('limits-panel'),
+    limitsSub: $('limits-sub'),
     limitations: $('limitations'),
     privacy: $('privacy'),
     ribbon: $('ribbon'),
@@ -676,21 +677,43 @@ window.Palimpsest = (function () {
   /* ==========================================================
      Render — limits + notice
      ========================================================== */
+  var COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
+    'Nine', 'Ten', 'Eleven', 'Twelve'];
+
   function renderLimitations(data) {
+    var lines = data.limitations || [];
     els.limitations.textContent = '';
-    (data.limitations || []).forEach(function (line) {
+    lines.forEach(function (line) {
       var li = document.createElement('li');
       li.textContent = line;
       els.limitations.appendChild(li);
     });
+    /* Counted from what was just rendered, never typed into the markup. This heading read
+       "Eight measured failure modes" above a list of nine, because the count was written by
+       hand against the bundled fixture while the deployed detector ships one more. The same
+       drift in the other direction has already published a live site disclosing one FEWER
+       failure mode than the repository claimed, and nothing errored either time. A number
+       describing a list belongs to the list. */
+    var n = lines.length;
+    els.limitsSub.textContent = (n < COUNT_WORDS.length ? COUNT_WORDS[n] : String(n)) +
+      ' measured failure mode' + (n === 1 ? '' : 's') +
+      ', shipped with every result. Read them before you act on anything above.';
     els.limitsPanel.classList.remove('hidden');
+  }
+
+  /* Grouped explicitly as en-US. A bare toLocaleString() follows the reader's locale, and
+     several of them render 6000 as "6.000" \u2014 which reads as six, in a sentence whose whole
+     job is to say how much of the essay went unread. */
+  function grouped(n) {
+    return typeof n === 'number' ? n.toLocaleString('en-US') : String(n);
   }
 
   function renderNotice(data) {
     var m = data.meta || {};
     if (m.clipped) {
       els.notice.textContent = 'This essay is longer than the observer\u2019s window of ' +
-        m.observerCharLimit + ' characters. Only the opening ' + m.observerCharLimit +
+        grouped(m.observerCharLimit) + ' characters. Only the opening ' +
+        grouped(m.observerCharLimit) +
         ' characters were read, so everything above describes the opening of the essay and not the rest of it.';
       els.notice.hidden = false;
     } else {

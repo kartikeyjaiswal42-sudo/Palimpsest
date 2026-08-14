@@ -165,9 +165,16 @@ async function launch() {
   // The interesting half of this example: the SENTENCE layer gets it right even though the
   // DOCUMENT verdict declines to flag. If the highlighting ever stops landing on the
   // rewritten paragraph, the demo's explanation becomes false and should fail here.
+  // These phrases are the POLISHED PARAGRAPH OF THE CURRENT FIXTURE and must be re-derived
+  // whenever `load-missed` changes. The interface redesign replaced the example essay, and
+  // this check went on grepping the previous one's wording -- reporting "0 of 2 highlighted
+  // sentences are in the rewritten paragraph" while both highlights were in fact landing
+  // inside it. A stale phrase list here accuses the detector of a regression it did not have,
+  // which is the direction that wastes the most time, so it is spelled out: the fixture is
+  // now the bus-transfers essay and its third paragraph is the polished one.
   const highlighted = await page.locator('.sentence.s3, .sentence.s4').allTextContents();
   const polished = highlighted.filter((t) =>
-    /Throughout this experience|important to note|remarkable patience|profound learning/.test(t));
+    /habit made a kind of sense|archive of ordinary persistence|small paper proof|no institution would ever think/.test(t));
   check('the rewritten paragraph is still located correctly',
     highlighted.length > 0 && polished.length >= Math.ceil(highlighted.length / 2),
     `${polished.length} of ${highlighted.length} highlighted sentences are in the rewritten paragraph`);
@@ -270,8 +277,14 @@ async function launch() {
   check('an over-length essay says the verdict covers only its opening',
     noticeShown && /6,000 characters/.test(noticeText),
     `${longEssay.length} chars — "${noticeText.slice(0, 96)}…"`);
+  // Matched on the CONDITION the span reports, not on one phrasing of it. The contract asks
+  // an unmeasurable span to name which of the three rules stopped it, and the current copy
+  // says "not measured: beyond the observer's window"; an earlier one said "never measured".
+  // Pinning this to a single sentence made the check fail with "0 unmeasured spans" on an
+  // interface where all 53 were present, correctly captioned and — the thing actually being
+  // tested — unshaded. A check that cannot find its subject must not read as a product fault.
   const unseen = await page.$$eval('.sentence.unreliable', (els) => els
-    .filter((e) => /never measured/i.test(e.getAttribute('title') || ''))
+    .filter((e) => /beyond the observer|never measured/i.test(e.getAttribute('title') || ''))
     .map((e) => ({ shaded: /\bs[1-4]\b/.test(e.className), title: e.getAttribute('title') })));
   check('text the observer never read is not shaded as evidence',
     unseen.length > 0 && unseen.every((s) => !s.shaded),
