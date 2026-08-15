@@ -163,6 +163,18 @@ async function handleAnalyze(request, env, ctx) {
   try {
     loaded = await models(env);
   } catch (err) {
+    // Give the reservation back. Nothing reached Workers AI on this path -- the corpus
+    // reference failed to load before the observer was called -- so the three neurons
+    // charged up front were never spent, and leaving them charged would let a broken asset
+    // binding quietly eat the day's allowance one refusal at a time. An observer failure
+    // below is deliberately NOT refunded: that call may or may not have been billed and a
+    // metered resource is the one place to guess high.
+    ctx.waitUntil(
+      stub.fetch(`${INTERNAL}/settle`, {
+        method: 'POST',
+        body: JSON.stringify({ estimate: NEURON_ESTIMATE, neurons: 0 }),
+      }).catch(() => {}),
+    );
     return json({ error: 'artifacts', detail: String(err.message ?? err) }, 503);
   }
 

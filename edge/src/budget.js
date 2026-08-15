@@ -100,7 +100,15 @@ export class Budget {
     // `settle` corrects it to the real cost once the observer reports back.
     await this.state.storage.put(`neurons:${day}`, spent + estimate);
     await this.state.storage.put(`calls:${day}`, ((await this.state.storage.get(`calls:${day}`)) ?? 0) + 1);
-    await this.state.storage.setAlarm(now + DAY_MS);
+    // Only arm the cleanup alarm if one is not already pending. `setAlarm` REPLACES the
+    // scheduled time rather than adding to it, so calling it on every reservation pushed the
+    // alarm 24 hours into the future on each request -- meaning that under any continuous
+    // traffic at all the cleanup this object schedules could never fire, and the per-IP
+    // history and old day counters it exists to drop would accumulate indefinitely. The
+    // alarm is a floor on cleanup, not a per-request timer.
+    if ((await this.state.storage.getAlarm()) === null) {
+      await this.state.storage.setAlarm(now + DAY_MS);
+    }
     return Response.json({ ok: true, estimate });
   }
 
