@@ -53,3 +53,23 @@ artifacts/_before/
 *.env
 !observer-worker/.env.example
 node_modules/
+
+# The Colab bundle EMBEDS the human essay corpus (scripts/export_for_colab.py bundles
+# data/raw text for upload), so it falls under exactly the rule above: not ours to
+# redistribute. The notebook that consumes it IS committed; the essays are not.
+colab_bundle/
+binoculars_scores.jsonl
+
+# ---------------------------------------------------------------------------
+# The failure analysis carries each failing document's FULL TEXT -- that is the point of
+# it, since the interface renders the essay next to the arithmetic that got it wrong. The
+# documents it ranks are drawn from `ellipse` and `real_hybrid_hewlett`, i.e. writing by
+# real students, so committing this file republishes verbatim exactly the corpus `data/raw/`
+# and `data/cache/` above are excluded to protect. Same rule, same reason, third back door.
+#
+# Nothing is lost by excluding it: `python scripts/confident_failures.py` rebuilds it from a
+# corpus the reader has fetched themselves, and a missing artifact makes /api/failures answer
+# 404 with that command, which the interface already handles by hiding the panel rather than
+# claiming the detector has no failures. The hosted build never served it at all.
+artifacts/confident_failures.json
+artifacts/*.json.tmp

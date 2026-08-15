@@ -1,0 +1,292 @@
+# Structural features, cross-perplexity, and the failure panel
+
+*Added 2026-08-15. Three new signal families were asked for, three were built, one of them
+works, one cannot be validated on this corpus, and building the failure panel found a bug in
+the shipped detector.*
+
+---
+
+## 1. What was asked for and what happened
+
+| asked | built | measured outcome |
+|---|---|---|
+| Cross-perplexity (Binoculars) | already existed; **executed for the first time** | works locally; cannot run at corpus scale here (§4) |
+| Syntactic tree-depth variance | `features/syntax.py` | **real gain**, and it reduces ESL false positives (§2) |
+| Stop-word ratio + POS n-gram entropy | `features/syntax.py` | stop-word ratio carries signal; **POS entropy is length in disguise** (§3) |
+| ESL false-positive harness | `scripts/esl_false_positive_audit.py` | §5 |
+| Dataset ingestion + report | `scripts/dataset_report.py` | §6 |
+| Confident-failures exposer + UI | `scripts/confident_failures.py`, `/api/failures` | §7, and it found a bug (§8) |
+
+Eleven features were added, in two groups that behave differently and are reported
+separately: eight per-sentence (`tree_depth_max/mean/sd`, `branching_factor`,
+`stopword_ratio`, `content_function_ratio`, `pos_trigram_entropy`, `pos_trigram_surprisal`)
+and three document-relative (`tree_depth_z_in_doc`, `local_depth_burstiness`,
+`pos_surprisal_z_in_doc`), built to mirror `context.py` exactly.
+
+They are computed by **joining onto the existing feature matrices**
+(`scripts/build_syntax_features.py`), not by re-scoring. A dependency parse needs no
+language model, so the 43 existing values that produced every published number are
+untouched and any measured difference is attributable to the new block rather than to a
+re-scoring run that drifted.
+
+---
+
+## 2. The result
+
+`scripts/syntax_probe.py`, grouped 5-fold CV on `train_remote` (7,055 sentences, 267 essays):
+
+| | AUROC |
+|---|---|
+| shipped features (39 usable) | 0.9744 |
+| + structural block (50) | **0.9846** |
+| delta | **+0.0102**, bootstrap 95% CI **[+0.0085, +0.0119]** |
+
+Positive in all five folds (+0.0038 to +0.0151). The CI excludes zero.
+
+**It survives the length control**, which matters because docs/04 records a length artifact
+that landed on exactly the wrong people. Five of the eleven features correlate |r| > 0.4
+with sentence length and were dropped; the remaining six still deliver **+0.0090
+[+0.0074, +0.0106]**, i.e. **88% of the gain is not length**.
+
+Strongest single features (direction-free strength, out of fold):
+
+| feature | AUROC | strength | r(length) |
+|---|---|---|---|
+| `pos_trigram_surprisal` | 0.350 | **0.650** | −0.14 |
+| `tree_depth_mean` | 0.628 | 0.628 | +0.70 |
+| `tree_depth_sd` | 0.612 | 0.612 | +0.56 |
+| `local_depth_burstiness` | 0.391 | 0.609 | −0.11 |
+| `stopword_ratio` | 0.395 | 0.605 | −0.01 |
+| `pos_trigram_entropy` | 0.578 | 0.578 | **+0.88** |
+
+An AUROC below 0.5 is not a weak feature, it is an inverted one, and the classifier learns
+the sign. `pos_trigram_surprisal` at 0.350 says machine prose uses **more ordinary
+grammatical shapes** than human prose — which is the hypothesis, confirmed.
+
+---
+
+## 3. Part-of-speech trigram entropy is a length feature
+
+Asked for, built, and reported as failing. A 15-word sentence yields ~13 POS trigrams that
+almost never repeat, so its empirical Shannon entropy is very nearly log(n_trigrams) — a
+re-encoding of sentence length wearing an information-theory label. Measured correlation
+with `n_words`: **r = +0.88**, the highest of any feature in the block.
+
+It is shipped anyway, alongside `pos_trigram_surprisal`, which asks the same question
+against a **reference distribution** (a POS-trigram model fitted on the human half of the
+training pool only). That one is the strongest single feature in the block. The pair is kept
+so the comparison stays visible rather than becoming folklore.
+
+---
+
+## 4. Cross-perplexity: it runs, and it cannot run here
+
+`scorer/binoculars.py` was written long ago and, per docs/11 §6.5, **had never been
+executed**. It has now been executed. Qwen3-0.6B-Base + Qwen3-0.6B loaded on CPU in 140 s
+and produced the predicted ordering on a two-sample probe:
+
+```
+machine-ish prose   B = 0.6879
+human-ish prose     B = 0.9046      (lower B = more machine-like)
+```
+
+That is the whole of the evidence. **It has not been run over the corpus**, for two
+independent reasons, both recorded rather than worked around:
+
+1. **Locally it needs RAM this project does not have.** Two models resident plus logits on
+   an 8 GB machine is the reason it was abandoned in the first place, and the constraint has
+   not changed.
+2. **Cloudflare cannot compute it.** Workers AI's `prompt_logprobs` returns the realised
+   token's log-probability and rank, plus at most a top-20 head. True cross-perplexity is a
+   cross-entropy between two models' **full** next-token distributions at every position.
+   The head is not the distribution, so the statistic is not available remotely at any price.
+   `scripts/consensus_probe.py` already says this in its own docstring.
+
+The approximation that *is* computable remotely — a ratio between two models'
+realised-token perplexities — **was already built in this project and already failed its
+controls**: AUROC 0.960 on our pipeline, **0.490 on a foreign corpus** (docs/12). Rebuilding
+it would reproduce a known-dead result.
+
+### The Colab path, which closes this
+
+Google Colab's free T4 has ~15 GB of VRAM, which is both more than the local machine has and
+enough to run a **larger pair than the local one** — including
+`tiiuae/falcon-7b` + `falcon-7b-instruct`, the pair the Binoculars paper itself used, whose
+absence `binoculars.py` flags as making this *"a weaker instrument than the paper's"*.
+Firebase is the wrong shape for this: it is request/response app infrastructure billed per
+invocation, and a cold start reloading 14 GB of weights is not a batch job.
+
+Three pieces, all built and tested:
+
+| | |
+|---|---|
+| `scripts/export_for_colab.py` | bundles 3,860 documents + 69,147 spans (11.9 MB) |
+| `notebooks/binoculars_colab.ipynb` | scores them on the GPU, ~20 min on a T4 |
+| `scripts/join_binoculars.py` | merges the column back, refusing on any misalignment |
+
+**Sentence spans are exported with the text, not re-derived in the notebook.** Re-segmenting
+there would re-derive spans from the raw text, and any difference — a spaCy version, a
+newline rule — would misalign every score by one sentence while leaving every value
+plausible. The notebook only slices what it is handed.
+
+**The scorer is uploaded, not pasted into a cell.** A notebook with the maths retyped into it
+is a second copy by construction, and this project's recurring bug is a fix applied to one
+copy of two. `export_for_colab.py` ships `binoculars.py` itself with a single mechanical
+edit — the one package-relative import inlined — and raises rather than shipping a
+half-rewritten module if that import ever changes shape.
+
+**The join refuses rather than half-writes.** Four checks: every document present, sentence
+indices identical, exported spans matching the matrix, and `logppl / xppl == score` to
+tolerance. The last catches truncated downloads and runs that interleaved two model pairs,
+which the other three cannot see because they only confirm that numbers arrived, not that
+they mean anything. All four were verified against deliberately corrupted input.
+
+**Data governance, stated because it is a decision and not a detail.** The bundle is real
+student essay text and uploading it sends it to Google — the same class of fact
+`/api/health` reports as `textLeavesMachine`. PERSUADE is CC BY-NC-SA (non-commercial);
+DAIGT declares no licence and docs/02 records that this repository does not redistribute it,
+so it is excluded by default behind an `--allow-unlicensed` flag that should stay unused.
+
+Failing that, run `scorer/binoculars.py` on any machine with ≥16 GB. The code is ready and
+now proven to run.
+
+---
+
+## 5. What it does to English-learner writers
+
+`scripts/esl_false_positive_audit.py`, 3,034 held-out ESL documents (ELLIPSE + TOEFL), all
+human-written, so every machine verdict is a false accusation.
+
+| | base | + structural |
+|---|---|---|
+| ESL documents **accused** | 14.80% | **6.43%** |
+| ESL documents **highlighted** (≥1 sentence — what the reader sees) | 45.35% | **34.71%** |
+| Gemini recall @ matched 5% ESL FPR | 83.48% | **98.26%** |
+| Gemini document AUROC | 0.9661 | **0.9926** |
+| Claude (frontier) recall @ matched 5% ESL FPR | 5.26% | 3.95% |
+| Claude document AUROC | 0.6928 | **0.6474** |
+
+**Read it as a split, not a win.** Where the detector already worked it works much better,
+and it accuses far fewer second-language writers doing it. At the frontier it does not help
+and is mildly worse — precisely the pattern docs/08 named: *it detects small models, not
+machines*. The structural block is one more instrument that cannot see Opus.
+
+**A methodology note worth keeping.** The first version of this script compared arms at a
+fixed document threshold and reported Claude recall collapsing 32.89% → 5.26%, concluding
+"threshold move, not a gain". That was wrong: the augmented arm is better calibrated, so its
+scores compress and fewer documents clear a fixed 0.5. Holding the *harm* constant instead —
+recall at whatever threshold produces 5% ESL false positives — the real difference is
+5.26% → 3.95%. **A fixed threshold is not a fair comparison between two differently
+calibrated models**, and the script now reports matched-harm recall and a threshold-free
+AUROC beside the fixed-threshold number.
+
+The proficiency finding from PROJECT.md §7 **reproduces and survives**: the highlight rate
+still *rises* with measured English proficiency (correlation +0.237 base, +0.200 augmented;
+18.5% at the weakest band against 43.6% at the strongest). The block reduces the level but
+does not change the direction.
+
+---
+
+## 6. Dataset report
+
+`scripts/dataset_report.py` regenerates `artifacts/dataset_report.json` and
+`docs/DATASET-REPORT.md` from the corpus on disk: **8,234 documents / 3.81 M words — 6,368
+human, 1,538 raw AI, 328 human-edited AI, 5,179 ESL** (a tag on the human total, not a fourth
+class, so the columns deliberately do not sum).
+
+`--check` fails the build when the report no longer matches the corpus. This exists because
+of the failure in PROJECT.md §2, where the interface published a 17.8% false-positive rate
+while the served build measured 10.9%.
+
+Two things it surfaces that were not previously written down anywhere:
+
+* **two corpus files fail to parse** (`raw/daigt.jsonl`, the 500-essay chat variant) — listed
+  rather than skipped, because a source that silently fails to load is a hole in every
+  downstream number;
+* **525 duplicate texts** (identical SHA-256 under different ids). Duplicates spanning a
+  train/test split inflate everything measured on it. This is not diagnosed here, only
+  reported.
+
+The "what this dataset does not cover" section lives in `docs/dataset-gaps.md`, is written by
+hand, is embedded into both outputs, and is **never overwritten** — regenerating a report
+must not delete somebody's account of their own blind spots.
+
+---
+
+## 7. Confident failures
+
+`scripts/confident_failures.py` ranks held-out mistakes by
+
+    severity = |p − truth| × confidence past the verdict threshold
+
+rather than by raw score, because raw score favours long documents (more sentences, more
+chances at one extreme value). Ties break by logit margin — probability saturates at 1.000
+and stops discriminating exactly among the worst cases — and only then toward the **shorter**
+document, on the ground that a confident wrong answer from less evidence is a worse failure.
+
+Of 3,495 held-out documents, **422 are wrong**. The worst three:
+
+1. `ellipse:00742` — ESL, 60 words, human, called machine at **P = 1.000**
+2. `ellipse:02990` — ESL, 388 words, human, called machine at **P = 1.000**
+3. `real_hybrid_hewlett:0079` — machine, 233 words, called *no evidence* at **P = 0.000**
+
+Two of the three worst failures in the corpus are second-language writers being accused.
+
+The panel is served at `/api/failures`, rendered from the artifact (never from markup), and
+each card carries the essay, the score, the per-feature bars that reconstruct the logit, and
+a **text box for the human explanation** — saved back into the artifact via
+`POST /api/failures/explanation` and preserved across regeneration. That field is the one
+thing the arithmetic cannot supply: the bars say which terms produced the number, not why
+those were the wrong things to measure.
+
+---
+
+## 8. The bug the failure panel found
+
+The top contribution to the worst false accusation in the corpus is
+`style_gap_from_doc` at **+55.87** — one feature, roughly six times the entire rest of the
+sum, against an ESL student's essay.
+
+`context.py::_loo_z` clips every in-document z-score to **±6**, with a stated reason:
+
+> *"Capped, because the true value is unbounded and one feature should not be able to
+> dominate the logit."*
+
+`style_gap_from_doc` is computed in the same function, a few lines below, and **is not
+clipped**. Measured over 50,875 ESL sentences:
+
+| feature | max observed |
+|---|---|
+| `logprob_z_in_doc` | 6.00 |
+| `len_z_in_doc` | 6.00 |
+| `tree_depth_z_in_doc` | 6.00 |
+| **`style_gap_from_doc`** | **64.67** |
+
+The p99.9 is 4.20, so this is a thin tail rather than a pervasive problem — but the tail
+lands on erratic prose, which means it lands on second-language writers, and there it is
+strong enough to carry a verdict single-handedly.
+
+**Deliberately not fixed here.** Clipping it changes the shipped model's output, which
+invalidates the 364,056-value edge parity test, every published number, and the fitted
+bands. That is a decision with a measurement in front of it, not a patch. The evidence is
+recorded so the decision can be made.
+
+---
+
+## 9. What none of this establishes
+
+**These features are not shown to survive a humanizer.** That was the motivation for
+building them, and this corpus contains no paraphrase or humanizer attack (PROJECT.md §10),
+so the claim is untested. Every number above is an ordinary human-vs-machine measurement.
+Testing the actual hypothesis requires an attacked corpus, and until one exists the
+structural block should be described as *a signal family that improves detection of the
+generators we already caught*, not as *the answer to paraphrase attacks*.
+
+**And the gain is not shown to generalise past our generation pipeline.** docs/12 records a
+0.960 AUROC that fell to **0.490** on a foreign corpus. The structural block has not been
+put through `scripts/consensus_controls.py`. Until it is, +0.0102 is a number measured on
+our own pipeline and carries exactly that much weight.
+
+**The block is measured but NOT wired into the shipped verdict.** Doing so requires
+retraining, refitting the bands, and extending the JS port and its parity test — the same
+bar docs/12 set for the polish head, and the same reason that head is not shipped either.

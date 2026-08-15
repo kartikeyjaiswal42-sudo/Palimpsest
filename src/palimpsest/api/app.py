@@ -277,6 +277,59 @@ def _limitations() -> list[str]:
 
 #: Application code is served no-cache.
 #:
+FAILURES = ARTIFACTS / "confident_failures.json"
+
+
+class ExplanationRequest(BaseModel):
+    doc_id: str = Field(..., description="Which failure the explanation belongs to.")
+    text: str = Field(..., max_length=8_000, description="Why the arithmetic failed.")
+
+
+@app.get("/api/failures")
+def failures() -> dict:
+    """The detector's worst held-out mistakes, ranked by confident wrongness.
+
+    Served from ``artifacts/confident_failures.json``, written by
+    ``scripts/confident_failures.py``. Rendered rather than described, for the reason
+    PROJECT.md §2 records: the limitations panel once published a 17.8% false-positive rate
+    where the served build measured 10.9%, because the number lived in prose instead of in
+    the artifact the run produced.
+
+    Returns 404 with the command to run rather than an empty list, so a missing artifact
+    cannot be mistaken for a detector that has no failures.
+    """
+    if not FAILURES.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="No failure analysis has been run. "
+                   "Generate it with: python scripts/confident_failures.py",
+        )
+    return json.loads(FAILURES.read_text(encoding="utf-8"))
+
+
+@app.post("/api/failures/explanation")
+def save_explanation(req: ExplanationRequest) -> dict:
+    """Persist the human account of why a given failure happened.
+
+    This is the one field in the artifact a script must not write. It is stored back into
+    the artifact itself rather than a side file, so ``confident_failures.py`` -- which
+    already carries explanations across regeneration -- keeps them when the corpus changes.
+    """
+    if not FAILURES.exists():
+        raise HTTPException(status_code=404, detail="No failure analysis to annotate.")
+    payload = json.loads(FAILURES.read_text(encoding="utf-8"))
+    for entry in payload.get("failures", []):
+        if entry.get("docId") == req.doc_id:
+            entry["humanExplanation"] = req.text
+            # Written via a temporary file and replaced: a half-written artifact would be
+            # read as a truncated failure list by the next GET.
+            tmp = FAILURES.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            tmp.replace(FAILURES)
+            return {"ok": True, "docId": req.doc_id, "chars": len(req.text)}
+    raise HTTPException(status_code=404, detail=f"No failure with docId {req.doc_id!r}")
+
+
 #: Not a micro-optimisation in reverse -- a correctness measure. A CSS fix was made, served
 #: correctly by this process, and still absent in the browser because the old stylesheet was
 #: cached; the screenshot showed an unstyled element and the file on disk showed the rule,

@@ -1,0 +1,305 @@
+{
+  "train": "train_remote",
+  "esl": "esl_remote",
+  "nEslDocuments": 3132,
+  "nEslSentences": 51824,
+  "docThreshold": 0.5,
+  "arms": {
+    "base": {
+      "nFeatures": 39,
+      "sentenceThreshold": 0.6427,
+      "overall": {
+        "documentAccusation": {
+          "n": 3034,
+          "k": 449,
+          "rate": 0.148,
+          "lo": 0.1358,
+          "hi": 0.1611
+        },
+        "anyHighlight": {
+          "n": 3034,
+          "k": 1376,
+          "rate": 0.4535,
+          "lo": 0.4359,
+          "hi": 0.4713
+        }
+      },
+      "bySource": {
+        "ellipse": {
+          "documentAccusation": {
+            "n": 2943,
+            "k": 433,
+            "rate": 0.1471,
+            "lo": 0.1348,
+            "hi": 0.1604
+          },
+          "anyHighlight": {
+            "n": 2943,
+            "k": 1326,
+            "rate": 0.4506,
+            "lo": 0.4327,
+            "hi": 0.4686
+          }
+        },
+        "liang_toefl": {
+          "documentAccusation": {
+            "n": 91,
+            "k": 16,
+            "rate": 0.1758,
+            "lo": 0.1112,
+            "hi": 0.2667
+          },
+          "anyHighlight": {
+            "n": 91,
+            "k": 50,
+            "rate": 0.5495,
+            "lo": 0.4473,
+            "hi": 0.6476
+          }
+        }
+      },
+      "byProficiency": {
+        "1.0-2.5 weakest": {
+          "documentAccusation": {
+            "n": 249,
+            "k": 21,
+            "rate": 0.0843,
+            "lo": 0.0558,
+            "hi": 0.1255
+          },
+          "anyHighlight": {
+            "n": 249,
+            "k": 61,
+            "rate": 0.245,
+            "lo": 0.1957,
+            "hi": 0.302
+          }
+        },
+        "2.5-3.5": {
+          "documentAccusation": {
+            "n": 1544,
+            "k": 222,
+            "rate": 0.1438,
+            "lo": 0.1272,
+            "hi": 0.1622
+          },
+          "anyHighlight": {
+            "n": 1544,
+            "k": 600,
+            "rate": 0.3886,
+            "lo": 0.3646,
+            "hi": 0.4132
+          }
+        },
+        "3.5-5.0 strongest": {
+          "documentAccusation": {
+            "n": 1150,
+            "k": 190,
+            "rate": 0.1652,
+            "lo": 0.1449,
+            "hi": 0.1878
+          },
+          "anyHighlight": {
+            "n": 1150,
+            "k": 665,
+            "rate": 0.5783,
+            "lo": 0.5495,
+            "hi": 0.6065
+          }
+        }
+      },
+      "proficiencyHighlightCorrelation": 0.2372,
+      "machineRecall": {
+        "modern_holdout_remote": {
+          "atFixedThreshold": {
+            "n": 115,
+            "k": 113,
+            "rate": 0.9826,
+            "lo": 0.9388,
+            "hi": 0.9952
+          },
+          "atMatchedEslFpr": {
+            "n": 115,
+            "k": 96,
+            "rate": 0.8348,
+            "lo": 0.7563,
+            "hi": 0.8916
+          },
+          "documentAuroc": 0.9661
+        },
+        "modern_claude_eval_remote": {
+          "atFixedThreshold": {
+            "n": 76,
+            "k": 25,
+            "rate": 0.3289,
+            "lo": 0.2338,
+            "hi": 0.4406
+          },
+          "atMatchedEslFpr": {
+            "n": 76,
+            "k": 4,
+            "rate": 0.0526,
+            "lo": 0.0207,
+            "hi": 0.1277
+          },
+          "documentAuroc": 0.6928
+        }
+      }
+    },
+    "augmented": {
+      "nFeatures": 50,
+      "sentenceThreshold": 0.5043,
+      "overall": {
+        "documentAccusation": {
+          "n": 3034,
+          "k": 195,
+          "rate": 0.0643,
+          "lo": 0.0561,
+          "hi": 0.0736
+        },
+        "anyHighlight": {
+          "n": 3034,
+          "k": 1053,
+          "rate": 0.3471,
+          "lo": 0.3303,
+          "hi": 0.3642
+        }
+      },
+      "bySource": {
+        "ellipse": {
+          "documentAccusation": {
+            "n": 2943,
+            "k": 180,
+            "rate": 0.0612,
+            "lo": 0.0531,
+            "hi": 0.0704
+          },
+          "anyHighlight": {
+            "n": 2943,
+            "k": 998,
+            "rate": 0.3391,
+            "lo": 0.3222,
+            "hi": 0.3564
+          }
+        },
+        "liang_toefl": {
+          "documentAccusation": {
+            "n": 91,
+            "k": 15,
+            "rate": 0.1648,
+            "lo": 0.1025,
+            "hi": 0.2543
+          },
+          "anyHighlight": {
+            "n": 91,
+            "k": 55,
+            "rate": 0.6044,
+            "lo": 0.5017,
+            "hi": 0.6987
+          }
+        }
+      },
+      "byProficiency": {
+        "1.0-2.5 weakest": {
+          "documentAccusation": {
+            "n": 249,
+            "k": 8,
+            "rate": 0.0321,
+            "lo": 0.0164,
+            "hi": 0.0621
+          },
+          "anyHighlight": {
+            "n": 249,
+            "k": 46,
+            "rate": 0.1847,
+            "lo": 0.1415,
+            "hi": 0.2376
+          }
+        },
+        "2.5-3.5": {
+          "documentAccusation": {
+            "n": 1544,
+            "k": 99,
+            "rate": 0.0641,
+            "lo": 0.0529,
+            "hi": 0.0775
+          },
+          "anyHighlight": {
+            "n": 1544,
+            "k": 451,
+            "rate": 0.2921,
+            "lo": 0.27,
+            "hi": 0.3153
+          }
+        },
+        "3.5-5.0 strongest": {
+          "documentAccusation": {
+            "n": 1150,
+            "k": 73,
+            "rate": 0.0635,
+            "lo": 0.0508,
+            "hi": 0.0791
+          },
+          "anyHighlight": {
+            "n": 1150,
+            "k": 501,
+            "rate": 0.4357,
+            "lo": 0.4073,
+            "hi": 0.4645
+          }
+        }
+      },
+      "proficiencyHighlightCorrelation": 0.1999,
+      "machineRecall": {
+        "modern_holdout_remote": {
+          "atFixedThreshold": {
+            "n": 115,
+            "k": 113,
+            "rate": 0.9826,
+            "lo": 0.9388,
+            "hi": 0.9952
+          },
+          "atMatchedEslFpr": {
+            "n": 115,
+            "k": 113,
+            "rate": 0.9826,
+            "lo": 0.9388,
+            "hi": 0.9952
+          },
+          "documentAuroc": 0.9926
+        },
+        "modern_claude_eval_remote": {
+          "atFixedThreshold": {
+            "n": 76,
+            "k": 4,
+            "rate": 0.0526,
+            "lo": 0.0207,
+            "hi": 0.1277
+          },
+          "atMatchedEslFpr": {
+            "n": 76,
+            "k": 3,
+            "rate": 0.0395,
+            "lo": 0.0135,
+            "hi": 0.1097
+          },
+          "documentAuroc": 0.6474
+        }
+      }
+    }
+  },
+  "note": "Every document in these sets is human-written; any machine verdict is a false accusation. Both arms are calibrated to a 5% sentence-level false-positive budget on TRAINING humans, so the arms differ by features, not by threshold.",
+  "trade": {
+    "deltaHighlighted": -0.1064,
+    "deltaAccused": -0.0837,
+    "deltaRecallAtMatchedEslFpr": {
+      "modern_claude_eval_remote": -0.0131,
+      "modern_holdout_remote": 0.1478
+    },
+    "deltaDocumentAuroc": {
+      "modern_claude_eval_remote": -0.0454,
+      "modern_holdout_remote": 0.0265
+    },
+    "reading": "SPLIT: better on modern_holdout_remote, worse on modern_claude_eval_remote. Consistent with docs/08-cross-vendor.md -- this family reads the generators the detector already caught, and does not reach the frontier."
+  }
+}

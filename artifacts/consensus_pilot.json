@@ -1,0 +1,92 @@
+{
+ "observers": [
+  "@cf/qwen/qwen3-30b-a3b-fp8",
+  "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+ ],
+ "per_set": 20,
+ "pilot": true,
+ "neurons_spent": 869.3605496883392,
+ "budget": 1400.0,
+ "n_docs": {
+  "human_native": 20,
+  "human_esl": 20,
+  "claude_opus": 20
+ },
+ "single_features": {
+  "x_consensus_top1|claude_opus": {
+   "auroc": 0.37375,
+   "inverted": true,
+   "auroc_oriented": 0.62625
+  },
+  "x_any_top1|claude_opus": {
+   "auroc": 0.60625,
+   "inverted": false,
+   "auroc_oriented": 0.60625
+  },
+  "x_no_top1|claude_opus": {
+   "auroc": 0.39375,
+   "inverted": true,
+   "auroc_oriented": 0.60625
+  },
+  "x_spread_lp|claude_opus": {
+   "auroc": 0.62,
+   "inverted": false,
+   "auroc_oriented": 0.62
+  },
+  "x_spread_lp_sd|claude_opus": {
+   "auroc": 0.6075,
+   "inverted": false,
+   "auroc_oriented": 0.6075
+  },
+  "x_range_lp|claude_opus": {
+   "auroc": 0.62,
+   "inverted": false,
+   "auroc_oriented": 0.62
+  },
+  "x_spread_rank|claude_opus": {
+   "auroc": 0.60875,
+   "inverted": false,
+   "auroc_oriented": 0.60875
+  },
+  "x_hard_disagree|claude_opus": {
+   "auroc": 0.59125,
+   "inverted": false,
+   "auroc_oriented": 0.59125
+  },
+  "x_corr_lp|claude_opus": {
+   "auroc": 0.37375,
+   "inverted": true,
+   "auroc_oriented": 0.62625
+  },
+  "x_binoc|claude_opus": {
+   "auroc": 0.38,
+   "inverted": true,
+   "auroc_oriented": 0.62
+  },
+  "x_binoc_rank|claude_opus": {
+   "auroc": 0.3825,
+   "inverted": true,
+   "auroc_oriented": 0.6174999999999999
+  },
+  "x_min_lp|claude_opus": {
+   "auroc": 0.6675,
+   "inverted": false,
+   "auroc_oriented": 0.6675
+  },
+  "x_max_lp|claude_opus": {
+   "auroc": 0.74,
+   "inverted": false,
+   "auroc_oriented": 0.74
+  },
+  "x_best_gap|claude_opus": {
+   "auroc": 0.62,
+   "inverted": false,
+   "auroc_oriented": 0.62
+  }
+ },
+ "arms": {
+  "A_baseline_single_observer": {},
+  "B_consensus_only": {},
+  "C_both": {}
+ }
+}

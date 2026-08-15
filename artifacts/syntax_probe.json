@@ -1,0 +1,198 @@
+{
+  "train": "train_remote",
+  "nSentences": 7055,
+  "nDocuments": 267,
+  "nHuman": 3544,
+  "nMachine": 3511,
+  "baseFeatures": 39,
+  "syntaxFeatures": [
+    "tree_depth_max",
+    "tree_depth_mean",
+    "tree_depth_sd",
+    "branching_factor",
+    "stopword_ratio",
+    "content_function_ratio",
+    "pos_trigram_entropy",
+    "pos_trigram_surprisal",
+    "tree_depth_z_in_doc",
+    "local_depth_burstiness",
+    "pos_surprisal_z_in_doc"
+  ],
+  "droppedAsUnmeasured": [
+    "mean_entropy",
+    "entropy_sd",
+    "curvature",
+    "curvature_z_in_doc"
+  ],
+  "singleFeature": [
+    {
+      "feature": "tree_depth_max",
+      "auroc": 0.6179,
+      "strength": 0.6179,
+      "coverage": 0.981,
+      "corrWithLength": 0.704
+    },
+    {
+      "feature": "tree_depth_mean",
+      "auroc": 0.6279,
+      "strength": 0.6279,
+      "coverage": 0.981,
+      "corrWithLength": 0.702
+    },
+    {
+      "feature": "tree_depth_sd",
+      "auroc": 0.6116,
+      "strength": 0.6116,
+      "coverage": 0.981,
+      "corrWithLength": 0.562
+    },
+    {
+      "feature": "branching_factor",
+      "auroc": 0.3902,
+      "strength": 0.6098,
+      "coverage": 0.981,
+      "corrWithLength": -0.058
+    },
+    {
+      "feature": "stopword_ratio",
+      "auroc": 0.395,
+      "strength": 0.605,
+      "coverage": 0.981,
+      "corrWithLength": -0.005
+    },
+    {
+      "feature": "content_function_ratio",
+      "auroc": 0.5599,
+      "strength": 0.5599,
+      "coverage": 0.98,
+      "corrWithLength": -0.109
+    },
+    {
+      "feature": "pos_trigram_entropy",
+      "auroc": 0.578,
+      "strength": 0.578,
+      "coverage": 0.981,
+      "corrWithLength": 0.882
+    },
+    {
+      "feature": "pos_trigram_surprisal",
+      "auroc": 0.3496,
+      "strength": 0.6504,
+      "coverage": 0.981,
+      "corrWithLength": -0.138
+    },
+    {
+      "feature": "tree_depth_z_in_doc",
+      "auroc": 0.5053,
+      "strength": 0.5053,
+      "coverage": 0.981,
+      "corrWithLength": 0.585
+    },
+    {
+      "feature": "local_depth_burstiness",
+      "auroc": 0.3914,
+      "strength": 0.6086,
+      "coverage": 0.994,
+      "corrWithLength": -0.114
+    },
+    {
+      "feature": "pos_surprisal_z_in_doc",
+      "auroc": 0.5074,
+      "strength": 0.5074,
+      "coverage": 0.981,
+      "corrWithLength": -0.077
+    }
+  ],
+  "pooled": {
+    "aurocBase": 0.9744,
+    "aurocAugmented": 0.9846,
+    "delta": 0.0102,
+    "bootstrap95": {
+      "lo": 0.0085,
+      "hi": 0.0119,
+      "mean": 0.0102
+    },
+    "perFold": [
+      {
+        "fold": 0,
+        "base": 0.9695,
+        "augmented": 0.9846,
+        "delta": 0.0151,
+        "n": 1409
+      },
+      {
+        "fold": 1,
+        "base": 0.9817,
+        "augmented": 0.9905,
+        "delta": 0.0088,
+        "n": 1409
+      },
+      {
+        "fold": 2,
+        "base": 0.9738,
+        "augmented": 0.9776,
+        "delta": 0.0038,
+        "n": 1416
+      },
+      {
+        "fold": 3,
+        "base": 0.9738,
+        "augmented": 0.9863,
+        "delta": 0.0126,
+        "n": 1413
+      },
+      {
+        "fold": 4,
+        "base": 0.9716,
+        "augmented": 0.984,
+        "delta": 0.0123,
+        "n": 1408
+      }
+    ],
+    "meanFoldDelta": 0.0105
+  },
+  "esl": {
+    "base": {
+      "threshold": 0.6427,
+      "eslSentenceFPR": 0.1244,
+      "nEslHumanSentences": 51824,
+      "meanP": 0.1917
+    },
+    "augmented": {
+      "threshold": 0.5043,
+      "eslSentenceFPR": 0.0781,
+      "nEslHumanSentences": 51824,
+      "meanP": 0.1035
+    },
+    "deltaFPR": -0.0463
+  },
+  "lengthControl": {
+    "droppedLengthLoaded": [
+      "tree_depth_max",
+      "tree_depth_mean",
+      "tree_depth_sd",
+      "pos_trigram_entropy",
+      "tree_depth_z_in_doc"
+    ],
+    "kept": [
+      "branching_factor",
+      "stopword_ratio",
+      "content_function_ratio",
+      "pos_trigram_surprisal",
+      "local_depth_burstiness",
+      "pos_surprisal_z_in_doc"
+    ],
+    "aurocLengthIndependentOnly": 0.9834,
+    "delta": 0.009,
+    "bootstrap95": {
+      "lo": 0.0074,
+      "hi": 0.0106,
+      "mean": 0.009
+    },
+    "shareOfFullGain": 0.883
+  },
+  "cannotAnswer": {
+    "humanizerSurvival": "The corpus contains no paraphrase or humanizer attack, so the motivating claim for this block -- that structure survives rewriting better than word choice -- is untested. Nothing in this artifact is evidence for it.",
+    "pipelineGeneralisation": "Every machine essay here comes from our own generation pipeline. docs/12 records a 0.960 AUROC that fell to 0.490 under a foreign-corpus control; any gain above is subject to the same doubt until it passes scripts/consensus_controls.py."
+  }
+}

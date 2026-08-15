@@ -1,0 +1,319 @@
+{
+  "generatedAt": "2026-08-15T07:08:39+00:00",
+  "totals": {
+    "documents": 8234,
+    "words": 3813916,
+    "human": 6368,
+    "machineRaw": 1538,
+    "humanEditedMachine": 328,
+    "eslCrossCut": 5179
+  },
+  "byAuthorship": {
+    "human": 6368,
+    "machine": 1538,
+    "hybrid": 328
+  },
+  "byRole": {
+    "esl-eval": 5179,
+    "reference": 1000,
+    "train": 448,
+    "unseen-generator": 789,
+    "ablation": 179,
+    "palamiassist-train": 500,
+    "localisation": 139
+  },
+  "bySource": {
+    "raw/ellipse.jsonl": {
+      "documents": 3888,
+      "authorship": {
+        "human": 3888
+      },
+      "roles": {
+        "esl-eval": 3888
+      },
+      "words": 1682003,
+      "medianWords": 403,
+      "isEsl": true
+    },
+    "raw/ghostbuster_ivypanda.jsonl": {
+      "documents": 1000,
+      "authorship": {
+        "human": 1000
+      },
+      "roles": {
+        "reference": 1000
+      },
+      "words": 642110,
+      "medianWords": 470,
+      "isEsl": false
+    },
+    "raw/jhu.jsonl": {
+      "documents": 31,
+      "authorship": {
+        "human": 31
+      },
+      "roles": {
+        "train": 31
+      },
+      "words": 21576,
+      "medianWords": 717,
+      "isEsl": false
+    },
+    "raw/liang_college_gpt3.jsonl": {
+      "documents": 31,
+      "authorship": {
+        "machine": 31
+      },
+      "roles": {
+        "unseen-generator": 31
+      },
+      "words": 8557,
+      "medianWords": 261,
+      "isEsl": false
+    },
+    "raw/liang_college_gpt3_prompteng.jsonl": {
+      "documents": 31,
+      "authorship": {
+        "machine": 31
+      },
+      "roles": {
+        "unseen-generator": 31
+      },
+      "words": 7171,
+      "medianWords": 238,
+      "isEsl": false
+    },
+    "raw/liang_college_human.jsonl": {
+      "documents": 70,
+      "authorship": {
+        "human": 70
+      },
+      "roles": {
+        "train": 70
+      },
+      "words": 42911,
+      "medianWords": 635,
+      "isEsl": false
+    },
+    "raw/liang_hewlett_gptsimplify.jsonl": {
+      "documents": 88,
+      "authorship": {
+        "hybrid": 88
+      },
+      "roles": {
+        "ablation": 88
+      },
+      "words": 10533,
+      "medianWords": 109,
+      "isEsl": false
+    },
+    "raw/liang_hewlett_human.jsonl": {
+      "documents": 88,
+      "authorship": {
+        "human": 88
+      },
+      "roles": {
+        "train": 88
+      },
+      "words": 33262,
+      "medianWords": 381,
+      "isEsl": false
+    },
+    "raw/liang_toefl.jsonl": {
+      "documents": 91,
+      "authorship": {
+        "human": 91
+      },
+      "roles": {
+        "esl-eval": 91
+      },
+      "words": 9756,
+      "medianWords": 104,
+      "isEsl": true
+    },
+    "raw/liang_toefl_gpt4polished.jsonl": {
+      "documents": 91,
+      "authorship": {
+        "hybrid": 91
+      },
+      "roles": {
+        "ablation": 91
+      },
+      "words": 8294,
+      "medianWords": 89,
+      "isEsl": false
+    },
+    "raw/persuade.jsonl": {
+      "documents": 1200,
+      "authorship": {
+        "human": 1200
+      },
+      "roles": {
+        "esl-eval": 1200
+      },
+      "words": 491945,
+      "medianWords": 368,
+      "isEsl": true
+    },
+    "generated/claude_modern.jsonl": {
+      "documents": 238,
+      "authorship": {
+        "machine": 238
+      },
+      "roles": {
+        "train": 238
+      },
+      "words": 149439,
+      "medianWords": 624,
+      "isEsl": false
+    },
+    "generated/claude_modern_heldout.jsonl": {
+      "documents": 160,
+      "authorship": {
+        "machine": 160
+      },
+      "roles": {
+        "unseen-generator": 160
+      },
+      "words": 101051,
+      "medianWords": 628,
+      "isEsl": false
+    },
+    "generated/hybrid_essays.jsonl": {
+      "documents": 10,
+      "authorship": {
+        "hybrid": 10
+      },
+      "roles": {
+        "train": 10
+      },
+      "words": 6505,
+      "medianWords": 655,
+      "isEsl": false
+    },
+    "generated/machine_essays.jsonl": {
+      "documents": 11,
+      "authorship": {
+        "machine": 11
+      },
+      "roles": {
+        "train": 11
+      },
+      "words": 7034,
+      "medianWords": 634,
+      "isEsl": false
+    },
+    "generated/modern_control.jsonl": {
+      "documents": 45,
+      "authorship": {
+        "machine": 45
+      },
+      "roles": {
+        "unseen-generator": 45
+      },
+      "words": 21303,
+      "medianWords": 469,
+      "isEsl": false
+    },
+    "generated/modern_holdout.jsonl": {
+      "documents": 115,
+      "authorship": {
+        "machine": 115
+      },
+      "roles": {
+        "unseen-generator": 115
+      },
+      "words": 55580,
+      "medianWords": 486,
+      "isEsl": false
+    },
+    "generated/modern_train.jsonl": {
+      "documents": 135,
+      "authorship": {
+        "machine": 135
+      },
+      "roles": {
+        "unseen-generator": 135
+      },
+      "words": 64830,
+      "medianWords": 478,
+      "isEsl": false
+    },
+    "generated/modern_unseen.jsonl": {
+      "documents": 250,
+      "authorship": {
+        "machine": 250
+      },
+      "roles": {
+        "unseen-generator": 250
+      },
+      "words": 129891,
+      "medianWords": 519,
+      "isEsl": false
+    },
+    "generated/modern_unseen_family.jsonl": {
+      "documents": 22,
+      "authorship": {
+        "machine": 22
+      },
+      "roles": {
+        "unseen-generator": 22
+      },
+      "words": 9957,
+      "medianWords": 450,
+      "isEsl": false
+    },
+    "generated/palamiassist_college_essays_500.jsonl": {
+      "documents": 500,
+      "authorship": {
+        "machine": 500
+      },
+      "roles": {
+        "palamiassist-train": 500
+      },
+      "words": 281959,
+      "medianWords": 557,
+      "isEsl": false
+    },
+    "generated/real_hybrid_essays.jsonl": {
+      "documents": 139,
+      "authorship": {
+        "hybrid": 139
+      },
+      "roles": {
+        "localisation": 139
+      },
+      "words": 28249,
+      "medianWords": 195,
+      "isEsl": false
+    }
+  },
+  "generators": {
+    "gemini-3.1-flash-lite": 422,
+    "gemini-3.5-flash-lite": 348,
+    "opus": 200,
+    "haiku": 184,
+    "sonnet": 151,
+    "gpt-3.5/gpt-4 (Liang et al. 2023)": 139,
+    "fable": 113,
+    "claude-opus-5": 32,
+    "gemini-3-flash-preview": 13,
+    "gemini-3.6-flash": 12,
+    "gemini-3.5-flash": 11
+  },
+  "unreadable": [
+    {
+      "file": "raw/daigt.jsonl",
+      "error": "Document.__init__() missing 1 required positional argument: 'role'"
+    },
+    {
+      "file": "generated/palamiassist_college_essays_500_chat.jsonl",
+      "error": "Document.__init__() got an unexpected keyword argument 'messages'"
+    }
+  ],
+  "duplicateTexts": 525,
+  "notes": {
+    "eslIsCrossCutting": "Every ESL document is also a human document. `eslCrossCut` is a tag on the human total, not a fourth authorship class, so the four category counts deliberately do not sum to the document total.",
+    "hybridMeaning": "`humanEditedMachine` counts documents with known machine spans inside human prose -- the brief's realistic case, and the reason detection is per sentence."
+  }
+}
