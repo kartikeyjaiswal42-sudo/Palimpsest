@@ -1,0 +1,88 @@
+{
+  "train": "train_remote",
+  "baseFeatures": 39,
+  "syntaxFeatures": 11,
+  "S1_crossPipeline": {
+    "fit OURS -> test FOREIGN": {
+      "base": 0.9927,
+      "augmented": 0.9901,
+      "delta": -0.0026,
+      "ci95": [
+        -0.006,
+        -0.0002
+      ],
+      "headroom": 0.0073,
+      "nTestMachineDocs": 31,
+      "ceilingLimited": true
+    },
+    "fit FOREIGN -> test OURS": {
+      "base": 0.9117,
+      "augmented": 0.92,
+      "delta": 0.0083,
+      "ci95": [
+        0.0059,
+        0.0109
+      ],
+      "headroom": 0.0883,
+      "nTestMachineDocs": 135,
+      "ceilingLimited": false
+    },
+    "inPipelineReference": {
+      "base": 0.9712,
+      "augmented": 0.9836,
+      "delta": 0.0124
+    }
+  },
+  "S2_collinearity": {
+    "tree_depth_max": 0.5581,
+    "tree_depth_mean": 0.56,
+    "tree_depth_sd": 0.3955,
+    "branching_factor": 0.2714,
+    "stopword_ratio": 0.6938,
+    "content_function_ratio": 0.5349,
+    "pos_trigram_entropy": 0.8721,
+    "pos_trigram_surprisal": 0.2163,
+    "tree_depth_z_in_doc": 0.4627,
+    "local_depth_burstiness": 0.3253,
+    "pos_surprisal_z_in_doc": 0.1506
+  },
+  "S3_length": {
+    "sentencesPerDoc": 24,
+    "base": 0.9764,
+    "augmented": 0.9864,
+    "delta": 0.0099
+  },
+  "S4_foreignHuman": {
+    "base": {
+      "meanP": 0.0889,
+      "flaggedAt5pct": 0.0457
+    },
+    "augmented": {
+      "meanP": 0.0462,
+      "flaggedAt5pct": 0.0303
+    }
+  },
+  "verdict": {
+    "state": "transfers",
+    "crossPipeline": {
+      "fit OURS -> test FOREIGN": {
+        "delta": -0.0026,
+        "ci95": [
+          -0.006,
+          -0.0002
+        ],
+        "ceilingLimited": true
+      },
+      "fit FOREIGN -> test OURS": {
+        "delta": 0.0083,
+        "ci95": [
+          0.0059,
+          0.0109
+        ],
+        "ceilingLimited": false
+      }
+    },
+    "inPipelineDelta": 0.0124,
+    "note": "A pipeline detector COLLAPSES under this test (docs/12: 0.960 -> 0.490). A small negative against a near-perfect baseline is a ceiling, not a collapse, and the first version of this verdict conflated the two."
+  }
+}
