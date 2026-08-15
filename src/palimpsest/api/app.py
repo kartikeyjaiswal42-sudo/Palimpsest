@@ -148,6 +148,30 @@ def get_genre_gate():
     return GenreGate.load(path) if path.exists() else GenreGate()
 
 
+def _unmeasurable_band(n_sentences: int) -> dict:
+    """The answer for a document none of whose spans could be scored.
+
+    ``aggregate`` reports ``any_machine_probability = 0.0`` when no sentence is reliable.
+    That zero is the ABSENCE of a measurement, not a low one -- but it sits below ``tHuman``,
+    so ``_band`` returned "No evidence of machine writing" for text the tool never scored a
+    word of, and quoted a calibration ("N% of known machine essays land here") measured on
+    documents that were actually read. ``aggregate`` and ``find_passages`` already refuse to
+    let an unmeasurable span decide the answer; the band is the line a reader actually acts
+    on, so it follows the same rule.
+    """
+    return {
+        "band": "insufficient_evidence",
+        "bandLabel": "Nothing here could be measured",
+        "bandDetail": (
+            f"None of the {n_sentences} span{'' if n_sentences == 1 else 's'} in this text "
+            "could be scored: each was too short, too long to treat as one sentence, or "
+            "beyond the observer's window. No verdict is offered, and that is an answer "
+            "rather than a failure -- the tool has neither flagged this text nor cleared it."
+        ),
+        "canExonerate": False,
+    }
+
+
 def _band(score: float) -> dict:
     """Map a document score to one of three bands.
 
@@ -248,6 +272,9 @@ def analyze(request: AnalyzeRequest) -> dict:
             "canExonerate": False,
             "inDomainProbability": round(p_in, 4),
         })
+    elif v.n_reliable_sentences == 0:
+        payload["verdict"].update(_unmeasurable_band(v.n_sentences))
+        payload["verdict"]["inDomainProbability"] = round(p_in, 4)
     else:
         payload["verdict"].update(_band(v.any_machine_probability))
         payload["verdict"]["inDomainProbability"] = round(p_in, 4)

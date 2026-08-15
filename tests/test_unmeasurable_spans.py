@@ -146,3 +146,53 @@ def _stub_scores(clipped: bool, last_char: int):
         tokens=["x"], char_start=z_i, char_end=z_i, logprob=z_f, rank=z_i,
         entropy=z_f, mu=z_f, sigma2=z_f, model_name="stub", device="stub", clipped=clipped,
     )
+
+
+# ---------------------------------------------------------------------------------------
+# The document band.
+#
+# `aggregate` and `find_passages` both learned the rule that an unmeasurable span must not
+# decide the answer. The BAND did not, and the band is the one line a reader acts on. With
+# no reliable sentence the aggregate reports `any_machine_probability = 0.0` -- the absence
+# of a measurement, not a low one -- and zero sits below `tHuman`, so a document the tool
+# never scored a word of came back "No evidence of machine writing", quoting a calibration
+# ("N% of known machine essays land here") derived from documents that were actually read.
+
+
+def test_a_document_with_nothing_measurable_is_not_given_a_calibrated_band():
+    from palimpsest.api.app import _band, _unmeasurable_band
+
+    verdict = aggregate([RUNON], threshold=0.5)
+    assert verdict.n_reliable_sentences == 0
+    assert verdict.any_machine_probability == 0.0
+
+    # What the old code did with that zero.
+    assert _band(verdict.any_machine_probability)["band"] == "no_evidence", (
+        "this test no longer reproduces the original defect -- the bands moved, so the "
+        "check below is no longer evidence of anything"
+    )
+
+    answer = _unmeasurable_band(verdict.n_sentences)
+    assert answer["band"] == "insufficient_evidence"
+    assert answer["canExonerate"] is False
+    assert "could be scored" in answer["bandDetail"]
+    # It must not read as a finding in either direction.
+    assert "no evidence of machine writing" not in answer["bandLabel"].lower()
+
+
+def test_the_unmeasurable_band_counts_the_spans_it_refused():
+    from palimpsest.api.app import _unmeasurable_band
+
+    assert "1 span " in _unmeasurable_band(1)["bandDetail"]
+    assert "7 spans " in _unmeasurable_band(7)["bandDetail"]
+
+
+def test_a_document_with_one_measurable_sentence_still_gets_a_real_band():
+    """The guard is for zero, not for 'few'. Abstaining more than necessary is its own fault."""
+    from palimpsest.api.app import _band
+
+    verdict = aggregate([RUNON, ordinary(1, prob=0.99, words=30)], threshold=0.5)
+    assert verdict.n_reliable_sentences == 1
+    assert _band(verdict.any_machine_probability)["band"] in {
+        "likely_machine", "insufficient_evidence", "no_evidence",
+    }

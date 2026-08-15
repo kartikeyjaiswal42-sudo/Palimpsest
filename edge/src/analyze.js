@@ -222,9 +222,8 @@ export function analyze(text, observation, models, { includeTokens = true, topK 
   // never be handed a band, because the thresholds were calibrated on admissions essays.
   const gfeat = documentGenreFeatures(features);
   const pIn = gate.probability(gfeat);
-  const wording = gate.inDomain(gfeat)
-    ? band(verdict.anyMachineProbability, bands)
-    : {
+  const wording = !gate.inDomain(gfeat)
+    ? {
         band: 'out_of_scope',
         bandLabel: "Outside this tool's scope",
         bandDetail:
@@ -235,7 +234,29 @@ export function analyze(text, observation, models, { includeTokens = true, topK 
           'machine-written at 97% confidence. Sentence scores are still shown as evidence, ' +
           'but no verdict is offered.',
         canExonerate: false,
-      };
+      }
+    // A document with nothing measurable in it must not be handed a band either. The
+    // aggregate of zero measurable sentences is `anyMachineProbability = 0`, which is the
+    // ABSENCE of a measurement and not a low one -- and 0 sits below tHuman, so this used to
+    // come back "No evidence of machine writing" for text the tool never scored a word of,
+    // quoting a calibration ("N% of known machine essays land here") derived from documents
+    // that were actually measured. The rule the aggregator and findPassages already follow --
+    // a span the tool cannot measure must not decide the answer -- applies to the band, which
+    // is the one line most readers will act on.
+    : verdict.nReliableSentences === 0
+      ? {
+          band: 'insufficient_evidence',
+          bandLabel: 'Nothing here could be measured',
+          bandDetail:
+            `None of the ${verdict.nSentences} span` +
+            (verdict.nSentences === 1 ? '' : 's') +
+            ' in this text could be scored: each was too short, too long to treat as one ' +
+            'sentence, or beyond the observer’s window. No verdict is offered, and that ' +
+            'is an answer rather than a failure — the tool has neither flagged this text ' +
+            'nor cleared it.',
+          canExonerate: false,
+        }
+      : band(verdict.anyMachineProbability, bands);
 
   return {
     verdict: {
