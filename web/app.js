@@ -271,6 +271,268 @@ window.Palimpsest = (function () {
   };
 })();
 
+/* ------------------------------------------------------------
+   Reading a .docx, in the browser, with nothing loaded to do it.
+
+   WHY THE FILE IS OPENED HERE AND NOT ON THE SERVER
+   `web/` is the single source of the interface and is copied verbatim into
+   `edge/assets/` by edge/scripts/sync_web.py, so one implementation here serves
+   both the local FastAPI build and the hosted Worker. Extracting on the server
+   instead would mean a Python dependency for one deployment and a second,
+   separate implementation in JavaScript for the other -- two extractors that can
+   disagree about what the essay says, which is the same drift this project has
+   already been bitten by twice (the limitations panel publishing another build's
+   error rates; a fix that existed on only one side of the port).
+
+   A .docx is a ZIP holding word/document.xml. Both halves of that are already in
+   the browser: DecompressionStream inflates the entry, DOMParser reads the XML.
+   So this adds no dependency and no external request, and the page keeps the
+   property that it fetches nothing it did not ship with.
+
+   WHY .docx AND NOT .pdf
+   A .docx stores paragraphs. A PDF stores positioned glyphs: recovering prose
+   from one means guessing where lines join, where a hyphen was a line break
+   rather than a word, and what order two columns should be read in. Those
+   guesses land on sentence boundaries and punctuation, and sentence
+   segmentation is the input to all 43 features -- a wrongly joined line changes
+   the numbers this tool reports, silently and with no way for a reader to see it
+   happened. Refusing a format is a worse product; reporting a measurement taken
+   on text the author did not write is a worse detector. A PDF is named and
+   explained here rather than half-read.
+   ------------------------------------------------------------ */
+window.PalimpsestDocx = (function () {
+  'use strict';
+
+  //: Generous for an essay and small enough that a mis-drop cannot hang the tab.
+  var MAX_BYTES = 25 * 1024 * 1024;
+
+  /* Carries the reason AND what to do about it. Every refusal below names a
+     specific next step, because "could not read this file" leaves a reader with
+     nothing to try. */
+  function ReadError(message) { this.message = message; this.name = 'ReadError'; }
+  ReadError.prototype = Object.create(Error.prototype);
+  ReadError.prototype.constructor = ReadError;
+
+  /* ---- what this actually is -------------------------------
+     Read from the leading bytes, never the extension. A .pdf renamed .docx must
+     be diagnosed as a PDF -- otherwise it fails as "not a ZIP", which is true and
+     useless. */
+  function sniff(bytes) {
+    var b = bytes;
+    if (b.length >= 4) {
+      if (b[0] === 0x50 && b[1] === 0x4b && (b[2] === 0x03 || b[2] === 0x05 || b[2] === 0x07)) return 'zip';
+      if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'pdf';
+      // OLE2 compound file: the pre-2007 binary .doc, and also .xls/.ppt.
+      if (b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0) return 'ole2';
+      if (b[0] === 0x7b && b[1] === 0x5c && b[2] === 0x72 && b[3] === 0x74) return 'rtf'; // {\rt
+    }
+    return 'other';
+  }
+
+  /* ---- ZIP ---------------------------------------------------
+     Only as much of the format as a .docx uses. Sizes and offsets are read from
+     the central directory, which is authoritative: when a writer streams the
+     archive it sets bit 3 of the flags and leaves the sizes in the local header
+     as zero, so trusting the local header there reads an empty entry. Word does
+     not do this; other .docx writers do. */
+  function u16(v, at) { return v.getUint16(at, true); }
+  function u32(v, at) { return v.getUint32(at, true); }
+
+  var EOCD_SIG = 0x06054b50, CEN_SIG = 0x02014b50, LOC_SIG = 0x04034b50;
+
+  function findEocd(view) {
+    // 22-byte record, plus a comment of up to 65535 bytes after it.
+    var min = Math.max(0, view.byteLength - (22 + 0xffff));
+    for (var i = view.byteLength - 22; i >= min; i--) {
+      if (u32(view, i) === EOCD_SIG) return i;
+    }
+    return -1;
+  }
+
+  function centralDirectory(view) {
+    var eocd = findEocd(view);
+    if (eocd < 0) throw new ReadError('not-a-zip');
+    var count = u16(view, eocd + 10);
+    var at = u32(view, eocd + 16);
+    var entries = [];
+    for (var i = 0; i < count; i++) {
+      if (at + 46 > view.byteLength || u32(view, at) !== CEN_SIG) break;
+      var nameLen = u16(view, at + 28);
+      var extraLen = u16(view, at + 30);
+      var commentLen = u16(view, at + 32);
+      entries.push({
+        method: u16(view, at + 10),
+        compressedSize: u32(view, at + 20),
+        size: u32(view, at + 24),
+        localOffset: u32(view, at + 42),
+        name: utf8(new Uint8Array(view.buffer, view.byteOffset + at + 46, nameLen))
+      });
+      at += 46 + nameLen + extraLen + commentLen;
+    }
+    return entries;
+  }
+
+  function utf8(bytes) { return new TextDecoder('utf-8').decode(bytes); }
+
+  /* The local header's extra field may be a different length from the central
+     one -- writers pad it for alignment -- so the data offset must be computed
+     from the local header's own two length fields, not the central copy. */
+  function rawEntry(view, entry) {
+    var at = entry.localOffset;
+    if (at + 30 > view.byteLength || u32(view, at) !== LOC_SIG) {
+      throw new ReadError('damaged');
+    }
+    var start = at + 30 + u16(view, at + 26) + u16(view, at + 28);
+    var end = start + entry.compressedSize;
+    if (end > view.byteLength) throw new ReadError('damaged');
+    return new Uint8Array(view.buffer, view.byteOffset + start, entry.compressedSize);
+  }
+
+  /* ZIP method 8 is raw DEFLATE with no zlib wrapper, which is exactly
+     'deflate-raw'. Passing 'deflate' here fails on the header check. */
+  function inflateRaw(bytes) {
+    if (typeof DecompressionStream === 'undefined') {
+      return Promise.reject(new ReadError('no-decompression'));
+    }
+    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Response(stream).arrayBuffer().then(
+      function (ab) { return new Uint8Array(ab); },
+      function () { throw new ReadError('damaged'); }
+    );
+  }
+
+  function readEntry(view, entry) {
+    var raw = rawEntry(view, entry);
+    if (entry.method === 0) return Promise.resolve(raw);   // stored
+    if (entry.method === 8) return inflateRaw(raw);        // deflate
+    return Promise.reject(new ReadError('damaged'));
+  }
+
+  /* ---- document.xml -> prose --------------------------------
+     Matched on localName so any namespace prefix works; documents in the wild are
+     not all `w:`. */
+  function paragraphText(p) {
+    var out = [];
+    (function walk(node) {
+      for (var i = 0; i < node.childNodes.length; i++) {
+        var n = node.childNodes[i];
+        if (n.nodeType !== 1) continue;
+        var ln = n.localName;
+        if (ln === 't') { out.push(n.textContent); }
+        else if (ln === 'tab') { out.push('\t'); }
+        else if (ln === 'br' || ln === 'cr') { out.push('\n'); }
+        /* Deliberately not read. `delText` is text the author DELETED under
+           tracked changes and `instrText` is a field code (HYPERLINK "http://..."),
+           neither of which is prose the author wrote; scoring either would measure
+           something nobody put on the page. Insertions live in plain `t` inside
+           `w:ins` and so are kept, which is the correct half of the same rule. */
+        else if (ln === 'delText' || ln === 'instrText') { continue; }
+        else { walk(n); }
+      }
+    })(p);
+    return out.join('');
+  }
+
+  function documentText(xml) {
+    var doc = new DOMParser().parseFromString(xml, 'application/xml');
+    if (doc.getElementsByTagName('parsererror').length) throw new ReadError('damaged');
+    var paras = [];
+    (function walk(node) {
+      for (var i = 0; i < node.childNodes.length; i++) {
+        var n = node.childNodes[i];
+        if (n.nodeType !== 1) continue;
+        if (n.localName === 'p') { paras.push(paragraphText(n)); }
+        else { walk(n); }
+      }
+    })(doc.documentElement);
+
+    /* Blank paragraphs are how Word spaces prose; they carry no words, so they
+       are dropped and the remaining paragraphs joined the way the paste path
+       would see them. */
+    var kept = paras.map(function (s) { return s.replace(/[ \t]+$/, ''); })
+                    .filter(function (s) { return s.trim() !== ''; });
+    return { text: normalise(kept.join('\n\n')), nParagraphs: kept.length };
+  }
+
+  /* Matched to what a copy-paste out of Word puts in the box, and no further.
+     Word writes a non-breaking space after some abbreviations and a soft hyphen
+     at discretionary breaks; left in, both reach the tokenizer as characters the
+     author never typed. Smart quotes and em dashes are NOT touched -- those
+     survive a paste, so removing them here would make the same essay measure
+     differently depending on how it arrived. */
+  function normalise(s) {
+    return s
+      .replace(/\r\n?/g, '\n')
+      // U+00A0 no-break space, U+202F narrow no-break space -> ordinary space.
+      .replace(/[\u00a0\u202f]/g, ' ')
+      // Zero-width space/non-joiner/joiner, word joiner, BOM, soft hyphen. Written as
+      // escapes on purpose: spelled as literal characters this line is invisible in
+      // every editor and impossible to review.
+      .replace(/[\u200b-\u200d\u2060\ufeff\u00ad]/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /* A .txt/.md costs nothing to accept and is the format a reader falls back to
+     when their own file is refused, so refusing it too would be perverse. Decoded
+     strictly: `fatal` makes TextDecoder throw on bytes that are not UTF-8, which
+     is what separates a text file from a binary one that happens to lack a
+     recognised signature. Guessing an encoding and getting it wrong would feed
+     the detector mojibake, and mojibake scores. */
+  function plainText(bytes) {
+    var text;
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+    catch (e) { throw new ReadError('not-a-zip'); }
+    // A NUL is valid UTF-8, so `fatal` does not catch it. Real prose never contains
+    // one; a binary file that decoded cleanly by luck usually does.
+    if (text.indexOf('\u0000') !== -1) throw new ReadError('not-a-zip');
+    var paras = normalise(text).split(/\n{2,}/).filter(function (s) { return s.trim() !== ''; });
+    return { text: normalise(text), nParagraphs: paras.length, kind: 'text' };
+  }
+
+  /* ---- the one entry point ----------------------------------
+     Resolves {text, nParagraphs, kind}; rejects with a ReadError whose message is
+     one of the codes the interface turns into a sentence. */
+  function extract(arrayBuffer) {
+    return Promise.resolve().then(function () {
+      var bytes = new Uint8Array(arrayBuffer);
+      if (!bytes.length) throw new ReadError('empty');
+      var kind = sniff(bytes);
+      // Named formats are refused by name; anything unrecognised gets one honest
+      // attempt at being plain text before it is refused.
+      if (kind === 'pdf' || kind === 'ole2' || kind === 'rtf') throw new ReadError(kind);
+      if (kind === 'other') {
+        var t = plainText(bytes);
+        if (!t.text) throw new ReadError('no-text');
+        return t;
+      }
+
+      var view = new DataView(arrayBuffer);
+      var entries = centralDirectory(view);
+      var main = entries.filter(function (e) { return e.name === 'word/document.xml'; })[0];
+      if (!main) {
+        // A ZIP that is some other Office file rather than a Word document.
+        var looksOffice = entries.some(function (e) { return e.name === '[Content_Types].xml'; });
+        throw new ReadError(looksOffice ? 'not-a-word-doc' : 'not-a-zip');
+      }
+      return readEntry(view, main).then(function (xml) {
+        var result = documentText(utf8(xml));
+        if (!result.text) throw new ReadError('no-text');
+        result.kind = 'docx';
+        return result;
+      });
+    });
+  }
+
+  return {
+    extract: extract,
+    MAX_BYTES: MAX_BYTES,
+    // exported for the test suite, which checks the ZIP reader without a browser
+    _internals: { sniff: sniff, centralDirectory: centralDirectory, documentText: documentText,
+                  normalise: normalise, readEntry: readEntry }
+  };
+})();
+
 (function () {
   'use strict';
 
@@ -289,6 +551,9 @@ window.Palimpsest = (function () {
     body: document.body,
     essay: $('essay'),
     analyse: $('analyse'),
+    upload: $('upload'),
+    file: $('file'),
+    dropzone: $('dropzone'),
     sample: $('load-sample'),
     missed: $('load-missed'),
     status: $('status'),
@@ -322,12 +587,20 @@ window.Palimpsest = (function () {
     evMeta: $('ev-meta'),
     prevFlag: $('prev-flag'),
     nextFlag: $('next-flag'),
-    copyWorking: $('copy-working')
+    copyWorking: $('copy-working'),
+    failuresPanel: $('failures-panel'),
+    failuresSub: $('failures-sub'),
+    failures: $('failures'),
+    failuresMethod: $('failures-method')
   };
 
   var LOCAL_PRIVACY = 'The observer runs here. Nothing you paste leaves this machine: no request is made, no copy is kept, and no text is used for training.';
 
   var current = null;      // last payload
+  /* Where the text in the box came from, printed on the result line. Cleared the
+     moment the box is edited: provenance that outlives the text it describes is a
+     false statement about what was measured. */
+  var sourceNote = '';
   var selectedIndex = null;
   var flagNumbers = {};   // sentence index -> printed flag number
 
@@ -751,7 +1024,8 @@ window.Palimpsest = (function () {
     // must be the last thing written by the render
     say(data.verdict.nSentences + ' sentences read \u00b7 ' + data.verdict.nReliableSentences +
       ' measured \u00b7 ' + flagged.length + ' sentences flagged above ' +
-      data.flagThreshold.toFixed(4) + (data.offline ? ' \u00b7 bundled fixture, no observer reached' : ''), 'ok');
+      data.flagThreshold.toFixed(4) + (data.offline ? ' \u00b7 bundled fixture, no observer reached' : '') +
+      (sourceNote ? ' \u00b7 read from ' + sourceNote : ''), 'ok');
   }
 
   /* ==========================================================
@@ -817,6 +1091,92 @@ window.Palimpsest = (function () {
       els.analyse.disabled = false;
       els.sample.disabled = false;
       els.missed.disabled = false;
+    });
+  }
+
+  /* ==========================================================
+     Opening a document
+
+     The extracted text goes into the same box a paste goes into, and the analysis
+     runs on that box. There is no hidden copy: whatever the reader sees is what
+     was measured, and they can correct it before running it again. That is the
+     whole safety story for reading a file, and it is why the text is shown rather
+     than sent straight to the scorer.
+     ========================================================== */
+
+  /* One sentence per refusal, each naming the next thing to try. A file dialog
+     that answers "unsupported format" has told the reader nothing they can act
+     on. The PDF wording is the longest because it is the case people will hit
+     most and the one where the reason is not obvious. */
+  var READ_ERRORS = {
+    'pdf':
+      'That is a PDF. This reads .docx instead, and the reason is not laziness: a PDF stores '
+      + 'placed glyphs, not paragraphs, so recovering the prose means guessing where lines join '
+      + 'and whether a hyphen ended a word or a line. Those guesses move sentence boundaries, and '
+      + 'every number this tool reports is computed per sentence. Open it in Word or Google Docs '
+      + 'and save as .docx, or paste the text straight into the box.',
+    'ole2':
+      'That is a pre-2007 Word .doc, which is a different format that stores text as a binary '
+      + 'stream. Open it in Word and use Save As → .docx, or paste the text in.',
+    'rtf':
+      'That is an .rtf. Open it in Word or Google Docs and save as .docx, or paste the text in.',
+    'not-a-word-doc':
+      'That is an Office file, but not a Word document — there is no word/document.xml in it. '
+      + 'If it is a spreadsheet or a deck, paste the essay text in instead.',
+    'not-a-zip':
+      'That is not a .docx and does not read as plain text. A .docx is a ZIP holding '
+      + 'word/document.xml; this file is neither. Paste the essay text in instead.',
+    'damaged':
+      'That .docx will not open — the archive inside it is damaged or uses a compression method '
+      + 'this reader does not implement. Re-save it from Word, or paste the text in.',
+    'no-text':
+      'That document opened, but there is no text in it. If the essay is a picture of a page, '
+      + 'this cannot read it — there is no OCR here. Type or paste the text in.',
+    'empty': 'That file is empty.',
+    'too-big':
+      'That file is larger than 25 MB, which is far larger than any essay. Check it is the right '
+      + 'file, or paste the text in.',
+    'no-decompression':
+      'This browser cannot unzip a .docx (it has no DecompressionStream). Paste the essay text in '
+      + 'instead, or use a current Chrome, Safari or Firefox.'
+  };
+
+  function words(s) { return (s.match(/\S+/g) || []).length; }
+
+  function openFile(file) {
+    if (!file) return;
+    if (file.size > PalimpsestDocx.MAX_BYTES) {
+      say(READ_ERRORS['too-big'], 'error');
+      return;
+    }
+    setState(current ? 'result' : 'idle');
+    say('Reading ' + file.name + '…');
+
+    file.arrayBuffer().then(function (buf) {
+      return PalimpsestDocx.extract(buf);
+    }).then(function (doc) {
+      els.essay.value = doc.text;
+      sourceNote = file.name;
+      var n = words(doc.text);
+      say('Read ' + n.toLocaleString('en-US') + ' words from ' + file.name +
+        ' · ' + doc.nParagraphs + ' paragraph' + (doc.nParagraphs === 1 ? '' : 's') +
+        '. This is the text being analysed — correct it in the box if the document did not ' +
+        'come through cleanly.');
+      /* Analysed straight away because that is what pressing Upload asks for, and
+         nothing is concealed by doing it: the text is in the box above the result.
+         The word count is stated first so a document that came through wrong is
+         visible as a wrong number before the reader reads any verdict off it.
+
+         Deferred by a beat, and that is the point rather than a workaround.
+         `analyse()` writes its own status line, so calling it in this tick replaced
+         the word count before the browser had painted it once -- a message that is
+         never on screen is not a disclosure, and the check that asserts it is
+         shown was what caught this. */
+      setTimeout(analyse, 450);
+    })['catch'](function (err) {
+      setState(current ? 'result' : 'idle');
+      say(READ_ERRORS[err && err.message] ||
+        ('Could not read ' + file.name + '. Paste the essay text in instead.'), 'error');
     });
   }
 
@@ -904,6 +1264,147 @@ window.Palimpsest = (function () {
   });
 
   /* ==========================================================
+     Confident failures
+
+     The three held-out documents the detector gets most aggressively wrong, rendered from
+     artifacts/confident_failures.json. Every number here comes from that artifact; none is
+     written into the markup, because a hand-typed number describing a model outlives the
+     model. PROJECT.md §2 records what that costs.
+
+     The explanation box is the point of the panel. The arithmetic can say WHICH terms
+     produced a wrong answer; it cannot say why that was the wrong thing to measure. That
+     sentence is a human artefact and the box is where it gets written, saved back into the
+     artifact so a corpus rebuild does not delete it.
+     ========================================================== */
+  function renderFailures(payload) {
+    var list = (payload && payload.failures) || [];
+    if (!list.length) return;
+
+    els.failures.textContent = '';
+    els.failuresSub.textContent =
+      (list.length < COUNT_WORDS.length ? COUNT_WORDS[list.length] : String(list.length)) +
+      ' held-out document' + (list.length === 1 ? '' : 's') + ' out of ' +
+      grouped(payload.nEvaluated) + ' — the ones this detector is most confidently ' +
+      'wrong about. ' + grouped(payload.nWrong) + ' were wrong in total.';
+    els.failuresMethod.textContent = 'Ranked by ' + (payload.ranking || '') +
+      ' Scored by the ' + (payload.arm || '') + ' arm (' + payload.nFeatures +
+      ' features), sentence threshold ' + payload.sentenceThreshold + '.';
+
+    list.forEach(function (f) {
+      var card = document.createElement('article');
+      card.className = 'failure' + (f.truth === 'human' ? ' false-accusation' : ' missed');
+
+      var head = document.createElement('div');
+      head.className = 'failure-head';
+      head.innerHTML =
+        '<p class="failure-kind">' + esc(f.direction) + '</p>' +
+        '<h3 class="failure-id">' + esc(f.docId) + '</h3>' +
+        '<p class="failure-meta">' + esc(f.source) + ' · ' + grouped(f.words) +
+        ' words · truly <strong>' + esc(f.truth) + '</strong>, called <strong>' +
+        esc(f.verdict) + '</strong></p>' +
+        '<p class="failure-score">P(machine) = ' + f.documentProbability.toFixed(3) +
+        '<span class="failure-sev">severity ' + f.severity.toFixed(3) +
+        ' = error ' + f.errorComponent.toFixed(2) +
+        ' × confidence ' + f.confidenceComponent.toFixed(2) + '</span></p>';
+      card.appendChild(head);
+
+      var essay = document.createElement('details');
+      essay.className = 'failure-essay';
+      var sum = document.createElement('summary');
+      sum.textContent = 'The essay';
+      essay.appendChild(sum);
+      var pre = document.createElement('p');
+      pre.className = 'failure-text';
+      pre.textContent = f.text || '(source text unavailable)';
+      essay.appendChild(pre);
+      card.appendChild(essay);
+
+      (f.drivingSentences || []).forEach(function (s) {
+        var blk = document.createElement('div');
+        blk.className = 'failure-driver';
+        var ev = s.evidence || {};
+        var bars = (ev.shownContributions || []);
+        var max = Math.max.apply(null, bars.map(function (c) {
+          return Math.abs(c.contribution) || 0;
+        }).concat([0.5]));
+
+        var html = '<p class="driver-head">The sentence that drove it — P = ' +
+          s.probability.toFixed(3) + '</p>' +
+          '<blockquote class="driver-text">' + esc((s.text || '').trim() || '(empty span)') +
+          '</blockquote>' +
+          '<p class="driver-sub">The terms that were summed:</p>';
+        bars.forEach(function (c) {
+          var w = Math.max(1.5, Math.abs(c.contribution) / max * 50);
+          html += '<div class="bar-row' + (c.measured ? '' : ' unmeasured') + '">' +
+            '<p class="bar-name">' + esc(c.label) +
+            '<span class="grp">' + esc(c.group) + '</span></p>' +
+            '<p class="bar-val">' + (c.contribution >= 0 ? '+' : '−') +
+            Math.abs(c.contribution).toFixed(3) + '</p>' +
+            '<div class="bar-track"><span class="bar-fill ' +
+            (c.contribution >= 0 ? 'machine' : 'human') +
+            '" style="width:' + w.toFixed(2) + '%"></span></div>' +
+            '<p class="evidence-desc">z ' + c.z.toFixed(3) + ' × weight ' +
+            c.weight.toFixed(4) + (c.measured ? '' : ' · not measured') + '</p>' +
+            '</div>';
+        });
+        html += '<p class="driver-math">' + bars.length + ' terms shown + remainder ' +
+          (ev.remainder >= 0 ? '+' : '−') + Math.abs(ev.remainder || 0).toFixed(3) +
+          ' + intercept ' + (ev.intercept >= 0 ? '+' : '−') +
+          Math.abs(ev.intercept || 0).toFixed(3) + ' = logit ' + (ev.logit || 0).toFixed(3) +
+          '</p>';
+        blk.innerHTML = html;
+        card.appendChild(blk);
+      });
+
+      /* The human half. */
+      var box = document.createElement('div');
+      box.className = 'failure-why';
+      var id = 'why-' + f.docId.replace(/[^a-zA-Z0-9]/g, '-');
+      box.innerHTML =
+        '<label class="field-label" for="' + id + '">Why the maths failed — ' +
+        'the part the arithmetic cannot supply</label>' +
+        '<textarea id="' + id + '" class="why-input" rows="4" ' +
+        'placeholder="The bars above say which terms produced this number. Write what they ' +
+        'were actually measuring, and why it was the wrong thing to measure here."></textarea>' +
+        '<div class="why-actions">' +
+        '<button type="button" class="btn btn-small why-save">Save this explanation</button>' +
+        '<span class="why-status" role="status" aria-live="polite"></span></div>';
+      card.appendChild(box);
+
+      var input = box.querySelector('.why-input');
+      var status = box.querySelector('.why-status');
+      input.value = f.humanExplanation || '';
+      if (f.humanExplanation) { status.textContent = 'saved'; }
+
+      box.querySelector('.why-save').addEventListener('click', function () {
+        status.textContent = 'saving…';
+        fetch('/api/failures/explanation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ doc_id: f.docId, text: input.value })
+        }).then(function (r) {
+          /* Reports what actually happened. An explanation the writer believes is stored
+             and is not is worse than one that visibly failed to save. */
+          status.textContent = r.ok ? 'saved' : 'NOT saved (' + r.status + ')';
+        }).catch(function () { status.textContent = 'NOT saved — no connection'; });
+      });
+
+      els.failures.appendChild(card);
+    });
+
+    els.failuresPanel.classList.remove('hidden');
+  }
+
+  /* Loaded once at startup, independently of any analysis: these failures are properties of
+     the detector, not of whatever essay the reader happens to paste. A missing artifact
+     leaves the panel hidden rather than showing an empty "no failures" state, which would
+     read as a claim that there are none. */
+  fetch('/api/failures')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (p) { if (p) renderFailures(p); })
+    .catch(function () { /* panel stays hidden */ });
+
+  /* ==========================================================
      Wiring
      ========================================================== */
   els.analyse.addEventListener('click', analyse);
@@ -912,13 +1413,65 @@ window.Palimpsest = (function () {
   });
   els.sample.addEventListener('click', function () {
     els.essay.value = Palimpsest.FIXTURE_CAUGHT;
+    sourceNote = '';
     els.essay.focus();
     say('Loaded a GPT-3.5 essay from the evaluation set. Nothing has been analysed yet \u2014 press Analyse.');
   });
   els.missed.addEventListener('click', function () {
     els.essay.value = Palimpsest.FIXTURE_MISSED;
+    sourceNote = '';
     els.essay.focus();
     say('Loaded the honest-failure example: a hand-polished paragraph inside human writing. The tool locates it and still declines to flag the document. Press Analyse.');
+  });
+
+  /* ---- opening a document ---------------------------------- */
+  els.upload.addEventListener('click', function () { els.file.click(); });
+  els.file.addEventListener('change', function () {
+    openFile(els.file.files && els.file.files[0]);
+    /* Reset so choosing the SAME file twice fires `change` again. Without this a
+       reader who fixes their document and re-picks it gets no response at all,
+       which reads as the button being broken. */
+    els.file.value = '';
+  });
+
+  /* Typing invalidates the "read from X" provenance on the result line. */
+  els.essay.addEventListener('input', function () { sourceNote = ''; });
+
+  /* Drag and drop. dragover must be cancelled or the browser navigates to the
+     file and the page is gone. The counter exists because dragenter/dragleave
+     also fire for the textarea INSIDE the zone, so a plain boolean turns the
+     highlight off while the file is still over the target. */
+  var dragDepth = 0;
+  function dragging(on) {
+    els.dropzone.classList.toggle('dragging', on);
+  }
+  ['dragenter', 'dragover'].forEach(function (name) {
+    els.dropzone.addEventListener(name, function (e) {
+      if (!e.dataTransfer || e.dataTransfer.types.indexOf('Files') === -1) return;
+      e.preventDefault();
+      if (name === 'dragenter') { dragDepth += 1; }
+      e.dataTransfer.dropEffect = 'copy';
+      dragging(true);
+    });
+  });
+  els.dropzone.addEventListener('dragleave', function () {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) dragging(false);
+  });
+  els.dropzone.addEventListener('drop', function (e) {
+    if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    e.preventDefault();
+    dragDepth = 0;
+    dragging(false);
+    openFile(e.dataTransfer.files[0]);
+  });
+  /* A file dropped anywhere else would otherwise be opened by the browser,
+     replacing the page and losing whatever was in the box. */
+  window.addEventListener('dragover', function (e) {
+    if (e.dataTransfer && e.dataTransfer.types.indexOf('Files') !== -1) e.preventDefault();
+  });
+  window.addEventListener('drop', function (e) {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) e.preventDefault();
   });
 
   /* privacy is narrowed from /api/health; only an explicit false may soften it.

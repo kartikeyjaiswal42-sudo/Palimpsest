@@ -52,14 +52,31 @@ uvicorn palimpsest.api.app:app --port 8123     # first run downloads GPT-2 (~500
 open http://127.0.0.1:8123
 ```
 
-Paste an essay, or press **Example it catches** / **Example it lets through** — the demo
-deliberately ships a failure alongside the success. The second one is the more instructive:
-the highlighting lands on the rewritten paragraph exactly, and the tool *still declines to
-flag the essay*, because 38% document confidence is under the 80.7% threshold we ship. That
-is the operating point costing us a catch, visible on screen rather than buried in a table.
+Paste an essay, drop a **.docx** on the box, or press **Example it catches** / **Example it
+lets through** — the demo deliberately ships a failure alongside the success. The second one
+is the more instructive: the highlighting lands on the rewritten paragraph exactly, and the
+tool *still declines to flag the essay*, because 38% document confidence is under the 80.7%
+threshold we ship. That is the operating point costing us a catch, visible on screen rather
+than buried in a table.
 
 Click any sentence to see the evidence behind its score. Analysis takes about 2 seconds for a
 650-word essay on a laptop CPU.
+
+### Opening a document
+
+`.docx` and plain `.txt` are read **in the browser**, with no library and no upload: a .docx
+is a ZIP holding `word/document.xml`, and `DecompressionStream` and `DOMParser` are already
+there. So this adds no dependency, and the same code serves the local build and the hosted
+one. Tracked-change *insertions* are read and *deletions* are not; hyperlink field codes are
+skipped. The extracted text lands in the essay box and that box is what gets analysed — there
+is no hidden copy, so a document that came through badly can be seen and corrected.
+
+**PDF is refused, and named as refused.** A .docx stores paragraphs; a PDF stores placed
+glyphs, so recovering prose from one means guessing where lines join and whether a hyphen
+ended a word or a line. Those guesses land on sentence boundaries, and every number this tool
+reports is computed per sentence — a wrongly joined line would change the result silently.
+Save as .docx, or paste the text. The refusal says exactly this rather than "unsupported
+format".
 
 To rebuild everything from scratch:
 
@@ -71,8 +88,10 @@ python scripts/train.py               # fit + report cross-validated performance
 python scripts/evaluate.py            # every held-out set
 python scripts/find_failures.py       # the essays it gets confidently wrong
 python scripts/ablate_length.py       # re-run the document-length ablation
-pytest                                # 127 tests, no network, no model download
-node scripts/verify_ui.cjs            # 23 end-to-end browser checks (needs the server up)
+pytest                                # 194 tests, no network, no model download
+node scripts/verify_ui.cjs            # end-to-end browser checks (needs the server up)
+python3 scripts/make_test_docx.py     # a real word-processor .docx for the check below
+node scripts/verify_upload.cjs        # 37 browser checks on opening a document (no server needed)
 ```
 
 ## What it does, honestly

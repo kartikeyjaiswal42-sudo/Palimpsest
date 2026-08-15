@@ -221,6 +221,25 @@ main { display: flex; flex-direction: column; gap: clamp(20px, 2.6vw, 32px); }
 body[data-state="result"] #essay { height: 10.5rem; }
 body[data-state="scoring"] #essay { opacity: .75; }
 
+/* Drop target. The overlay is pointer-events:none so it cannot itself become the
+   dragleave target -- an overlay that swallows the pointer makes the highlight
+   flicker on and off as the cursor crosses it. */
+.dropzone { position: relative; }
+.drop-hint {
+  display: none;
+  position: absolute; inset: 0;
+  align-items: center; justify-content: center;
+  margin: 0;
+  background: var(--paper);
+  border: 2px dashed var(--accent);
+  border-radius: 2px;
+  color: var(--accent);
+  font-size: .82rem; font-weight: 650;
+  letter-spacing: .08em; text-transform: uppercase;
+  pointer-events: none;
+}
+.dropzone.dragging .drop-hint { display: flex; }
+
 .controls {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
   margin-top: 14px;
@@ -1031,4 +1050,170 @@ body[data-state="scoring"] .skeleton {
   .metric-value { font-size: 26pt; }
   .limitations { grid-template-columns: 1fr; }
   a { text-decoration: none; }
+}
+
+/* ============================================================
+   Confident failures
+
+   Rendered from artifacts/confident_failures.json. Deliberately
+   built from the same .bar-row primitives as the live evidence
+   panel: the arithmetic that explains a failure is the same
+   arithmetic that explains a verdict, and showing it in a
+   different visual language would imply otherwise.
+
+   Nothing here is coloured green. A missed machine essay is not
+   a success, and the project's rule is that no part of this
+   interface may read as exoneration.
+   ============================================================ */
+.failures-panel { margin-top: 1.5rem; }
+
+.failures {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: .85rem;
+}
+
+.failure {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--machine);
+  border-radius: 6px;
+  padding: 1rem 1.1rem 1.1rem;
+}
+/* A missed machine essay fails in the other direction, so it is marked in a different
+   hue — but a neutral slate, never green. */
+.failure.missed { border-left-color: #6b7280; }
+
+.failure-head { margin-bottom: .75rem; }
+
+.failure-kind {
+  font-size: .7rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--machine);
+  margin: 0 0 .2rem;
+  font-weight: 600;
+}
+.failure.missed .failure-kind { color: #566070; }
+
+.failure-id {
+  font-size: 1rem;
+  margin: 0 0 .2rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink);
+}
+
+.failure-meta {
+  margin: 0 0 .35rem;
+  font-size: .82rem;
+  color: var(--ink-soft);
+}
+
+.failure-score {
+  margin: 0;
+  font-size: .9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.failure-sev {
+  display: block;
+  font-size: .75rem;
+  color: var(--ink-faint);
+  margin-top: .15rem;
+}
+
+.failure-essay { margin: .6rem 0; }
+.failure-essay > summary {
+  cursor: pointer;
+  font-size: .82rem;
+  color: var(--accent);
+}
+.failure-text {
+  white-space: pre-wrap;
+  font-size: .84rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: .7rem .8rem;
+  margin: .5rem 0 0;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.failure-driver {
+  margin-top: .85rem;
+  padding-top: .8rem;
+  border-top: 1px solid var(--rule);
+}
+.driver-head {
+  margin: 0 0 .4rem;
+  font-size: .78rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.driver-text {
+  margin: 0 0 .7rem;
+  padding: .5rem .75rem;
+  border-left: 3px solid var(--rule);
+  font-size: .9rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.driver-sub {
+  margin: 0 0 .4rem;
+  font-size: .78rem;
+  color: var(--ink-faint);
+}
+.driver-math {
+  margin: .5rem 0 0;
+  font-size: .76rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.failure-why {
+  margin-top: .9rem;
+  padding-top: .8rem;
+  border-top: 1px dashed var(--rule);
+}
+.why-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: .88rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: .55rem .65rem;
+  resize: vertical;
+}
+.why-input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.why-actions {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-top: .5rem;
+}
+.why-status {
+  font-size: .78rem;
+  color: var(--ink-faint);
+}
+
+.failures-method {
+  margin: 1rem 0 0;
+  font-size: .76rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+@media (prefers-color-scheme: dark) {
+  .failure-text { background: rgba(255,255,255,.04); }
+  .why-input { background: rgba(255,255,255,.04); }
 }

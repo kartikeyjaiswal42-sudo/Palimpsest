@@ -25,16 +25,25 @@
   <section class="composer" aria-labelledby="composer-h">
     <h2 class="sr-only" id="composer-h">Essay input</h2>
 
-    <label class="field-label" for="essay">Paste an essay</label>
-    <textarea id="essay" rows="12" spellcheck="false"
-      placeholder="Paste the essay here, or load one of the two examples below."></textarea>
+    <label class="field-label" for="essay">Paste an essay, or drop a .docx on the box</label>
+    <div class="dropzone" id="dropzone">
+      <textarea id="essay" rows="12" spellcheck="false"
+        placeholder="Paste the essay here, drop a Word .docx file on this box, or load one of the two examples below."></textarea>
+      <p class="drop-hint" aria-hidden="true">Release to read the document</p>
+    </div>
 
     <div class="controls">
       <button type="button" id="analyse" class="btn btn-primary">Analyse this essay</button>
+      <button type="button" id="upload" class="btn btn-quiet">Upload a .docx</button>
       <button type="button" id="load-sample" class="btn btn-quiet">Example it catches</button>
       <button type="button" id="load-missed" class="btn btn-quiet">Example it lets through</button>
       <span class="kbd-hint" aria-hidden="true"><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
     </div>
+    <!-- `accept` is a filter on the picker, never the check. The file is identified
+         from its leading bytes in app.js, so a .pdf renamed .docx is named as a PDF
+         rather than failing as a broken archive. -->
+    <input type="file" id="file" class="sr-only" tabindex="-1" aria-hidden="true"
+      accept=".docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown">
 
     <div class="progress" aria-hidden="true"><span></span></div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -188,6 +197,20 @@
       result. Read them before you act on anything above.</p>
     </div>
     <ul class="limitations" id="limitations"></ul>
+  </section>
+
+  <!-- ── Confident failures ─────────────────────────────────── -->
+  <!-- Rendered from artifacts/confident_failures.json via /api/failures. Nothing in this
+       section is written in the markup: the essays, the scores and the feature bars all
+       come from the artifact the scoring run produced, so this panel cannot drift away
+       from the detector the way the limitations prose once did. -->
+  <section class="panel failures-panel hidden" id="failures-panel" aria-labelledby="failures-h">
+    <div class="limits-head">
+      <h2 class="panel-h" id="failures-h">Where it fails worst</h2>
+      <p class="limits-sub" id="failures-sub"></p>
+    </div>
+    <div class="failures" id="failures"></div>
+    <p class="failures-method" id="failures-method"></p>
   </section>
 
 </main>
