@@ -280,10 +280,23 @@ function serveWeb() {
       JSON.stringify(r.text));
     check('the status names the file and the word count',
       /\b18 words from essay\.docx/.test(r.seen), r.seen.slice(0, 120));
-    check('it analyses what it read without being asked again',
-      await page.isVisible('#verdict-panel'));
-    check('the result line records where the text came from',
-      (await status()).includes('read from essay.docx'), (await status()).slice(-60));
+    check('opening a document starts the analysis without being asked again',
+      /Reading token probabilities|analyz|analys/i.test(r.seen), r.seen.slice(0, 160));
+
+    // WHAT THIS USED TO CHECK, AND WHY IT CHANGED. This block asserted that the finished
+    // result line said "read from essay.docx". This suite runs with NO SERVER, so the only
+    // reason a result line ever existed here was that the page manufactured one locally when
+    // the analyzer could not be reached -- a seeded PRNG producing a verdict, a machine share
+    // and evidence bars, which has since been removed for the obvious reason. The check was
+    // therefore reading a fabricated render, not the product. What can honestly be verified
+    // without a backend is that the reader records the source and that the failure is
+    // reported as a failure; the source note ON A REAL RESULT is covered by verify_ui.cjs,
+    // which runs against a live analyzer.
+    const ended = await status();
+    check('with no analyzer reachable it reports that, rather than inventing a result',
+      /nothing was measured/i.test(ended), ended.slice(0, 110));
+    check('and it does not paint a verdict it did not compute',
+      !(await page.isVisible('#verdict-panel')));
   }
 
   /* ---- uncompressed entries ---- */

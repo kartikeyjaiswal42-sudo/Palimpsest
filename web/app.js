@@ -5,19 +5,27 @@
    ============================================================ */
 
 /* ------------------------------------------------------------
-   Fixtures + the offline analyzer.
-   The page always asks POST /api/analyze first. When no analyzer
-   is deployed (static preview, 404, non-JSON), it falls back to
-   this bundled analyzer so the interface can be read, and says so
-   in the status line and the observer chip. It never mixes the
-   two: a real response is rendered untouched.
+   The two example essays.
+
+   THIS MODULE USED TO CARRY AN OFFLINE ANALYZER AND IT HAS BEEN REMOVED.
+   When POST /api/analyze could not be reached, the page fell back to a
+   seeded random-number generator that manufactured a verdict band, a
+   machine share, per-sentence probabilities, per-feature evidence bars
+   with z-scores and weights, and per-token ranks -- and rendered them
+   through the same code that renders a real result. For any text that was
+   not one of the two fixtures the document score was literally
+   `-1.6 + random() * 3.2`, so a student pasting their own essay during a
+   network blip could be shown "Likely machine-written" with a full
+   evidence panel behind it. The only disclosure was the words "bundled
+   fixture" appended to a metadata chip.
+
+   That is the exact fault this project exists to argue against: presenting
+   a number that was not measured as though it were. A detector that
+   invents evidence when it cannot reach its observer is worse than one
+   that says it cannot reach its observer, so it now says so.
    ------------------------------------------------------------ */
 window.Palimpsest = (function () {
   'use strict';
-
-  var INTERCEPT = -0.406;
-  var THRESHOLD = 0.3004;
-  var CHAR_LIMIT = 6000;
 
   var FIXTURE_CAUGHT =
 'Throughout my life, I have always been drawn to the quiet power of community service. Growing up in a small suburban neighborhood, I witnessed firsthand how small acts of kindness could ripple outward and transform the lives of those around me. This realization sparked a passion within me that would ultimately shape both my academic interests and my personal values.\n\n' +
@@ -32,242 +40,9 @@ window.Palimpsest = (function () {
 'So I started keeping things too. Ticket stubs, mostly, and the receipt from the diner where my father told me he was moving out. I am not sentimental about them. I do not take them out and look at them. I just want there to be a record that I was somewhere, the way she wanted one.\n\n' +
 'I do not know yet what I want to study. I know I want to work with things people left behind.';
 
-  var LIMITATIONS = [
-    'Measured on held-out data: 10.9% of TOEFL essays by non-native English speakers were flagged as likely machine-written. If the writer learned English as a second language, this tool is wrong about them roughly one time in nine.',
-    'Light editing defeats it. Rewriting one sentence in three moved a machine-written document back below the threshold in 62% of the cases we tested.',
-    'It cannot separate drafting help from ghostwriting. A student who told their own story and had a model tidy the grammar scores like a student who typed a prompt.',
-    'Below about 120 words the calibration set has too few comparable documents, so the tool reports that the essay is outside its scope rather than guess at a number.',
-    'Formulaic human writing scores high. Prose drilled toward a rubric — five paragraphs, signposted transitions, a hedged conclusion — is the human writing this tool most often flags.',
-    'It was calibrated on undergraduate admissions essays written in English. On graduate statements, on translated text, and on any other genre, the reported probability has no validated meaning.',
-    'The observer model changes. Scores are not comparable across observer versions, and a re-run after an upgrade can move a document across the threshold.',
-    'A flag is not evidence of misconduct and has never been validated as such. At this threshold, one flagged essay in twenty was written by a person.'
-  ];
-
-  var FEATURES = [
-    { name: 'mean_logprob', label: 'Average predictability', group: 'likelihood', weight: 2.0407, center: -2.1, scale: 0.55,
-      description: 'Mean log-probability the observer assigned to the words actually used. Machine drafts sit closer to the model\u2019s own preferences.' },
-    { name: 'mean_logrank', label: 'Average log rank', group: 'rank', weight: 1.6182, center: 1.9, scale: 0.42,
-      description: 'Average position of each word in the observer\u2019s ranked guesses, log-scaled.' },
-    { name: 'smoothness', label: 'Smoother than the author\u2019s baseline', group: 'context', weight: 1.1834, center: 0.0, scale: 0.31,
-      description: 'How much flatter this sentence\u2019s surprise curve is than the rest of this author\u2019s writing.' },
-    { name: 'length_vs_baseline', label: 'Length vs the author\u2019s baseline', group: 'context', weight: 0.7391, center: 1.0, scale: 0.28,
-      description: 'This sentence\u2019s length against the author\u2019s own average, so a naturally terse writer is not penalised for terseness.' },
-    { name: 'fluent_atypical', label: 'Fluent but atypical', group: 'composite', weight: 1.3127, center: 0.4, scale: 0.26,
-      description: 'High fluency combined with low resemblance to real applicant prose \u2014 the combination, not either part alone.' },
-    { name: 'corpus_distance', label: 'Distance from applicant prose', group: 'corpus', weight: 1.4408, center: 0.6, scale: 0.19,
-      description: 'Distance from a reference corpus of verified human admissions essays.' },
-    { name: 'sent_len', label: 'Sentence length', group: 'rhythm', weight: 0.6215, center: 21.0, scale: 8.0,
-      description: 'Raw sentence length in words, standardised against the calibration set.' },
-    { name: 'local_rhythm', label: 'Local rhythm', group: 'rhythm', weight: 0.8342, center: 0.0, scale: 0.4,
-      description: 'Variation in length between this sentence and the sentences on either side of it.' },
-    { name: 'surprise_rhythm', label: 'Rhythm of surprise', group: 'rhythm', weight: 0.9713, center: 0.9, scale: 0.22,
-      description: 'Whether surprise is spread evenly across the sentence or clustered in a few words.' },
-    { name: 'vocab_richness', label: 'Vocabulary richness', group: 'register', weight: 0.7085, center: 0.78, scale: 0.11,
-      description: 'Type-token ratio inside the sentence, standardised.' },
-    { name: 'contractions', label: 'Contractions', group: 'register', weight: 0.5512, center: 0.06, scale: 0.05,
-      description: 'Rate of contracted forms, which machine drafts use less often than applicants do.' },
-    { name: 'top10_share', label: 'Words in the top 10', group: 'likelihood', weight: 1.0946, center: 0.42, scale: 0.13,
-      description: 'Share of words that were among the observer\u2019s ten most likely continuations at that position.' },
-    { name: 'lr_ratio', label: 'Likelihood/rank ratio', group: 'composite', weight: 0.8804, center: 1.1, scale: 0.24,
-      description: 'Ratio between the likelihood and rank signals, which separates fluent human prose from generated prose.' }
-  ];
-
-  function hash(s) {
-    var h = 2166136261;
-    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
-    return h >>> 0;
-  }
-  function rng(seed) {
-    var a = seed >>> 0;
-    return function () {
-      a = (a + 0x6D2B79F5) >>> 0;
-      var t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  var r4 = function (n) { return Math.round(n * 1e4) / 1e4; };
-  var sig = function (z) { return 1 / (1 + Math.exp(-z)); };
-
-  function splitSentences(text) {
-    var out = [], re = /[^.!?]+[.!?]+["'\u201d\u2019)\]]*|[^.!?]+$/g, m;
-    while ((m = re.exec(text)) !== null) {
-      var raw = m[0];
-      var lead = raw.match(/^\s*/)[0].length;
-      var trimmed = raw.trim();
-      if (!trimmed) continue;
-      out.push({ start: m.index + lead, end: m.index + lead + trimmed.length, text: trimmed });
-    }
-    return out;
-  }
-
-  function buildEvidence(rand, target, nWords) {
-    var total = target - INTERCEPT;
-    var shownSum = r4(total * 0.85);
-    var remainder = r4(total - shownSum);
-    var logit = r4(INTERCEPT + shownSum + remainder);
-
-    var offset = Math.floor(rand() * FEATURES.length);
-    var picked = [];
-    for (var i = 0; i < 6; i++) { picked.push(FEATURES[(offset + i * 3) % FEATURES.length]); }
-
-    // a genuinely unmeasurable term on very short sentences
-    var unmeasuredAt = nWords < 12 ? 3 : -1;
-    var shape = [1, 0.78, -0.42, 0.61, 0.35, -0.25];
-    var live = [], sum = 0;
-    picked.forEach(function (f, i) {
-      var w = i === unmeasuredAt ? 0 : shape[i] * (0.75 + rand() * 0.5);
-      live.push(w); sum += w;
-    });
-    if (Math.abs(sum) < 0.01) { live[0] += 1; sum += 1; }
-    var k = shownSum / sum;
-
-    var evidence = picked.map(function (f, i) {
-      var measured = i !== unmeasuredAt;
-      var c = measured ? r4(live[i] * k) : 0;
-      var z = measured ? r4(c / f.weight) : null;
-      return {
-        name: f.name, label: f.label, group: f.group, description: f.description,
-        value: measured ? r4(f.center + z * f.scale) : null,
-        z: z, weight: f.weight, contribution: c,
-        toward: c >= 0 ? 'machine' : 'human', measured: measured
-      };
-    });
-
-    // absorb rounding drift into the largest term so the parts add up exactly
-    var got = evidence.reduce(function (a, f) { return a + f.contribution; }, 0);
-    var drift = r4(shownSum - got);
-    if (drift !== 0) {
-      var big = evidence.filter(function (f) { return f.measured; })
-        .sort(function (a, b) { return Math.abs(b.contribution) - Math.abs(a.contribution); })[0];
-      if (big) {
-        big.contribution = r4(big.contribution + drift);
-        big.z = r4(big.contribution / big.weight);
-        big.toward = big.contribution >= 0 ? 'machine' : 'human';
-      }
-    }
-    return { evidence: evidence, remainder: remainder, logit: logit };
-  }
-
-  function analyseLocally(text) {
-    var mode = text === FIXTURE_CAUGHT ? 'caught' : text === FIXTURE_MISSED ? 'missed' : 'free';
-    var seed = hash(text);
-    var docRand = rng(seed);
-    var base = mode === 'caught' ? 3.1 : mode === 'missed' ? -1.9 : (-1.6 + docRand() * 3.2);
-    var polished = mode === 'missed' ? [6, 7, 8] : [];
-    var clipped = text.length > CHAR_LIMIT;
-
-    var raw = splitSentences(text);
-    var sentences = raw.map(function (s, i) {
-      var nWords = s.text.split(/\s+/).length;
-      var rand = rng(hash(s.text) ^ (i * 2654435761));
-      var reason = null;
-      if (nWords < 5) reason = 'too_short';
-      else if (nWords > 90) reason = 'too_long';
-      else if (s.start >= CHAR_LIMIT) reason = 'beyond_observer_window';
-
-      var out = {
-        index: i, start: s.start, end: s.end, text: s.text, nWords: nWords,
-        reliable: reason === null, unreliableReason: reason, intercept: INTERCEPT
-      };
-      if (reason) {
-        out.probability = null; out.smoothed = null; out.logit = null;
-        out.evidence = []; out.evidenceRemainder = null;
-        out.nFeaturesShown = 0; out.nFeaturesTotal = 43;
-        return out;
-      }
-      var target = base + (rand() - 0.5) * 1.7 + (polished.indexOf(i) >= 0 ? 3.7 : 0);
-      target = Math.max(-6, Math.min(6, target));
-      var built = buildEvidence(rand, target, nWords);
-      out.logit = built.logit;
-      out.probability = r4(sig(built.logit));
-      out.smoothed = r4(sig(built.logit * 0.96));
-      out.evidence = built.evidence;
-      out.evidenceRemainder = built.remainder;
-      out.nFeaturesShown = built.evidence.length;
-      out.nFeaturesTotal = 43;
-      return out;
-    });
-
-    var tokens = [];
-    var re = /\S+/g, m, si = 0;
-    while ((m = re.exec(text)) !== null && tokens.length < 3000) {
-      while (si < sentences.length - 1 && m.index >= sentences[si].end) { si++; }
-      var host = sentences[si];
-      var p = host && host.probability != null ? host.probability : 0.2;
-      var tr = rng(hash(m[0] + m.index))();
-      var bucket, rank, lp;
-      if (tr < 0.28 + p * 0.45) { bucket = 'top10'; rank = 1 + Math.floor(tr * 9); lp = -0.2 - tr * 1.6; }
-      else if (tr < 0.6 + p * 0.28) { bucket = 'top100'; rank = 11 + Math.floor(tr * 88); lp = -2 - tr * 2.2; }
-      else if (tr < 0.87) { bucket = 'top1000'; rank = 101 + Math.floor(tr * 890); lp = -4.4 - tr * 2.4; }
-      else { bucket = 'tail'; rank = 1001 + Math.floor(tr * 9000); lp = -7.1 - tr * 3.4; }
-      tokens.push({
-        text: (m.index > 0 ? ' ' : '') + m[0], start: m.index, end: m.index + m[0].length,
-        logprob: r4(lp), rank: rank, bucket: bucket
-      });
-    }
-
-    var reliable = sentences.filter(function (s) { return s.reliable; });
-    var flagged = reliable.filter(function (s) { return s.probability >= THRESHOLD; });
-    var nWords = text.trim().split(/\s+/).length;
-    var share = reliable.length ? flagged.length / reliable.length : 0;
-    var anyp = 1;
-    reliable.forEach(function (s) { anyp *= (1 - Math.min(0.9, s.probability * s.probability * 0.85)); });
-    anyp = r4(1 - anyp);
-
-    var se = reliable.length ? 1.96 * Math.sqrt(Math.max(share * (1 - share), 0.0004) / reliable.length) : 0.5;
-    var band, label, detail;
-    if (reliable.length < 3) {
-      band = 'insufficient_evidence';
-      label = 'Insufficient evidence';
-      detail = 'Only ' + reliable.length + ' sentence' + (reliable.length === 1 ? '' : 's') +
-        ' could be measured, which is below the minimum the calibration supports. This is an answer, not a failure: the tool has not cleared this essay and has not flagged it.';
-    } else if (nWords < 120) {
-      band = 'out_of_scope';
-      label = 'Outside what this tool can measure';
-      detail = 'At ' + nWords + ' words this essay is shorter than anything in the calibration set, so no probability reported here has a validated meaning. This is a statement about the tool, not about the writer.';
-    } else if (share >= 0.5 && anyp >= 0.9) {
-      band = 'likely_machine';
-      label = 'Likely machine-written';
-      detail = 'Above the threshold calibrated so that at most 5% of at-risk human essays are flagged (observed 4.0% on 1492 held-out documents).';
-    } else if (anyp >= 0.3) {
-      band = 'insufficient_evidence';
-      label = 'Insufficient evidence';
-      detail = 'Some sentences carry the signal, but the document-level evidence does not reach the calibrated threshold. The tool cannot say this essay is machine-written, and it cannot say it is not. Read the flagged sentences and decide yourself.';
-    } else {
-      band = 'no_evidence';
-      label = 'No evidence of machine writing';
-      detail = 'Nothing in this essay reached the sentence threshold. That means the tool found no evidence \u2014 not that it found evidence of a human author. It cannot establish authorship in either direction.';
-    }
-
-    return {
-      text: text,
-      verdict: {
-        machineShare: r4(share),
-        machineShareLow: r4(Math.max(0, share - se)),
-        machineShareHigh: r4(Math.min(1, share + se)),
-        anyMachineProbability: anyp,
-        nSentences: sentences.length, nWords: nWords, nReliableSentences: reliable.length,
-        band: band, bandLabel: label, bandDetail: detail,
-        canExonerate: false, inDomainProbability: r4(0.05 + docRand() * 0.5)
-      },
-      flagThreshold: THRESHOLD,
-      sentences: sentences,
-      tokens: tokens,
-      limitations: LIMITATIONS,
-      meta: {
-        observer: 'bundled-fixture/qwen3-30b-a3b-fp8', device: 'none',
-        elapsedMs: r4(12 + docRand() * 24), nObserverTokens: tokens.length,
-        clipped: clipped, observerCharLimit: CHAR_LIMIT
-      }
-    };
-  }
-
   return {
     FIXTURE_CAUGHT: FIXTURE_CAUGHT,
-    FIXTURE_MISSED: FIXTURE_MISSED,
-    analyseLocally: analyseLocally
+    FIXTURE_MISSED: FIXTURE_MISSED
   };
 })();
 
@@ -994,8 +769,7 @@ window.PalimpsestDocx = (function () {
       els.notice.textContent = '';
     }
     els.chip.textContent = 'observer ' + (m.observer || 'unknown') + ' \u00b7 ' +
-      (m.device || '?') + ' \u00b7 ' + (m.elapsedMs != null ? m.elapsedMs + ' ms' : '') +
-      (data.offline ? ' \u00b7 bundled fixture' : '');
+      (m.device || '?') + ' \u00b7 ' + (m.elapsedMs != null ? m.elapsedMs + ' ms' : '');
     els.chip.hidden = false;
   }
 
@@ -1024,7 +798,7 @@ window.PalimpsestDocx = (function () {
     // must be the last thing written by the render
     say(data.verdict.nSentences + ' sentences read \u00b7 ' + data.verdict.nReliableSentences +
       ' measured \u00b7 ' + flagged.length + ' sentences flagged above ' +
-      data.flagThreshold.toFixed(4) + (data.offline ? ' \u00b7 bundled fixture, no observer reached' : '') +
+      data.flagThreshold.toFixed(4) +
       (sourceNote ? ' \u00b7 read from ' + sourceNote : ''), 'ok');
   }
 
@@ -1079,14 +853,19 @@ window.PalimpsestDocx = (function () {
       data.text = data.text || text;
       renderAll(data);
     }).catch(function (err) {
-      if (err instanceof NoBackend) {
-        var data = Palimpsest.analyseLocally(text);
-        data.offline = true;
-        renderAll(data);
-        return;
-      }
       setState(current ? 'result' : 'idle');
-      say('Failed: ' + (err && err.message ? err.message : String(err)), 'error');
+      /* No result is shown for a request that did not produce one. The page used
+         to answer an unreachable analyzer with a locally manufactured verdict;
+         see the note at the top of this file for why that is gone. A reader who
+         gets nothing back is told nothing was measured, and the previous result
+         (if any) stays on screen unchanged rather than being overwritten by a
+         number nobody computed. */
+      var message = err instanceof NoBackend
+        ? 'No analyzer answered, so nothing was measured. This page scores essays by '
+          + 'sending them to an observer model; without it there is no result to show, and '
+          + 'it will not invent one. Check the connection and try again.'
+        : 'Failed: ' + (err && err.message ? err.message : String(err));
+      say(message, 'error');
     })['finally'](function () {
       els.analyse.disabled = false;
       els.sample.disabled = false;
