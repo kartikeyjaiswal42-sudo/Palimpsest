@@ -19,6 +19,7 @@ a floor, not a proof, and adding a headline number without adding it here is a r
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -28,12 +29,32 @@ ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / "artifacts"
 DOCS = [ROOT / "README.md"] + sorted((ROOT / "docs").glob("*.md"))
 
+#: WHICH BUILD THE PROSE IS CHECKED AGAINST, and the whole reason this constant exists.
+#:
+#: This file used to read `evaluation.json`, `detector.json` and `document_detector.json`
+#: unconditionally -- the GPT-2-observer artifacts. But `api/app.py` serves the artifact set
+#: named by `SUFFIX`, which defaults to `_remote`, and so does the hosted Worker. So the test
+#: written to stop the documentation drifting away from the shipped model was itself pointed
+#: at a model nobody runs, and it passed happily while the README's headline table described
+#: a different detector from the one behind the button: 0.925 sentence AUROC against a served
+#: 0.9576, and a 17.8% TOEFL false-positive rate against a served 10.9% -- the latter printed
+#: in the safety warning telling people how often the tool is wrong about a real student.
+#:
+#: This is the same fault `api/app.py::_limitations` records having fixed in the application
+#: ("it read evaluation.json unconditionally while every other artifact on this page was
+#: selected by SUFFIX"). The application was fixed and the test was not, which is precisely
+#: why nothing caught the drift. Resolved here the same way the server resolves it.
+SUFFIX = os.environ.get("PALIMPSEST_SUFFIX") or (
+    "_remote" if os.environ.get("PALIMPSEST_OBSERVER", "remote") == "remote" else ""
+)
 
-def _artifacts() -> dict:
+
+def _artifacts(suffix: str = SUFFIX) -> dict:
     """Every artifact under one namespace so a claim can point anywhere."""
     out = {}
     for name in ("evaluation", "detector", "document_detector", "ablation_length"):
-        path = ARTIFACTS / f"{name}.json"
+        # ablate_length.py writes one file for the whole experiment, not one per observer.
+        path = ARTIFACTS / f"{name}{'' if name == 'ablation_length' else suffix}.json"
         if path.exists():
             out[name] = json.loads(path.read_text(encoding="utf-8"))
     return out
@@ -48,62 +69,84 @@ def _dig(data: dict, path: str):
     return node
 
 
-#: (label, regex capturing one number, artifact path, scale, tolerance)
+#: The wording ``limitations.py`` already uses to mark a number that was not re-measured on
+#: the shipped observer. Any claim declared ``"gpt2"`` below must carry it, so a figure from
+#: the research build cannot sit unlabelled in a table describing the deployed one.
+GPT2_LABEL = "GPT-2-observer build"
+
+#: (label, regex capturing one number, artifact path, scale, tolerance, build)
 #:
 #: ``scale`` converts the artifact's units to the units the prose uses -- 100 where the docs
 #: write a percentage and the artifact stores a fraction. ``tolerance`` is half a display
 #: unit, so a claim rounded to one decimal place passes and a claim that is actually wrong
 #: does not.
-CLAIMS: list[tuple[str, str, str, float, float]] = [
+#:
+#: ``build`` is ``"served"`` for a number that must match the artifact set the application
+#: actually serves, and ``"gpt2"`` for one that only exists in the GPT-2-observer evaluation
+#: -- several held-out sets (the ASAP rewrite comparison, the evade-detection prompt, two of
+#: the four modern-generator arms) were never re-run against the remote observer. Those are
+#: still worth publishing, but only if the prose says which build produced them, so a
+#: ``"gpt2"`` claim is additionally required to carry ``GPT2_LABEL`` on the same line.
+CLAIMS: list[tuple[str, str, str, float, float, str]] = [
     (
         "sentence AUROC",
         r"[Ss]entence AUROC,? out-of-fold \| \*\*(\d\.\d+)\*\*",
         "detector.metadata.oofSentenceAuroc", 1.0, 0.0005,
+        "served",
     ),
     (
         "document AUROC",
         r"[Dd]ocument AUROC,? out-of-fold \| \*\*(\d\.\d+)\*\*",
         "document_detector.metadata.auroc", 1.0, 0.0005,
+        "served",
     ),
     (
         "localisation AUROC",
         r"\*\*AUROC (\d\.\d+)\*\*, seam found within 2 sentences",
         "evaluation.sets.localisation.sentenceAuroc", 1.0, 0.0005,
+        "served",
     ),
     (
         "seam within two sentences",
         r"seam found within 2 sentences in \*\*(\d+)%\*\*",
         "evaluation.sets.localisation.seam.withinTwoSentences", 100.0, 0.5,
+        "served",
     ),
     (
         "ESL document FPR",
         r"[Ff]alse positives on essays by English-language learners \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.esl.documentFPR", 100.0, 0.05,
+        "served",
     ),
     (
         "domain-shift document FPR",
         r"[Ff]alse positives on out-of-domain human essays \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.domain_shift.documentFPR", 100.0, 0.05,
+        "served",
     ),
     (
         "TOEFL document FPR",
         r"TOEFL essays by non-native writers, wrongly flagged \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.esl.breakdown.liang_toefl.documentFPR", 100.0, 0.05,
+        "served",
     ),
     (
         "prompt-engineered recall",
         r"prompted to evade detection\*\* \| only \*\*(\d+\.\d+)%\*\* of essays caught",
         "evaluation.sets.unseen_prompting.documentRecall", 100.0, 0.05,
+        "gpt2",
     ),
     (
         "ASAP originals flagged",
         r"The 88 original student essays \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.ablation.ASAP essays, GPT-simplified.originalFlagged", 100.0, 0.05,
+        "gpt2",
     ),
     (
         "ASAP rewrites flagged",
         r"The same 88 essays, rewritten by a model \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.ablation.ASAP essays, GPT-simplified.rewrittenFlagged", 100.0, 0.05,
+        "gpt2",
     ),
     (
         # This one is here because it went wrong. The README's safety warning quoted 22%,
@@ -115,6 +158,7 @@ CLAIMS: list[tuple[str, str, str, float, float]] = [
         "TOEFL FPR in the safety warning",
         r"An? \*\*(\d+\.\d+)%\*\*\s*\n?false-positive rate on the TOEFL essays",
         "evaluation.sets.esl.breakdown.liang_toefl.documentFPR", 100.0, 0.05,
+        "served",
     ),
     # The modern-generator results. These are why the detector was refitted, and the GRADIENT
     # across them is the finding -- so all four are pinned, not only the flattering one. If a
@@ -124,45 +168,74 @@ CLAIMS: list[tuple[str, str, str, float, float]] = [
         "modern recall, generator in training",
         r"in the training pool, these essays are not \(n=\d+\) \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.modern_holdout.documentRecall", 100.0, 0.05,
+        "served",
     ),
     (
         "modern recall, topic control",
         r"no topic steering\*\* \(n=\d+\) \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.modern_control.documentRecall", 100.0, 0.05,
+        "gpt2",
     ),
     (
         "modern recall, unseen checkpoint",
         r"a checkpoint withheld from training entirely \(n=\d+\) \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.modern_unseen.documentRecall", 100.0, 0.05,
+        "gpt2",
     ),
     (
         "modern recall, unseen family",
         r"a different model family, withheld entirely \(n=\d+\) \| \*\*(\d+\.\d+)%\*\*",
         "evaluation.sets.modern_unseen_family.documentRecall", 100.0, 0.05,
+        "served",
     ),
 ]
 
 
-@pytest.mark.parametrize("label,pattern,path,scale,tol", CLAIMS, ids=[c[0] for c in CLAIMS])
-def test_documented_number_matches_artifact(label, pattern, path, scale, tol):
-    artifacts = _artifacts()
-    expected = _dig(artifacts, path)
+@pytest.mark.parametrize("label,pattern,path,scale,tol,build", CLAIMS,
+                         ids=[c[0] for c in CLAIMS])
+def test_documented_number_matches_artifact(label, pattern, path, scale, tol, build):
+    suffix = "" if build == "gpt2" else SUFFIX
+    expected = _dig(_artifacts(suffix), path)
     if expected is None:
+        if build == "served":
+            # Not a skip. A headline claim declared as describing the served build, whose
+            # measurement is missing from the served build's evaluation, is the drift this
+            # file exists to catch -- skipping would hide it exactly as it was hidden before.
+            pytest.fail(
+                f"{label!r} is declared as a claim about the served build, but "
+                f"artifacts/evaluation{SUFFIX}.json has no {path}. Either re-run "
+                f"scripts/evaluate.py --suffix {SUFFIX or '(none)'}, or declare the claim "
+                f'"gpt2" and label it in the prose.'
+            )
         pytest.skip(f"{path} not present -- run scripts/train.py and scripts/evaluate.py")
 
     found = [
-        (doc.name, float(m.group(1)))
+        (doc.name, m, float(m.group(1)))
         for doc in DOCS
         for m in re.finditer(pattern, doc.read_text(encoding="utf-8"))
     ]
     assert found, f"no documented value for {label!r} matched {pattern!r} in any doc"
 
     target = expected * scale
-    for doc_name, claimed in found:
+    for doc_name, match, claimed in found:
         assert abs(claimed - target) <= tol, (
-            f"{doc_name} claims {label} = {claimed}, but {path} says {target:.4f}. "
-            f"Re-run the evaluation and update the prose, or the docs are lying."
+            f"{doc_name} claims {label} = {claimed}, but artifacts/"
+            f"{'evaluation' if path.startswith('evaluation') else path.split('.')[0]}"
+            f"{suffix}.json says {target:.4f}. Re-run the evaluation and update the prose, "
+            f"or the docs are lying."
         )
+        if build == "gpt2":
+            # The number is real but was measured on a build that is not deployed. It may be
+            # published; it may not be published silently, in a table a reader will take to
+            # describe the thing behind the button.
+            line = match.string[match.string.rfind("\n", 0, match.start()) + 1:
+                                match.string.find("\n", match.end())]
+            assert GPT2_LABEL in line, (
+                f"{doc_name} publishes {label} = {claimed}, which exists only in the "
+                f"GPT-2-observer evaluation, without saying so. The served build "
+                f"(artifacts/evaluation{SUFFIX}.json) never measured this set, so the line "
+                f"must carry {GPT2_LABEL!r} the way limitations.py already labels it."
+            )
 
 
 def _failure_contribution(sentence_fragment: str, feature_label: str) -> float | None:

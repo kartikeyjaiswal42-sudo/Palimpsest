@@ -8,6 +8,19 @@ python scripts/train.py && python scripts/evaluate.py
 
 Raw output lands in `artifacts/evaluation.json`.
 
+> **Which build this file measures.** The observer moved from an in-process GPT-2 to
+> qwen3-30B on Workers AI, and the shipped detector was refitted on it — so there are two
+> artifact sets, `artifacts/*.json` (GPT-2) and `artifacts/*_remote.json` (served). **The
+> tables below are the GPT-2-observer build unless a heading says otherwise**, because the
+> retrain narrative running through this file is that build's history and re-running the
+> comparisons against the new observer would not preserve it. The figures that describe what
+> is actually behind the button — sentence AUROC 0.958, document AUROC 0.930, TOEFL
+> false-positive rate 10.9%, ESL 4.3%, localisation AUROC 0.835 — are the headline table in
+> the [README](../README.md), and `tests/test_documented_numbers.py` holds those to
+> `evaluation_remote.json` on every run. This paragraph exists because that test used to read
+> `evaluation.json` while the application served `_remote`, and the README quietly published
+> one build's error rates under the other's name.
+
 ## How the splits work, and why it matters
 
 Folds are split **by essay, never by sentence**. Sentences from one essay resemble each other
@@ -45,24 +58,30 @@ ours: the generation prompt asks for 400–500 words. It is under the 0.15-from-
 `scripts/train.py` warns at, so no alarm fires, but it is a confound that did not exist
 before and roughly a tenth of the separation could be length rather than authorship.
 
-### Calibration
+### Calibration — the served detector
+
+Unlike the rest of this file, this table is the **shipped** model
+(`artifacts/detector_remote.json`), because it describes how much weight to put on a number
+the interface is showing someone right now. `train.py` writes it into the detector artifact
+and `test_documented_numbers.py` reads it back, so it cannot be hand-copied out of date the
+way it was once before.
 
 In each score band, how often the sentence really was machine-written:
 
 | predicted | n | mean predicted | actual |
 |---|---|---|---|
-| 0.0–0.1 | 2,502 | 0.053 | 0.050 |
-| 0.1–0.2 | 688 | 0.143 | 0.185 |
-| 0.2–0.3 | 372 | 0.246 | 0.290 |
-| 0.3–0.4 | 278 | 0.348 | 0.345 |
-| 0.4–0.5 | 265 | 0.448 | 0.392 |
-| 0.5–0.7 | 538 | 0.607 | 0.556 |
-| 0.7–1.0 | 3,294 | 0.890 | 0.892 |
+| 0.0–0.1 | 3,168 | 0.037 | 0.042 |
+| 0.1–0.2 | 387 | 0.142 | 0.176 |
+| 0.2–0.3 | 215 | 0.248 | 0.274 |
+| 0.3–0.4 | 177 | 0.350 | 0.294 |
+| 0.4–0.5 | 141 | 0.450 | 0.376 |
+| 0.5–0.7 | 351 | 0.605 | 0.601 |
+| 0.7–1.0 | 3,498 | 0.924 | 0.921 |
 
 Bands holding fewer than 20 sentences are omitted; the rest account for all 7,937.
 
-Good at the ends, softer in the middle — the 0.5–0.7 band predicts 0.607 on 538 sentences
-that were machine-written 0.556 of the time. Calibration improved when the modern corpus went
+Good at the ends, softer in the middle — the 0.5–0.7 band predicts 0.605 on 351 sentences
+that were machine-written 0.601 of the time. Calibration improved when the modern corpus went
 in, because the training prior stopped being 12% machine. The interface therefore bands scores into five buckets
 rather than showing a continuous gradient: a reader should not be invited to distinguish 0.55
 from 0.62 when the model demonstrably cannot.

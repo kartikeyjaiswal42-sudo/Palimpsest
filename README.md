@@ -99,13 +99,21 @@ node scripts/verify_upload.cjs        # 37 browser checks on opening a document 
 Every number below is on data the model never trained on. The full breakdown, including the
 trade-off curve, is in [docs/03-evaluation.md](docs/03-evaluation.md).
 
+**Which build these describe.** There are two, and they measure differently. The one that
+serves every request — locally and at the hosted URL — reads token probabilities from
+**qwen3-30B on Workers AI** (`artifacts/*_remote.json`); `PALIMPSEST_OBSERVER=gpt2` swaps in
+a local GPT-2 and its own artifacts. The table below is the **served** build. Where a
+measurement exists only for the GPT-2-observer build, it says so on the line, because a
+figure from a model nobody is running does not belong unlabelled in a table about the one
+behind the button.
+
 | | |
 |---|---|
-| Sentence AUROC, out-of-fold | **0.925** |
-| Document AUROC, out-of-fold | **0.909** |
-| Locating machine text inside a mixed essay | **AUROC 0.808**, seam found within 2 sentences in **39%** of documents |
+| Sentence AUROC, out-of-fold | **0.958** |
+| Document AUROC, out-of-fold | **0.930** |
+| Locating machine text inside a mixed essay | **AUROC 0.835**, seam found within 2 sentences in **52%** of documents |
 | False positives on out-of-domain human essays | **0.0%** of documents |
-| False positives on essays by English-language learners | **5.8%** of documents |
+| False positives on essays by English-language learners | **4.3%** of documents |
 
 ### The number that decides whether this is useful
 
@@ -115,23 +123,26 @@ modern (2026) essays, by how far the generator sits from the training pool:
 | the generator is... | caught |
 |---|---|
 | in the training pool, these essays are not (n=115) | **94.8%** |
-| in the training pool, and **no topic steering** (n=45) | **95.6%** |
-| a checkpoint withheld from training entirely (n=250) | **80.0%** |
-| a different model family, withheld entirely (n=22) | **45.5%** |
+| in the training pool, and **no topic steering** (n=45) | **95.6%** — GPT-2-observer build, not re-run on the served one |
+| a checkpoint withheld from training entirely (n=250) | **80.0%** — GPT-2-observer build, not re-run on the served one |
+| a different model family, withheld entirely (n=22) | **63.6%** |
 
-**That gradient is the finding.** Skill falls from 95% to 46% as the generator moves away
+**That gradient is the finding.** Skill falls from 95% to 64% as the generator moves away
 from what was trained on, which puts a number on how much of any detector's score is
 recognising *one generator* rather than recognising machine prose. The second row is the
 control: same generator, but the essays answer bare prompts instead of the 40 subjects used
-to build the corpus, so the gain is not topic memorisation.
+to build the corpus, so the gain is not topic memorisation. The two middle rows were measured
+on the GPT-2-observer build and never re-run against the served observer, so read the
+gradient's shape rather than the spacing of its middle.
 
 And the part that a leaderboard would hide:
 
 | | |
 |---|---|
-| GPT-3.5 **prompted to evade detection** | only **38.7%** of essays caught |
+| GPT-3.5 **prompted to evade detection** | only **38.7%** of essays caught — GPT-2-observer build, not re-run on the served one |
 | Prose a careful writer composed to imitate a model | **0 of 11** caught |
-| TOEFL essays by non-native writers, wrongly flagged | **17.8%** |
+| Prose from the strongest current models (n=160) | **5.6%** of essays caught |
+| TOEFL essays by non-native writers, wrongly flagged | **10.9%** |
 
 The operating point is deliberately tuned so the tool almost never accuses a real student,
 and it pays for that in recall. That is a choice, not a result, and
@@ -139,7 +150,7 @@ and it pays for that in recall. That is a choice, not a result, and
 
 **For context on that last number:** Liang et al. (2023) measured a **61.22%** average false
 positive rate across seven commercial detectors on the same 91 TOEFL essays. Palimpsest
-scores 17.8% on that set. Better, and still far too high to use as evidence against anyone.
+scores 10.9% on that set. Better, and still far too high to use as evidence against anyone.
 
 ## The cleanest evidence that it measures what it claims
 
@@ -148,11 +159,12 @@ rewrote. Same author, same content, same subject — only the surface differs.
 
 | | flagged as machine |
 |---|---|
-| The 88 original student essays | **0.0%** |
-| The same 88 essays, rewritten by a model | **48.9%** |
+| The 88 original student essays | **0.0%** — GPT-2-observer build |
+| The same 88 essays, rewritten by a model | **48.9%** — GPT-2-observer build |
 
-That is a controlled comparison, not a correlation, and it is the strongest thing in the
-evaluation.
+This comparison has not been re-run against the served observer, so both rows carry the build
+that produced them. It is a controlled comparison rather than a correlation, and it is the
+strongest thing in the evaluation.
 
 ## Four things this project got wrong first
 
@@ -255,9 +267,9 @@ tests/                   127 tests: no model is ever asked for a verdict, and
 
 ## What this tool must not be used for
 
-It is an instrument for looking at text, not evidence about a person. An **17.8%**
+It is an instrument for looking at text, not evidence about a person. A **10.9%**
 false-positive rate on the TOEFL essays means that using this to accuse a student of cheating
-would be wrong roughly one time in six for exactly the students least able to contest it.
+would be wrong roughly one time in nine for exactly the students least able to contest it.
 The interface says so on every result, and the API returns the error rates in the response
 body.
 
