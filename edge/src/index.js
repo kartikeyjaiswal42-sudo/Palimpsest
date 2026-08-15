@@ -220,6 +220,47 @@ export default {
       return handleAnalyze(request, env, ctx);
     }
 
+    // The detector's worst held-out mistakes, ranked by confident wrongness.
+    //
+    // Served from the REDACTED asset built by edge/scripts/build_failures.py, never from
+    // artifacts/confident_failures.json. That artifact embeds the complete text of the
+    // documents this panel is about, and on this corpus those are real second-language
+    // students' essays. The redaction is a separate FILE rather than a branch here,
+    // because a branch is one edit from being inverted with nothing to notice, whereas the
+    // assets directory physically does not contain the full essays.
+    //
+    // Read-only on purpose. The local build accepts POST /api/failures/explanation so the
+    // author can write up why the maths failed; a public endpoint that writes into a
+    // served artifact would let any visitor edit it, so the hosted build does not offer it
+    // and says so in the payload rather than failing silently.
+    if (url.pathname === '/api/failures') {
+      if (request.method !== 'GET') return json({ error: 'method', detail: 'GET only.' }, 405);
+      const res = await env.ASSETS.fetch(
+        new URL('/failures.json', 'https://palimpsest.internal'),
+      );
+      if (!res.ok) {
+        return json(
+          { error: 'not_found', detail: 'No failure analysis is bundled with this build.' },
+          404,
+        );
+      }
+      const payload = await res.json();
+      payload.explanationsEditable = false;
+      return json(payload);
+    }
+
+    if (url.pathname === '/api/failures/explanation') {
+      return json(
+        {
+          error: 'read_only',
+          detail:
+            'The hosted build serves the failure analysis read-only. Explanations are ' +
+            'written in the local build, which reads the unredacted artifact.',
+        },
+        405,
+      );
+    }
+
     if (url.pathname.startsWith('/api/')) {
       return json({ error: 'not_found', detail: `No such endpoint: ${url.pathname}` }, 404);
     }

@@ -80,13 +80,24 @@ last checkpoint and only scores what is left.
 
 ## Step 5 — read the summary before downloading
 
-The second-to-last cell prints a median score per source. Lower means more machine-like, so
-the machine sources (`modern_*`, `claude_*`, `liang_college_gpt3`) should sort to the top and
-the human ones (`liang_college_human`, `jhu`, `ellipse`) to the bottom.
+The second-to-last cell prints a median score per source, lowest (most machine-like) first.
 
-**If they are all mixed together, do not download it — something went wrong.** If they
-separate, that is *not yet* a result either: it is a smoke test. The real measurement happens
-back in the repository, where the column is scored against held-out sets with controls.
+**An earlier version of this guide said "if the sources are all mixed together, something
+went wrong — do not download it." That advice was wrong and it has been removed.** When this
+was actually run, the table *was* mixed, and the mixing was the result rather than a fault:
+
+* older and cheaper generators (`liang_college_gpt3`, `machine_claude`, Gemini 3.1
+  flash-lite) sat at the machine-like end, as predicted;
+* **frontier models sat at the bottom — scoring as more human-like than the human sources**;
+* **TOEFL, real second-language student writing, was the most machine-like source of all.**
+
+That is the published Binoculars-on-frontier degradation and this project's own ESL
+false-positive direction, visible in one table. Telling you to abort on seeing it would have
+thrown away the finding.
+
+So: read the table, do not judge the run by it. The only thing here that indicates a broken
+run is the `ordering OK` sanity check in step 4, which uses two passages whose answer is
+already known. The real measurement happens back in the repository.
 
 ---
 
@@ -101,9 +112,8 @@ python scripts/join_binoculars.py --scores ~/Downloads/binoculars_scores.jsonl -
 # if that passes, write it
 python scripts/join_binoculars.py --scores ~/Downloads/binoculars_scores.jsonl
 
-# re-measure with the new column
-python scripts/syntax_probe.py
-python scripts/esl_false_positive_audit.py
+# measure the new column
+python scripts/binoculars_probe.py
 ```
 
 Always run `--dry-run` first. The join refuses on any misalignment rather than writing a

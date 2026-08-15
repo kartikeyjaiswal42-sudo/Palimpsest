@@ -212,7 +212,10 @@ def main() -> int:
     wrote = sum(augment(n, scores, spans_by_doc, args.dry_run) for n in names)
     print(f"\n{wrote} set(s) {'would be ' if args.dry_run else ''}updated")
     if wrote and not args.dry_run:
-        print("next: python scripts/syntax_probe.py   # re-measure with the new column")
+        # NOT syntax_probe.py: that script selects its columns from FEATURE_NAMES +
+        # ALL_SYNTAX_FEATURE_NAMES and never reads binoculars_score, so it would print
+        # a real number about a different question.
+        print("next: python scripts/binoculars_probe.py   # measures THIS column")
     return 0
 
 

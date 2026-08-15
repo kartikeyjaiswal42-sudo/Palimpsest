@@ -1308,14 +1308,19 @@ window.PalimpsestDocx = (function () {
         ' × confidence ' + f.confidenceComponent.toFixed(2) + '</span></p>';
       card.appendChild(head);
 
+      /* The hosted build withholds the full essay: these are real students' writing and
+         republishing it at a public URL is not this project's to do. Say that, rather than
+         rendering an empty box that reads as a bug. */
       var essay = document.createElement('details');
       essay.className = 'failure-essay';
       var sum = document.createElement('summary');
-      sum.textContent = 'The essay';
+      sum.textContent = f.textWithheld ? 'The essay — withheld' : 'The essay';
       essay.appendChild(sum);
       var pre = document.createElement('p');
-      pre.className = 'failure-text';
-      pre.textContent = f.text || '(source text unavailable)';
+      pre.className = 'failure-text' + (f.textWithheld ? ' withheld' : '');
+      pre.textContent = f.text
+        || payload.redactionReason
+        || '(source text unavailable)';
       essay.appendChild(pre);
       card.appendChild(essay);
 
@@ -1356,9 +1361,28 @@ window.PalimpsestDocx = (function () {
         card.appendChild(blk);
       });
 
-      /* The human half. */
+      /* The human half. On the hosted build there is nowhere to save to -- the artifact is
+         a read-only asset and a public write endpoint would let any visitor edit it -- so
+         the box is rendered read-only with the reason, rather than offering a Save button
+         that cannot work. Any already-written explanation is still shown: it is the
+         analysis, and it is ours. */
+      var editable = payload.explanationsEditable !== false;
       var box = document.createElement('div');
       box.className = 'failure-why';
+      if (!editable) {
+        var ro = document.createElement('div');
+        ro.className = 'failure-why';
+        ro.innerHTML = '<p class="why-label">Why the maths failed</p>' +
+          '<p class="why-readonly">' +
+          (f.humanExplanation
+            ? esc(f.humanExplanation)
+            : 'Not yet written. Explanations are authored in the local build, which reads ' +
+              'the unredacted artifact.') +
+          '</p>';
+        card.appendChild(ro);
+        els.failures.appendChild(card);
+        return;
+      }
       var id = 'why-' + f.docId.replace(/[^a-zA-Z0-9]/g, '-');
       box.innerHTML =
         '<label class="field-label" for="' + id + '">Why the maths failed — ' +

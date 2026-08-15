@@ -1,0 +1,588 @@
+{
+  "arm": "augmented",
+  "nFeatures": 50,
+  "sentenceThreshold": 0.5043,
+  "documentThreshold": 0.5,
+  "nEvaluated": 3495,
+  "nWrong": 422,
+  "ranking": "severity = |p - truth| x confidence past the verdict threshold, in units of the band's own width. Ties break toward the shorter document.",
+  "failures": [
+    {
+      "docId": "ellipse:00742",
+      "set": "esl_remote",
+      "source": "ellipse",
+      "truth": "human",
+      "verdict": "machine",
+      "direction": "false accusation",
+      "documentProbability": 1.0,
+      "maxSentenceProbability": 1.0,
+      "flaggedShare": 1.0,
+      "words": 60,
+      "severity": 1.0,
+      "logitMargin": 21.043,
+      "errorComponent": 1.0,
+      "confidenceComponent": 1.0,
+      "meta": {
+        "proficiency": 3.5,
+        "ell": true
+      },
+      "text": null,
+      "drivingSentences": [
+        {
+          "probability": 1.0,
+          "start": 1509,
+          "end": 1533,
+          "text": "e.\n\nThank you for your t",
+          "evidence": {
+            "logit": 49.997148,
+            "intercept": -0.52183,
+            "probability": 1.0,
+            "shownContributions": [
+              {
+                "name": "style_gap_from_doc",
+                "label": "Doesn't sound like the rest",
+                "group": "context",
+                "value": 64.6693,
+                "z": 177.266,
+                "weight": 0.3152,
+                "contribution": 55.8713,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "logprob_z_in_doc",
+                "label": "Smoother than the author's baseline",
+                "group": "context",
+                "value": 3.8238,
+                "z": 3.1516,
+                "weight": -3.2031,
+                "contribution": -10.095,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "mean_logprob",
+                "label": "Average predictability",
+                "group": "likelihood",
+                "value": -0.9886,
+                "z": 1.8506,
+                "weight": 2.0434,
+                "contribution": 3.7814,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "pos_trigram_entropy",
+                "label": "Grammatical variety",
+                "group": "structure",
+                "value": 2.0,
+                "z": -2.3587,
+                "weight": 0.894,
+                "contribution": -2.1087,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "local_len_burstiness",
+                "label": "Local rhythm",
+                "group": "context",
+                "value": 1.2286,
+                "z": 5.2406,
+                "weight": -0.3893,
+                "contribution": -2.0399,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "mean_log_rank",
+                "label": "Average log rank",
+                "group": "rank",
+                "value": 0.4513,
+                "z": -1.5125,
+                "weight": -1.3019,
+                "contribution": 1.9691,
+                "measured": true,
+                "toward": "machine"
+              }
+            ],
+            "remainder": 3.140834
+          },
+          "quoteTruncated": false
+        },
+        {
+          "probability": 1.0,
+          "start": 22,
+          "end": 322,
+          "text": "\nFor some of the students, school is really far away for them, some student arent able to be in school for there health issues or gifted youngsters, is a really wonderful thing that the schools are offering online classes for the kids, it can really be a big help for there parents and there children",
+          "evidence": {
+            "logit": 20.95592,
+            "intercept": -0.52183,
+            "probability": 1.0,
+            "shownContributions": [
+              {
+                "name": "style_gap_from_doc",
+                "label": "Doesn't sound like the rest",
+                "group": "context",
+                "value": 32.1976,
+                "z": 87.1158,
+                "weight": 0.3152,
+                "contribution": 27.4574,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "mean_logprob",
+                "label": "Average predictability",
+                "group": "likelihood",
+                "value": -3.4299,
+                "z": -1.2565,
+                "weight": 2.0434,
+                "contribution": -2.5674,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "local_len_burstiness",
+                "label": "Local rhythm",
+                "group": "context",
+                "value": 1.2286,
+                "z": 5.2406,
+                "weight": -0.3893,
+                "contribution": -2.0399,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "pos_trigram_entropy",
+                "label": "Grammatical variety",
+                "group": "structure",
+                "value": 5.6067,
+                "z": 2.1856,
+                "weight": 0.894,
+                "contribution": 1.954,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "fluency_typicality_gap",
+                "label": "Fluent but atypical",
+                "group": "corpus",
+                "value": 3.0916,
+                "z": -1.2086,
+                "weight": 1.4735,
+                "contribution": -1.7809,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "pos_trigram_surprisal",
+                "label": "Unusual grammatical shape",
+                "group": "structure",
+                "value": 2.8663,
+                "z": 0.7186,
+                "weight": -2.3089,
+                "contribution": -1.6591,
+                "measured": true,
+                "toward": "human"
+              }
+            ],
+            "remainder": 0.113743
+          },
+          "quoteTruncated": false
+        }
+      ],
+      "humanExplanation": "",
+      "textWithheld": true
+    },
+    {
+      "docId": "ellipse:02990",
+      "set": "esl_remote",
+      "source": "ellipse",
+      "truth": "human",
+      "verdict": "machine",
+      "direction": "false accusation",
+      "documentProbability": 1.0,
+      "maxSentenceProbability": 1.0,
+      "flaggedShare": 1.0,
+      "words": 388,
+      "severity": 1.0,
+      "logitMargin": 13.061,
+      "errorComponent": 1.0,
+      "confidenceComponent": 1.0,
+      "meta": {
+        "proficiency": 2.5,
+        "ell": true
+      },
+      "text": null,
+      "drivingSentences": [
+        {
+          "probability": 1.0,
+          "start": 1172,
+          "end": 1381,
+          "text": " This is my examples of careers.,lol\n\nThe students enter in high school for graduating, and they expected to indentify a careers of cources in high school and are selected to guide them toward a specific caree",
+          "evidence": {
+            "logit": 25.625383,
+            "intercept": -0.52183,
+            "probability": 1.0,
+            "shownContributions": [
+              {
+                "name": "logprob_z_in_doc",
+                "label": "Smoother than the author's baseline",
+                "group": "context",
+                "value": -6.0,
+                "z": -4.7212,
+                "weight": -3.2031,
+                "contribution": 15.1225,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "mean_logprob",
+                "label": "Average predictability",
+                "group": "likelihood",
+                "value": -1.2918,
+                "z": 1.4648,
+                "weight": 2.0434,
+                "contribution": 2.9931,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "style_gap_from_doc",
+                "label": "Doesn't sound like the rest",
+                "group": "context",
+                "value": 4.0509,
+                "z": 8.973,
+                "weight": 0.3152,
+                "contribution": 2.8281,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "tree_depth_z_in_doc",
+                "label": "Depth vs the author's baseline",
+                "group": "structure",
+                "value": -2.0235,
+                "z": -1.7321,
+                "weight": -0.8881,
+                "contribution": 1.5384,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "mean_log_rank",
+                "label": "Average log rank",
+                "group": "rank",
+                "value": 0.7119,
+                "z": -0.9519,
+                "weight": -1.3019,
+                "contribution": 1.2393,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "pos_trigram_entropy",
+                "label": "Grammatical variety",
+                "group": "structure",
+                "value": 4.8791,
+                "z": 1.2689,
+                "weight": 0.894,
+                "contribution": 1.1344,
+                "measured": true,
+                "toward": "machine"
+              }
+            ],
+            "remainder": 1.291442
+          },
+          "quoteTruncated": false
+        },
+        {
+          "probability": 1.0,
+          "start": 2380,
+          "end": 2411,
+          "text": "y. This is my examples of caree",
+          "evidence": {
+            "logit": 20.382759,
+            "intercept": -0.52183,
+            "probability": 1.0,
+            "shownContributions": [
+              {
+                "name": "logprob_z_in_doc",
+                "label": "Smoother than the author's baseline",
+                "group": "context",
+                "value": -4.595,
+                "z": -3.5952,
+                "weight": -3.2031,
+                "contribution": 11.5158,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "mean_logprob",
+                "label": "Average predictability",
+                "group": "likelihood",
+                "value": -0.7696,
+                "z": 2.1293,
+                "weight": 2.0434,
+                "contribution": 4.351,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "pos_trigram_surprisal",
+                "label": "Unusual grammatical shape",
+                "group": "structure",
+                "value": 3.1333,
+                "z": 1.4589,
+                "weight": -2.3089,
+                "contribution": -3.3684,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "tree_depth_z_in_doc",
+                "label": "Depth vs the author's baseline",
+                "group": "structure",
+                "value": -4.0469,
+                "z": -3.3603,
+                "weight": -0.8881,
+                "contribution": 2.9844,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "mean_log_rank",
+                "label": "Average log rank",
+                "group": "rank",
+                "value": 0.1569,
+                "z": -2.146,
+                "weight": -1.3019,
+                "contribution": 2.7938,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "len_z_in_doc",
+                "label": "Length vs the author's baseline",
+                "group": "context",
+                "value": -3.6615,
+                "z": -3.1433,
+                "weight": -0.8244,
+                "contribution": 2.5914,
+                "measured": true,
+                "toward": "machine"
+              }
+            ],
+            "remainder": 0.036586
+          },
+          "quoteTruncated": false
+        }
+      ],
+      "humanExplanation": "",
+      "textWithheld": true
+    },
+    {
+      "docId": "real_hybrid_hewlett:0079",
+      "set": "localisation_remote",
+      "source": "real_hybrid",
+      "truth": "machine",
+      "verdict": "no evidence of machine",
+      "direction": "missed machine text",
+      "documentProbability": 0.0,
+      "maxSentenceProbability": 0.0002,
+      "flaggedShare": 0.0,
+      "words": 233,
+      "severity": 0.9999,
+      "logitMargin": 10.869,
+      "errorComponent": 1.0,
+      "confidenceComponent": 1.0,
+      "meta": {
+        "pair": "hewlett",
+        "human_doc_id": "liang_hewlett_human:0079",
+        "machine_doc_id": "liang_hewlett_gptsimplify:0079",
+        "base_doc_id": "liang_hewlett_human:0079",
+        "machine_spans": [
+          [
+            956,
+            1313
+          ]
+        ],
+        "cut_sentence": 12,
+        "generator": "gpt-3.5/gpt-4 (Liang et al. 2023)",
+        "style": "real-rewrite",
+        "n_machine_sentences": 4,
+        "n_total_sentences": 16
+      },
+      "text": null,
+      "drivingSentences": [
+        {
+          "probability": 0.0,
+          "start": 50,
+          "end": 91,
+          "text": "They can make or break somone financhely.",
+          "evidence": {
+            "logit": -19.395371,
+            "intercept": -0.52183,
+            "probability": 0.0,
+            "shownContributions": [
+              {
+                "name": "mean_logprob",
+                "label": "Average predictability",
+                "group": "likelihood",
+                "value": -5.0747,
+                "z": -3.3498,
+                "weight": 2.0434,
+                "contribution": -6.8448,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "fluency_typicality_gap",
+                "label": "Fluent but atypical",
+                "group": "corpus",
+                "value": 0.5352,
+                "z": -3.6502,
+                "weight": 1.4735,
+                "contribution": -5.3785,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "mean_log_rank",
+                "label": "Average log rank",
+                "group": "rank",
+                "value": 2.8388,
+                "z": 3.6248,
+                "weight": -1.3019,
+                "contribution": -4.719,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "logprob_z_in_doc",
+                "label": "Smoother than the author's baseline",
+                "group": "context",
+                "value": -1.4716,
+                "z": -1.0921,
+                "weight": -3.2031,
+                "contribution": 3.4982,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "pos_trigram_entropy",
+                "label": "Grammatical variety",
+                "group": "structure",
+                "value": 2.3219,
+                "z": -1.9531,
+                "weight": 0.894,
+                "contribution": -1.7461,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "pos_trigram_surprisal",
+                "label": "Unusual grammatical shape",
+                "group": "structure",
+                "value": 2.8435,
+                "z": 0.6556,
+                "weight": -2.3089,
+                "contribution": -1.5136,
+                "measured": true,
+                "toward": "human"
+              }
+            ],
+            "remainder": -2.169841
+          },
+          "quoteTruncated": false
+        },
+        {
+          "probability": 0.0,
+          "start": 157,
+          "end": 248,
+          "text": "Coumputrs are also for great for recer antal acitivitys, and they also take your life away.",
+          "evidence": {
+            "logit": -18.694072,
+            "intercept": -0.52183,
+            "probability": 0.0,
+            "shownContributions": [
+              {
+                "name": "mean_logprob",
+                "label": "Average predictability",
+                "group": "likelihood",
+                "value": -4.6734,
+                "z": -2.839,
+                "weight": 2.0434,
+                "contribution": -5.8011,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "fluency_typicality_gap",
+                "label": "Fluent but atypical",
+                "group": "corpus",
+                "value": 0.6118,
+                "z": -3.5771,
+                "weight": 1.4735,
+                "contribution": -5.2707,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "pos_trigram_surprisal",
+                "label": "Unusual grammatical shape",
+                "group": "structure",
+                "value": 3.3721,
+                "z": 2.1208,
+                "weight": -2.3089,
+                "contribution": -4.8967,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "mean_log_rank",
+                "label": "Average log rank",
+                "group": "rank",
+                "value": 2.5743,
+                "z": 3.0558,
+                "weight": -1.3019,
+                "contribution": -3.9782,
+                "measured": true,
+                "toward": "human"
+              },
+              {
+                "name": "pos_surprisal_z_in_doc",
+                "label": "Grammar vs the author's baseline",
+                "group": "structure",
+                "value": 1.5908,
+                "z": 1.2155,
+                "weight": 1.9924,
+                "contribution": 2.4218,
+                "measured": true,
+                "toward": "machine"
+              },
+              {
+                "name": "logprob_z_in_doc",
+                "label": "Smoother than the author's baseline",
+                "group": "context",
+                "value": -0.9666,
+                "z": -0.6874,
+                "weight": -3.2031,
+                "contribution": 2.2018,
+                "measured": true,
+                "toward": "machine"
+              }
+            ],
+            "remainder": -2.849204
+          },
+          "quoteTruncated": false
+        }
+      ],
+      "humanExplanation": "",
+      "textWithheld": true
+    }
+  ],
+  "redacted": true,
+  "redactionReason": "The full essay is withheld from the hosted build. These are real students' essays, including second-language writers, and republishing them at a public URL is not something this project has the right to do. The sentence that drove the verdict is quoted below with its arithmetic; run the tool locally to see the whole document.",
+  "quoteCapChars": 320
+}

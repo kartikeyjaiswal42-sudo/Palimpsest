@@ -1217,3 +1217,31 @@ body[data-state="scoring"] .skeleton {
   .failure-text { background: rgba(255,255,255,.04); }
   .why-input { background: rgba(255,255,255,.04); }
 }
+
+/* Hosted build: the essay is withheld and the explanation is read-only. Styled as a stated
+   condition rather than as an error — a missing essay here is a deliberate decision about
+   other people's writing, not a failure to load. */
+.failure-text.withheld {
+  font-style: italic;
+  color: var(--ink-faint);
+  max-height: none;
+}
+.why-label {
+  margin: 0 0 .35rem;
+  font-size: .78rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.why-readonly {
+  margin: 0;
+  font-size: .88rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  padding: .55rem .65rem;
+  background: var(--surface);
+  border-radius: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  .why-readonly { background: rgba(255,255,255,.04); }
+}

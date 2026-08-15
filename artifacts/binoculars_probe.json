@@ -1,0 +1,39 @@
+{
+  "column": "binoculars_score",
+  "train": "train_remote",
+  "nSentences": 7055,
+  "coverage": 0.982,
+  "decorationThreshold": 0.55,
+  "alone": {
+    "aurocHigherIsMachine": 0.4578,
+    "aurocLowerIsMachine": 0.5422,
+    "strength": 0.5422,
+    "medianHuman": 1.0047,
+    "medianMachine": 0.9723,
+    "thresholdAtBudget": 0.7092,
+    "machineRecall": 0.0439,
+    "budget": 0.05
+  },
+  "esl": {
+    "sentenceFpr": 0.0573,
+    "bySource": {
+      "ellipse": {
+        "n": 50939,
+        "fpr": 0.0569
+      },
+      "liang_toefl": {
+        "n": 547,
+        "fpr": 0.0914
+      }
+    },
+    "documentsWithAnyHighlight": 0.4776,
+    "nDocuments": 3034
+  },
+  "earnsSeatInShippedDetector": false,
+  "verdict": "Binoculars on this pair and this corpus is a NEAR-NULL: strength 0.542 against a 0.55 decoration threshold, and 4.4% machine recall at a 5% false-accusation budget. It does not earn a seat in the shipped detector.",
+  "notes": {
+    "whyNotSyntaxProbe": "scripts/syntax_probe.py selects columns from FEATURE_NAMES + ALL_SYNTAX_FEATURE_NAMES and never reads binoculars_score. Running it after joining this column reports a real number about a different question.",
+    "columnIsInert": "binoculars_* appears in no feature registry, so train.py cannot select it and the column on disk has no path into the shipped model.",
+    "frontierPattern": "The per-source medians put older/cheaper generators at the machine-like end and frontier models below the human sources, with TOEFL the most machine-like source of all -- the published Binoculars-on-frontier degradation plus this project's own ESL false-positive direction, in one table."
+  }
+}
