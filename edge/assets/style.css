@@ -108,9 +108,24 @@ button { font: inherit; color: inherit; }
 a { color: var(--accent); text-underline-offset: 2px; }
 a:hover { color: var(--ink); }
 
-.hidden { display: none; }
-#notice[hidden] { display: none !important; }
-[hidden] { display: none; }
+/* `!important` on both, and it is load-bearing rather than lazy.
+ *
+ * `.hidden` and `[hidden]` are single-selector rules sitting near the top of this file, so
+ * ANY later same-specificity author rule that sets `display` beats them -- and this
+ * stylesheet is full of exactly that. `.verdict-panel { display: flex }` at line ~360 and
+ * `.evidence-panel { display: flex }` both won, which meant the two largest panels on the
+ * page were on screen from first paint despite being marked hidden in the markup: a fresh
+ * load showed the empty verdict frame ("How much reads as machine-written / Confidence any
+ * of it is machine-written") and the empty evidence frame above an essay nobody had analysed
+ * yet, and neither could ever be hidden again because `renderVerdict` only ever REMOVES the
+ * class. Measured, not deduced: a fresh page reported display=flex and 611px of height on
+ * #verdict-panel.
+ *
+ * The `#notice[hidden]` line that used to sit here was this same bug found once and patched
+ * for one element. Fixing the class fixes every element that will ever use it, including the
+ * ones added later by someone who reasonably assumes "hidden" means hidden. */
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

@@ -61,6 +61,21 @@ async function launch() {
   await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60000 });
   check('page loads', await page.title() !== '');
 
+  // Everything the markup marks hidden must actually BE hidden before anything is analysed.
+  //
+  // `.hidden { display: none }` sits near the top of style.css as a single-class rule, so any
+  // later same-specificity rule setting `display` beat it -- and two did. `.verdict-panel`
+  // and `.evidence-panel` are both `display: flex`, so the empty verdict frame (611px tall)
+  // and the empty evidence frame were on screen from first paint, above an essay box nobody
+  // had typed in yet, and could never be hidden again because the render only ever REMOVES
+  // the class. Asserting computed style rather than the class is the point: the class was
+  // there the whole time and meant nothing.
+  const leaked = await page.evaluate(() => [...document.querySelectorAll('.hidden, [hidden]')]
+    .filter((el) => getComputedStyle(el).display !== 'none')
+    .map((el) => `${el.id || el.className} (${getComputedStyle(el).display})`));
+  check('nothing marked hidden is on screen before an analysis', leaked.length === 0,
+    leaked.join(', ') || '8 panels checked');
+
   // ---- the example the detector catches
   await page.click('#load-sample');
   const pasted = await page.inputValue('#essay');
