@@ -617,7 +617,7 @@ non-commercial, which is fine for a hackathon and a genuine blocker for a paid p
 ## 7. Open items
 
 - **The repository is public.** The brief states *"push your work to your own private repository."* Verified unauthenticated: HTTP 200. This is the one flat rule violation outstanding.
-- **The README describes a detector that is not shipped** — a local GPT-2 architecture diagram, a `uvicorn` command described as downloading GPT-2, TOEFL FPR 17.8% (stated three times), cross-family recall 45.5%, 127 tests, and zero mentions of "remote", "Cloudflare", "Workers" or "hosted". The substance is documented correctly in `PROJECT.md`; the README never got the memo. It lands on the criterion the brief weights hardest and it is the first file a judge opens.
+- ~~**The README describes a detector that is not shipped**~~ — **fixed 15 August 2026, along with the reason it survived.** The diagram, the `uvicorn` line, the test counts and every headline figure now describe the served `_remote` build, and the numbers that exist only for the GPT-2 build carry that label on the line. The root cause was not the prose: `tests/test_documented_numbers.py`, the test written to stop exactly this, read `evaluation.json` / `detector.json` / `document_detector.json` while `api/app.py` served the set named by `SUFFIX`. It was checking a model nobody runs, so it passed while the README stated 0.925 against a served 0.9576 and a 17.8% TOEFL FPR against a served 10.87% — the latter in the safety warning about how often the tool is wrong about a real student, and contradicted by the site's own limitations panel. This is the same fault `_limitations` records having fixed in the application in July; the application was fixed and the test was not. It now resolves the suffix the way the server does, fails rather than skips when a "served" claim has no measurement, and requires the `GPT-2-observer build` label on any claim that only exists in the old evaluation. Correcting it reddened 13 of 15 claims plus the calibration table.
 - **No ESL-authored admissions essays exist in the corpus.** Whether the gate would refuse a genuine non-native applicant's personal statement — the exact person this tool must not fail — remains the most important untested question. Fifty real essays would be worth more than any further accuracy work.
 - **Localisation regression undiagnosed** — seam-within-2-sentences 70% → 39% since the 9 August retrain.
 - **Frontier prose is not reliably detectable** by any method in this repository. Unedited cheap-model output is; Opus/Sonnet/Gemini-Pro-class prose in a 650-word essay is not. The two-specialist ensemble reaches 15.8% at an unchanged false-accusation rate.
@@ -625,7 +625,62 @@ non-commercial, which is fine for a hackathon and a genuine blocker for a paid p
 - **`GET /api/failures` 404s on the hosted build, once per page load.** The Worker has no such route and `artifacts/confident_failures.json` is not bundled into it, so the "Where it fails worst" panel is simply absent there. The page handles it correctly — the panel stays hidden rather than claiming the detector has no failures — but the browser still logs the 404, which means `verify_ui.cjs`'s "no console errors" check now fails against the hosted site and passes locally. The fix is a product decision, not a bug fix: either serve the panel from the Worker (which republishes the essays, see below) or stop asking for it when it cannot be there.
 - **`artifacts/confident_failures.json` cannot be committed** — it stores each failing document's full text, drawn from `ellipse` and `real_hybrid_hewlett`, so publishing it would republish verbatim the student writing that `data/raw/` and `data/cache/` are already excluded to protect. It is gitignored and rebuilt by `scripts/confident_failures.py`. Separately, **`artifacts/failures.json` is already tracked and carries ~110-character excerpts** of `ellipse` / `liang_toefl` / `persuade` documents in `topSentences[].text`. Quotation rather than republication, and left as it is — but it is the same corpus, and it is a call somebody should make deliberately rather than inherit.
 
+## 8. Bug sweep, 15 August 2026
+
+A review of the whole system — both builds, the interface, the Worker — rather than a feature.
+Six defects, none of which any existing test caught, and four of which were failures of
+honesty rather than of arithmetic. Deployed as `8ff98bf`; 203 Python tests, the 364,056-comparison
+parity suite, and three browser suites (31 + 38 + 8) pass against production.
+
+**1. The interface manufactured results.** `web/app.js` carried an offline analyzer. When
+`POST /api/analyze` could not be reached — a 404, a non-JSON body, a dropped connection — the
+page rendered a complete fabricated result through the same code that renders a real one:
+verdict band, machine share, per-sentence probabilities, evidence bars with z-scores and
+weights, per-token ranks, all from a seeded PRNG. For any text that was not one of the two
+bundled examples the document score was `-1.6 + random() * 3.2`, so a student pasting their own
+essay during a network blip could be shown "Likely machine-written" with a full evidence panel
+behind it. The disclosure was the words "bundled fixture" in a metadata chip. Nothing referenced
+it — no doc, neither browser harness — and it is gone; an unreachable analyzer now says so and
+paints nothing. `tests/test_no_fabricated_results.py` holds both copies of the shipped
+interface to that: no local analyzer, no `Math.random`, not even the mulberry32 constant the
+original used to stay inconspicuous.
+
+**2. The documentation described the wrong build**, and the guard test is why. Written up in
+the open item above.
+
+**3. A document with nothing measurable in it was cleared.** With no reliable sentence the
+aggregate reports `any_machine_probability = 0.0` — the absence of a measurement, not a low one
+— and zero sits below `tHuman`, so text the tool never scored a word of came back "No evidence
+of machine writing" quoting a calibration derived from documents that were read. Reproduced
+against the live Worker before the fix: nine spans, none measurable, cleared. `aggregate` and
+`find_passages` had both learned the rule that an unmeasurable span must not decide the answer;
+the band, the one line a reader acts on, had not. Both builds now abstain and name the spans
+they refused.
+
+**4. `.hidden` was not hiding two panels.** `.hidden { display: none }` is a single-class rule
+near the top of `style.css`, so later same-specificity rules beat it — and `.verdict-panel` and
+`.evidence-panel` are both `display: flex`. On a fresh load, before anything was typed, the
+empty verdict frame (611px tall, measured) and the empty evidence frame were on screen, and
+because `renderVerdict` only ever *removes* the class nothing could hide them again. The
+`#notice[hidden] { … !important }` line underneath was this same bug found once and patched for
+one element. `verify_ui.cjs` now asserts on computed style, because the class was present the
+whole time and meant nothing.
+
+**5 and 6, in the Worker.** `setAlarm` replaces rather than adds, and `Budget.reserve` called
+it on every reservation — so under continuous traffic the cleanup alarm was pushed 24 hours
+forward on each request and could never fire, and the per-IP histories it drops would grow
+without bound. And `handleAnalyze` charged three neurons up front and returned 503 without
+releasing them when the corpus reference failed to load, a path that never reaches Workers AI —
+so a broken asset binding could eat the day's allowance one refusal at a time. An observer
+failure is still deliberately not refunded: that call may or may not have been billed.
+
+The pattern worth keeping: four of the six were places where the code did something *reasonable*
+in a failure case — fall back, default to a band, keep a panel simple, keep a charge — and the
+reasonable thing was a claim the tool had not earned. The tests that existed all passed, on
+production, throughout.
+
 ---
 
-*Extracted from nine Claude Code sessions, 7–12 August 2026. Numbers are quoted as measured on the
-date shown; where a figure was later superseded, both appear.*
+*Extracted from nine Claude Code sessions, 7–12 August 2026, plus a bug sweep on 15 August.
+Numbers are quoted as measured on the date shown; where a figure was later superseded, both
+appear.*

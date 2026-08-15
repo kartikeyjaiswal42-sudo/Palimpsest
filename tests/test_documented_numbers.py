@@ -386,3 +386,24 @@ def test_length_ablation_conclusion_is_not_overstated():
         "The superseded claim is back in docs/04-failures.md; the measurement does not "
         "support it."
     )
+
+
+def test_the_readme_states_the_real_number_of_tests(request):
+    """The README quoted two different test counts, in two places, both wrong.
+
+    "pytest # 194 tests" in the run instructions and "tests/ 127 tests" in the repository
+    map -- a file whose argument is that a number describing something belongs to the thing
+    it describes. Counted from the collected session rather than typed, for the same reason
+    `renderLimitations` counts the list it just rendered.
+    """
+    collected = request.session.testscollected
+    if collected < 150:
+        pytest.skip("only part of the suite was collected; nothing to compare a total against")
+
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    claimed = {int(m.group(1)) for m in re.finditer(r"\b(\d{2,4}) tests\b", text)}
+    assert claimed, "the README no longer states how many tests there are"
+    assert claimed == {collected}, (
+        f"README claims {sorted(claimed)} tests; the suite collects {collected}. If more than "
+        f"one number appears, the README is disagreeing with itself as well as with pytest."
+    )

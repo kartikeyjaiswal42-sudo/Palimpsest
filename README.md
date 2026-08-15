@@ -14,8 +14,10 @@ is the evidence.*
               ┌────────────────────────────────────────────────┐
               │  TWO OBSERVERS, neither of which gives a verdict │
               │                                                  │
-              │  local GPT-2 ──▶ per-token logprob, rank,        │
-              │  (124M, on CPU)   entropy, curvature             │
+              │  qwen3-30B   ──▶ per-token logprob and rank      │
+              │  (Workers AI;     (GPT-2 locally instead, with    │
+              │   one forward      entropy and curvature, via     │
+              │   pass, scored)    PALIMPSEST_OBSERVER=gpt2)      │
               │                                                  │
               │  n-gram model ──▶ how typical is this OF REAL    │
               │  of 1,000 human   ADMISSIONS ESSAYS specifically │
@@ -38,9 +40,9 @@ is the evidence.*
 
 ## The one line that matters
 
-**No language model is ever asked for a verdict.** GPT-2 is read for token probabilities in a
-single forward pass — there is no `generate()` call, no prompt, and no chat template anywhere
-in the scoring path. Every number the interface shows is arithmetic we do on those
+**No language model is ever asked for a verdict.** The observer is read for token
+probabilities in a single forward pass — there is no `generate()` call, no prompt, and no chat
+template anywhere in the scoring path. Every number the interface shows is arithmetic we do on those
 probabilities. `tests/test_no_generative_calls.py` asserts this against the source, so it
 cannot quietly stop being true.
 
@@ -48,7 +50,7 @@ cannot quietly stop being true.
 
 ```bash
 uv venv && uv pip install -e ".[data,dev]"     # or: python -m venv .venv && pip install -e ".[data,dev]"
-uvicorn palimpsest.api.app:app --port 8123     # first run downloads GPT-2 (~500 MB)
+uvicorn palimpsest.api.app:app --port 8123     # scores via Workers AI; no weights downloaded
 open http://127.0.0.1:8123
 ```
 
@@ -60,7 +62,7 @@ threshold we ship. That is the operating point costing us a catch, visible on sc
 than buried in a table.
 
 Click any sentence to see the evidence behind its score. Analysis takes about 2 seconds for a
-650-word essay on a laptop CPU.
+650-word essay — one round trip to the observer, then arithmetic.
 
 ### Opening a document
 
@@ -88,10 +90,11 @@ python scripts/train.py               # fit + report cross-validated performance
 python scripts/evaluate.py            # every held-out set
 python scripts/find_failures.py       # the essays it gets confidently wrong
 python scripts/ablate_length.py       # re-run the document-length ablation
-pytest                                # 194 tests, no network, no model download
+pytest                                # 203 tests, no network, no model download
 node scripts/verify_ui.cjs            # end-to-end browser checks (needs the server up)
 python3 scripts/make_test_docx.py     # a real word-processor .docx for the check below
-node scripts/verify_upload.cjs        # 37 browser checks on opening a document (no server needed)
+node scripts/verify_upload.cjs        # 38 browser checks on opening a document (no server needed)
+node scripts/verify_honest_failure.cjs  # it must report a failure, never manufacture a result
 ```
 
 ## What it does, honestly
@@ -249,8 +252,10 @@ src/palimpsest/
 web/                     the interface (no build step)
 scripts/                 fetch → fit → features → train → evaluate → failures
 docs/                    approach, dataset, evaluation, failures, ESL, decisions, AI use
-tests/                   127 tests: no model is ever asked for a verdict, and
-                         the documented numbers must match the artifacts
+tests/                   203 tests: no model is ever asked for a verdict, the
+                         interface never invents a result it did not measure,
+                         and the documented numbers must match the artifacts
+                         OF THE BUILD THAT IS SERVED
 ```
 
 ## Documentation
