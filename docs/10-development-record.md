@@ -519,6 +519,53 @@ Verified: 15 new tests, each fix reverted in turn to confirm the matching test g
 suite **174 passing**; parity re-checked over **262 documents / 364,056 values**, every
 probability, logit and share exact; browser suite **28/28 against the live site**.
 
+### 15 August — a document can be opened, and a PDF is refused by name
+
+Until now the only way in was a paste. `.docx` and `.txt` are now read **in the browser**: a
+.docx is a ZIP holding `word/document.xml`, and `DecompressionStream` plus `DOMParser` are
+already there, so this cost no dependency and no external request.
+
+**Client-side was the design decision, not a shortcut.** `web/` is copied verbatim into
+`edge/assets/` by `sync_web.py`, so one implementation serves the local build and the hosted
+one. Extracting on the server would have meant a Python dependency for one deployment and a
+separate JavaScript implementation for the other — two readers that can disagree about what
+the essay says, which is the drift that produced the hosted-only patches above.
+
+**PDF is refused and named.** A .docx stores paragraphs; a PDF stores placed glyphs, so
+recovering prose means guessing where lines join and whether a hyphen ended a word or a line.
+Those guesses land on sentence boundaries, and every number here is computed per sentence — a
+wrongly joined line would move the result with nothing on screen to show it. The refusal says
+that and says to save as .docx, rather than "unsupported format". Format is decided from the
+leading bytes, so a .pdf renamed .docx is still named as a PDF.
+
+Tracked-change *insertions* are read and *deletions* are not; hyperlink field codes are
+skipped. The text lands in the essay box and that box is what is analysed, so there is no
+hidden copy and a badly-converted document can be seen and corrected. A refusal leaves
+whatever was already pasted untouched.
+
+**One real defect, found by the check rather than by reading the code:** analysis was kicked
+off in the same tick as the "Read 18 words from essay.docx" status, so that line was replaced
+before the browser painted it once. A disclosure that is never on screen is not a disclosure;
+the analysis is now deferred a beat.
+
+Verified: `scripts/verify_upload.cjs`, **37 checks in a real browser** — deflated and stored
+ZIP entries, Word's blank spacer paragraphs, tracked changes both directions, field codes,
+tab/break/no-break-space/soft-hyphen, `.txt`, and all seven refusals, each asserting both that
+the reason is named and that the box is left alone. 37/37 against a static server, 37/37
+against the live API, 36/36 against the synced `edge/assets` copy. **Proved able to fail**:
+reverting the `delText`/`instrText` guard and the invisible-character normalisation reddens
+exactly the four matching checks. Fixtures are built by the script, not committed — a .docx in
+the repository is a blob nobody can review in a diff, and the case worth testing hardest is
+invisible in any viewer that renders it correctly; `scripts/make_test_docx.py` adds a
+python-docx file so the reader is also proved against what a word processor really emits.
+No regressions: pytest **194**, `verify_ui.cjs` **30/30** including its 390px overflow check.
+Deployed and confirmed in a real browser on the hosted Worker.
+
+**A gotcha worth keeping:** immediately after `wrangler deploy`, `curl` on the asset URLs
+returned the OLD file and wrangler itself printed *"No updated asset files to upload"* — both
+read as a failed deploy. The assets were live; the plain fetch was served `cf-cache-status:
+HIT` from the edge. Cache-bust before concluding a deploy did not ship.
+
 ---
 
 ## 5. Publication
@@ -575,6 +622,8 @@ non-commercial, which is fine for a hackathon and a genuine blocker for a paid p
 - **Localisation regression undiagnosed** — seam-within-2-sentences 70% → 39% since the 9 August retrain.
 - **Frontier prose is not reliably detectable** by any method in this repository. Unedited cheap-model output is; Opus/Sonnet/Gemini-Pro-class prose in a 650-word essay is not. The two-specialist ensemble reaches 15.8% at an unchanged false-accusation rate.
 - **Reproducibility of the headline numbers.** The remote observer is bearer-gated, so a reviewer cloning the repo gets the `gpt2` path, whose numbers are measurably worse.
+- **`GET /api/failures` 404s on the hosted build, once per page load.** The Worker has no such route and `artifacts/confident_failures.json` is not bundled into it, so the "Where it fails worst" panel is simply absent there. The page handles it correctly — the panel stays hidden rather than claiming the detector has no failures — but the browser still logs the 404, which means `verify_ui.cjs`'s "no console errors" check now fails against the hosted site and passes locally. The fix is a product decision, not a bug fix: either serve the panel from the Worker (which republishes the essays, see below) or stop asking for it when it cannot be there.
+- **`artifacts/confident_failures.json` cannot be committed** — it stores each failing document's full text, drawn from `ellipse` and `real_hybrid_hewlett`, so publishing it would republish verbatim the student writing that `data/raw/` and `data/cache/` are already excluded to protect. It is gitignored and rebuilt by `scripts/confident_failures.py`. Separately, **`artifacts/failures.json` is already tracked and carries ~110-character excerpts** of `ellipse` / `liang_toefl` / `persuade` documents in `topSentences[].text`. Quotation rather than republication, and left as it is — but it is the same corpus, and it is a call somebody should make deliberately rather than inherit.
 
 ---
 
