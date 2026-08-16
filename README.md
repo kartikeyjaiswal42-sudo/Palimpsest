@@ -6,6 +6,12 @@ A palimpsest is a manuscript where the earlier writing shows through the later. 
 problem this tool is built for: not "is this essay AI", but *which parts of it are, and what
 is the evidence.*
 
+**Live:** https://palimpsest.amitynoidalibrary.workers.dev
+
+> **Evaluating this project?** → **[JUDGES.md](JUDGES.md)** is a fifteen-minute path through it:
+> how to verify the central claim yourself, the numbers including the ones that hurt, and the
+> three essays it gets confidently wrong with a theory for each.
+
 ```
                     ┌──────────────────────────────────────────────┐
    essay  ─────────▶│  segment into sentences (offsets preserved)  │
@@ -57,9 +63,10 @@ open http://127.0.0.1:8123
 Paste an essay, drop a **.docx** on the box, or press **Example it catches** / **Example it
 lets through** — the demo deliberately ships a failure alongside the success. The second one
 is the more instructive: the highlighting lands on the rewritten paragraph exactly, and the
-tool *still declines to flag the essay*, because 38% document confidence is under the 80.7%
-threshold we ship. That is the operating point costing us a catch, visible on screen rather
-than buried in a table.
+tool *still declines to flag the essay*, because its document confidence sits under the
+document threshold this build ships — roughly 0.895, and `GET /api/health` reports the exact
+value the running deployment is using. That is the operating point costing us a catch, visible
+on screen rather than buried in a table.
 
 Click any sentence to see the evidence behind its score. Analysis takes about 2 seconds for a
 650-word essay — one round trip to the observer, then arithmetic.
@@ -250,8 +257,9 @@ src/palimpsest/
   analyze.py             the pipeline; the API and training call the SAME method
   api/app.py             FastAPI
 web/                     the interface (no build step)
+edge/                    the same detector as a Cloudflare Worker — the build that is served
 scripts/                 fetch → fit → features → train → evaluate → failures
-docs/                    approach, dataset, evaluation, failures, ESL, decisions, AI use
+docs/                    the written record; docs/README.md indexes it with a reading order
 tests/                   203 tests: no model is ever asked for a verdict, the
                          interface never invents a result it did not measure,
                          and the documented numbers must match the artifacts
@@ -260,8 +268,12 @@ tests/                   203 tests: no model is ever asked for a verdict, the
 
 ## Documentation
 
+Indexed with a reading order in **[docs/README.md](docs/README.md)**. The seven that carry the
+argument:
+
 | | |
 |---|---|
+| **[JUDGES.md](JUDGES.md)** | **fifteen minutes, start here** |
 | [01-approach.md](docs/01-approach.md) | which signals, and why those |
 | [02-dataset.md](docs/02-dataset.md) | provenance, licences, what the data does **not** cover |
 | [03-evaluation.md](docs/03-evaluation.md) | every held-out number and the trade-off curve |
@@ -269,6 +281,15 @@ tests/                   203 tests: no model is ever asked for a verdict, the
 | [05-esl.md](docs/05-esl.md) | the false-positive study on non-native writers |
 | [06-decisions.md](docs/06-decisions.md) | decisions we would be asked to defend |
 | [07-ai-usage.md](docs/07-ai-usage.md) | how AI tools were used building this |
+
+And the rest of the record: [08-cross-vendor.md](docs/08-cross-vendor.md) (how far skill
+transfers across model families) · [09-frontier-ceiling.md](docs/09-frontier-ceiling.md) (why
+the strongest current models are not reliably caught) ·
+[13-structural-features.md](docs/13-structural-features.md) (three signal families — one works,
+one is a length feature in disguise, one is a near-null) ·
+[14-submission-record.md](docs/14-submission-record.md) (what was built, measured, and thrown
+away) · [10-development-record.md](docs/10-development-record.md) (the long chronological
+record) · [PROJECT.md](PROJECT.md) (the full written report).
 
 ## What this tool must not be used for
 
